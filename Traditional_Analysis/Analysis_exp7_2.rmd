@@ -1611,7 +1611,7 @@ df.rt.moral_bias_id <- df.corr.bias_rt[,c("L_rt_m.good_bad_slf","T_rt_Id_good_ba
 colnames(df.rt.moral_bias_id) <- c("RT_moral_bias_match","RT_moral_bias_id_categorization")
 ggplot(df.rt.moral_bias_id, aes(x=RT_moral_bias_match, y=RT_moral_bias_id_categorization)) +
     geom_point() +    # Use hollow circles
-    geom_smooth(method=lm) +   
+    geom_smooth(method=lm) + 
     ggtitle("Correlation between RT of Matching and id categorization (moral-effect)") +
     apatheme
 #ggsave("p_corr_RT_self1.eps", p_corr_RT_self1, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
