@@ -1,0 +1,1619 @@
+---
+title: "Analysis_exp7"
+author: "hcp"
+date: "2016-10-28"
+output: word_document
+---
+<style type="text/css">
+
+body{ /* Normal  */
+   font-family: Times     
+   font-size: 12px;
+}
+td {  /* Table  */
+   font-size: 8px;
+}
+h1 { /* Header 1 */
+ font-size: 28px;
+}
+h2 { /* Header 2 */
+ font-size: 22px;
+}
+h3 { /* Header 3 */
+ font-size: 18px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 10px;
+}
+pre { /* Code block */
+  font-size: 10px
+}
+</style>
+
+
+This script is aimed at making the analysis of the experiment 7 reproducible. We analyzezd the data using the traditional ways (d prime/Accuracy and mean of RT)
+
+```{r Initializing, include=FALSE}
+Sys.setlocale("LC_ALL", "English")  # set local encoding to English
+Sys.setenv(LANG = "en") # set the feedback language to English
+options(scipen = 999)   # force R to output in decimal instead of scientifc notion
+options(digits=5)       # limit the number of reporting
+rm(list = setdiff(ls(), lsf.str()))  # remove all data but keep functions
+
+pkgTest <- function(x)
+ {
+   if (!require(x,character.only = TRUE))
+  {
+    install.packages(x,dep = TRUE)
+   if(!require(x,character.only = TRUE)) stop("Package not found")
+  }
+}
+
+pkgNeeded <- (c("ez","plyr","ggplot2", "reshape2", "MBESS", "bootES","BayesFactor","psych","corrplot"))
+
+lapply(pkgNeeded,pkgTest)
+rm(pkgNeeded)
+# using APA style plot
+# Save some time and stor APA format-related code in an object so you can easily
+# use it in multiple plots
+windowsFonts(Times=windowsFont("TT Times New Roman")) # explicit mapping to "times"
+apatheme=theme_bw()+
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank(),
+              panel.border = element_blank(),
+              text=element_text(family='Times'),
+              legend.title=element_blank(),
+              legend.position='top',
+              axis.line.x = element_line(color='black'),
+              axis.line.y = element_line(color='black'))
+
+# define the d prime function
+dprime <- function(hit,fa) {
+        qnorm(hit) - qnorm(fa)
+}
+
+## code for calculate the summary with sE, adopted from cook book for R
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+        library(plyr)
+        
+        # New version of length which can handle NA's : if na.rm == T, don't count the
+        length2 <- function(x, na.rm=FALSE){
+                if(na.rm) sum(!is.na(x))
+                else      length(x)
+        }
+        
+        # this does the summary. For each group's data frame, return a vector with
+        # N, mean, and sd
+        datac <- ddply(data,groupvars, .drop=.drop,
+                       .fun = function(xx,col){
+                        c(N    = length2(xx[[col]],na.rm=na.rm),
+                          mean = mean(xx[[col]],na.rm=na.rm),
+                          sd   = sd  (xx[[col]],na.rm=na.rm)
+                           )
+                       },
+                       measurevar
+                       )
+        # Rename the "mean" column
+        
+        datac <- rename(datac,c("mean" = measurevar))
+        
+        datac$se <- datac$sd /sqrt(datac$N)   # calculate standard error of the mean
+        
+        # Confidence interval mltiplier for standard error
+        # calculate t-statistic for confidence interval:
+        # e.g., if conf.interval is .95, use .975 (above/below), and use df.L1 = N-1
+        ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+        datac$ci <- datac$se * ciMult
+        
+        return (datac)
+}
+
+## code for calculate the summary with sE for within subject data, adopted from cook book for R
+summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+        
+        # Ensure that the betweenvars and withinvars are factors
+        factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+                             FUN=is.factor, FUN.VALUE=logical(1))
+        
+        if (!all(factorvars)) {
+                nonfactorvars <- names(factorvars)[!factorvars]
+                message("Automatically converting the following non-factors to factors: ",
+                        paste(nonfactorvars, collapse = ", "))
+                data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
+        }
+        
+        # Get the means from the un-normed data
+        datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                           na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+        
+        # Drop all the unused columns (these will be calculated with normed data)
+        datac$sd <- NULL
+        datac$se <- NULL
+        datac$ci <- NULL
+        
+        # Norm each subject's data
+        ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+        
+        # This is the name of the new column
+        measurevar_n <- paste(measurevar, "_norm", sep="")
+        
+        # Collapse the normed data - now we can treat between and within vars the same
+        ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                            na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+        
+        # Apply correction from Morey (2008) to the standard error and confidence interval
+        #  Get the product of the number of conditions of within-S variables
+        nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                                        FUN.VALUE=numeric(1)))
+        correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
+        
+        # Apply the correction factor
+        ndatac$sd <- ndatac$sd * correctionFactor
+        ndatac$se <- ndatac$se * correctionFactor
+        ndatac$ci <- ndatac$ci * correctionFactor
+        
+        # Combine the un-normed means with the normed results
+        merge(datac, ndatac)
+}
+
+### code for normalizing the SE
+normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+        library(plyr)
+        
+        # Measure var on left, idvar + between vars on right of formula.
+        data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+                               .fun = function(xx, col, na.rm) {
+                                       c(subjMean = mean(xx[,col], na.rm=na.rm))
+                               },
+                               measurevar,
+                               na.rm
+        )
+        
+        # Put the subject means with original data
+        data <- merge(data, data.subjMean)
+        
+        # Get the normalized data in a new column
+        measureNormedVar <- paste(measurevar, "_norm", sep="")
+        data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+                mean(data[,measurevar], na.rm=na.rm)
+        
+        # Remove this subject mean column
+        data$subjMean <- NULL
+        
+        return(data)
+}
+
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+        library(grid)
+        
+        # Make a list from the ... arguments and plotlist
+        plots <- c(list(...), plotlist)
+        
+        numPlots = length(plots)
+        
+        # If layout is NULL, then use 'cols' to determine layout
+        if (is.null(layout)) {
+                # Make the panel
+                # ncol: Number of columns of plots
+                # nrow: Number of rows needed, calculated from # of cols
+                layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                                 ncol = cols, nrow = ceiling(numPlots/cols))
+        }
+        
+        if (numPlots==1) {
+                print(plots[[1]])
+                
+        } else {
+                # Set up the page
+                grid.newpage()
+                pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+                
+                # Make each plot, in the correct location
+                for (i in 1:numPlots) {
+                        # Get the i,j matrix positions of the regions that contain this subplot
+                        matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+                        
+                        print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                                        layout.pos.col = matchidx$col))
+                }
+        }
+}
+
+```
+
+
+```{r loadingData_e7_L,echo=FALSE,results='hide'}
+df.L <- read.csv("df.Learn.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
+df.T <- read.csv("df.Test.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
+# render the numeric column
+cols.num <- c("Age","Block","Bin","Trial","RT","Accuracy")
+# Tcols.num <- c("SubjectID","Age","Block","Bin","Trial","RT","Accuracy")
+df.L[cols.num] <- sapply(df.L[cols.num], as.numeric)
+df.T[cols.num] <- sapply(df.T[cols.num], as.numeric)
+
+colnames(df.L)[colnames(df.L)=="Accuracy"] <- "ACC"
+colnames(df.T)[colnames(df.T)=="Accuracy"] <- "ACC"
+colnames(df.L)[colnames(df.L)=="SubjectID"] <- "Subject"
+colnames(df.T)[colnames(df.T)=="SubjectID"] <- "Subject"
+
+df.L$Subject <- factor(df.L$Subject)
+df.T$Subject <- factor(df.T$Subject)
+
+df.L$Morality[df.L$Morality == 'moral'] <- 'Good'
+df.L$Morality[df.L$Morality == 'immoral'] <- 'Bad'
+df.L$Identity[df.L$Identity == 'self'] <- 'Self'
+df.L$Identity[df.L$Identity == 'other'] <- 'Other'
+
+df.L$Morality <- factor(df.L$Morality, levels=c("Good","Bad")) # make the variables in a specified order
+df.L$Identity <- factor(df.L$Identity, levels=c("Self","Other")) # make the variables in a specified order
+df.L$Match <- factor(df.L$Match, levels=c("match","nonmatch")) # make the variables in a specified order
+
+
+df.T$Morality[df.T$Morality == 'moral'] <- 'Good'
+df.T$Morality[df.T$Morality == 'immoral'] <- 'Bad'
+df.T$Identity[df.T$Identity == 'self'] <- 'Self'
+df.T$Identity[df.T$Identity == 'other'] <- 'Other'
+df.T$Task[df.T$Task == 'Self'] <- 'ID'
+df.T$Task[df.T$Task == 'self'] <- 'Id_task'
+df.T$Task[df.T$Task == 'moral'] <- 'Valence_task'
+df.T$Morality <- factor(df.T$Morality, levels=c("Good","Bad")) # make the variables in a specified order
+df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other")) # make the variables in a specified order
+```
+
+```{r clean the data_e7_L,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+df.L1 <- df.L
+df.T1 <- df.T
+df.L1$RT <- df.L1$RT*1000 # transfer from seconds to min seconds
+df.T1$RT <- df.T1$RT * 1000
+
+# no response equal to wrong
+df.L1$ACC[df.L1$ACC == -1] <- 0
+
+# excluded data from subjects whose trials number are not normal
+procFailureSub <- c("7","8","2027","7035")
+df.L1 <- df.L1[!(df.L1$Subject %in% procFailureSub),]
+df.T1 <- df.T1[!(df.T1$Subject %in% procFailureSub),]
+df.T1 <- df.T1[df.T1$Task != 'importance',]  # exclude the results from importance task
+
+# delete the practicing trials (first 48 trials)
+subNo <- unique(df.L1$Subject)
+for (subj in subNo) {
+        if (exists('df.L1.fm')){
+                df.tmp <- df.L1[df.L1$Subject == subj,]
+                df.tmp <- df.tmp[49:nrow(df.tmp),]
+                df.L1.fm <- rbind(df.L1.fm,df.tmp)
+        } else {
+                df.L1.fm <- df.L1[df.L1$Subject == subj,]
+                df.L1.fm <- df.L1.fm[49:nrow(df.L1.fm),]
+        }
+}
+
+rm(subNo)
+
+# calculate the overall accuracy for matching task
+df.L1.acc.g <-  ddply(df.L1.fm,.(Subject), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+# calculate the overall accuracy for categorziation task
+df.T1.acc.g <-  ddply(df.T1,.(Subject), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+excld.sub <- df.L1.acc.g$Subject[df.L1.acc.g$ACC < 0.5]      # less 50% accuracy in matching task
+excld.sub.T <- df.T1.acc.g$Subject[df.T1.acc.g$ACC < 0.5]    # less than 50% accuracy in categorization task
+df.L1.valid <- df.L1.fm[!(df.L1.fm$Subject %in% excld.sub),] # exclude the invalid subjects
+df.T1.valid <- df.T1[!(df.T1$Subject %in% excld.sub),]
+df.T1.valid <- df.T1.valid[!(df.T1.valid$Subject %in% excld.sub.T),]
+
+length(unique(df.L1.valid$Subject)) + length(excld.sub) == length(unique(df.L1$Subject))
+# excld.trials3 <- excld.trials[!(excld.trials$Subject %in% excld.sub),]
+excld.trials.L <- df.L1.valid[df.L1.valid$RT <= 200,]
+df.L1.V <- df.L1.valid[!(df.L1.valid$RT <= 200),] 
+excld.trials.T <- df.T1.valid[df.T1.valid$RT <= 200,]
+df.T1.V <- df.T1.valid[!(df.T1.valid$RT <= 200),] 
+nrow(excld.trials.T) + nrow(df.T1.V) == nrow(df.T1.valid) # if true, everything is ok
+
+## Basic information of the data ####
+df.L1.T.basic <- df.L1[!duplicated(df.L1$Subject), 1:4]
+numT.subj <- nrow(df.L1.T.basic)
+numT.female <- sum(df.L1.T.basic$Gender == 'female');
+numT.male <- sum(df.L1.T.basic$Gender == 'male');
+ageT.mean <- round(mean(df.L1.T.basic$Age),2);
+ageT.std <- round(sd(df.L1.T.basic$Age),2);
+num.excld.sub <- length(unique(excld.sub))
+num.excld.sub.T <- length(unique(excld.sub.T))
+
+# valide data for matching task
+df.L1.V.basic <- df.L1.V[!duplicated(df.L1.V$Subject), 1:4]
+numV.female <- sum(df.L1.V.basic$Gender == 'female');
+numV.male <- sum(df.L1.V.basic$Gender == 'male');
+ageV.mean <- round(mean(df.L1.V.basic$Age),2);
+ageV.std <- round(sd(df.L1.V.basic$Age),2);
+ratio.excld.trials.L <- nrow(excld.trials.L)/nrow(df.L1.valid)
+ratio.excld.trials.T <- nrow(excld.trials.T)/nrow(df.T1.valid)
+
+# valid data for categorization task
+df.T1.V.basic <- df.T1.V[!duplicated(df.T1.V$Subject), 1:4]
+numV.female.T <- sum(df.T1.V.basic$Gender == 'female');
+numV.male.T <- sum(df.T1.V.basic$Gender == 'male');
+ageV.mean.T <- round(mean(df.T1.V.basic$Age),2);
+ageV.std.T <- round(sd(df.T1.V.basic$Age),2);
+ratio.excld.trials.T <- nrow(excld.trials.T)/nrow(df.T1.valid)
+```
+## Participants
+`r numT.subj+length(procFailureSub)` college students (`r numT.female` female, age: `r ageT.mean` $\pm$ `r ageT.std`) participated in experiment 7. All partcipants were right handed, and all had normal or corrected-to-normal vision. Informed consent was obtained from all partcipants prior to the experiment according to procedure approved by a local ethics committee. Data of `r length(procFailureSub)` participants were excluded from matching task because of the procedura failure, and `r num.excld.sub` of the participants data were excluded from the analysis for matching task and categorization task because of less than 50% overall accuracy for the matching task, leaving `r numT.subj - num.excld.sub` participants (`r numV.female` female, age: `r ageV.mean` $\pm$ `r ageV.std` years) for matching task. `r num.excld.sub.T` addtional participants's data in categorization task were excluded becasue of less than 50% accuracy for the categorization task,leaving `r numT.subj - num.excld.sub - num.excld.sub.T` participants (`r numV.female.T` female, age: `r ageV.mean.T` $\pm$ `r ageV.std.T` years) for categorization task.
+
+
+##Results 
+For the learning phase, we excluded the first 24 trials, which is suppose to be the duration participants were practicing. Also, trials that responsed less than 200 ms or no-response was excluded.For the learning phase, `r round(ratio.excld.trials.L,4)` of the total trials was excluded, for the testing phase, `r round(ratio.excld.trials.T,4)` of the total trials was excluded.
+
+### Results of Learning phase
+#### Analaysis of d prime
+```{r analyzing for d prime_e7_L, echo=FALSE, results='hide',warning=FALSE, message=FALSE}
+# calculate the d prime for each condition
+df.L1.V$sdt <- NA
+for (i in 1:nrow(df.L1.V)){
+        if (df.L1.V$ACC[i] == 1 & df.L1.V$Match[i] == "match" & !is.na(df.L1.V$ResponseKey[i])){
+                df.L1.V$sdt[i] <- "hit"
+        } else if (df.L1.V$ACC[i] == 1 & df.L1.V$Match[i] == "nonmatch" & !is.na(df.L1.V$ResponseKey[i])){
+                df.L1.V$sdt[i] <- "CR"
+        } else if (df.L1.V$ACC[i] == 0 & df.L1.V$Match[i] == "match" & !is.na(df.L1.V$ResponseKey[i])){
+                df.L1.V$sdt[i] <- "miss"
+        } else if (df.L1.V$ACC[i] == 0 & df.L1.V$Match[i] == "nonmatch" & !is.na(df.L1.V$ResponseKey[i])){
+                df.L1.V$sdt[i] <- "FA"
+        }
+}
+
+# calculate the number of each for each condition
+df.L1.V.SDT <-  ddply(df.L1.V,.(Subject,Morality, Identity,sdt), summarise, N = length(sdt))
+df.L1.V.SDT <- df.L1.V.SDT[complete.cases(df.L1.V.SDT$sdt),] # exclude NA, which represents no-response trials
+
+# long format to wide
+df.L1.V.SDT_w <- dcast(df.L1.V.SDT, Subject + Morality + Identity ~ sdt,value.var = "N")
+df.L1.V.SDT_w$miss[is.na(df.L1.V.SDT_w$miss)] <- 0
+df.L1.V.SDT_w$FA[is.na(df.L1.V.SDT_w$FA)] <- 0
+df.L1.V.SDT_w$hitR <- df.L1.V.SDT_w$hit/(df.L1.V.SDT_w$hit + df.L1.V.SDT_w$miss)
+df.L1.V.SDT_w$faR <- df.L1.V.SDT_w$FA/(df.L1.V.SDT_w$FA + df.L1.V.SDT_w$CR)
+
+# standardized way to deal with the extreme values
+for (i in 1:nrow(df.L1.V.SDT_w)){
+        if (df.L1.V.SDT_w$hitR[i] == 1){
+                df.L1.V.SDT_w$hitR[i] <- 1 - 1/(2*(df.L1.V.SDT_w$hit[i] + df.L1.V.SDT_w$miss[i]))
+        }
+}
+
+for (i in 1:nrow(df.L1.V.SDT_w)){
+        if (df.L1.V.SDT_w$faR[i] == 0){
+                df.L1.V.SDT_w$faR[i] <- 1/(2*(df.L1.V.SDT_w$FA[i] + df.L1.V.SDT_w$CR[i]))
+        }
+}
+
+# calculate the d prime for each condition
+df.L1.V.SDT_w$dprime <- mapply(dprime,df.L1.V.SDT_w$hitR,df.L1.V.SDT_w$faR)
+
+# transfor from long format to wide format
+df.L1.V.SDT_ww <- dcast(df.L1.V.SDT_w, Subject ~ Identity + Morality ,value.var = "dprime")
+
+# anova for d prime with 2*2 design
+e7_L.d_anova <- ezANOVA(df.L1.V.SDT_w,dv = dprime, wid = Subject, within=.(Morality,Identity), type=3)
+
+# summary(aov(dprime ~ Morality*Identity + Error(Subject/(Morality*Identity)), data=df.L1.V.SDT_w))
+df.L1.V.SDT_w$Subject <- factor(df.L1.V.SDT_w$Subject)
+e7_L.dprime_anova_bf = anovaBF(dprime ~ Morality*Identity + Subject, data = df.L1.V.SDT_w, whichRandom = "Subject")
+
+# Good self vs Bad self
+e7_L.d.t.good_bad_slf <- t.test(df.L1.V.SDT_ww$Self_Good,df.L1.V.SDT_ww$Self_Bad,paired = TRUE)
+df.L1.V.SDT_ww$good_bad_slf <- df.L1.V.SDT_ww$Self_Good - df.L1.V.SDT_ww$Self_Bad
+e7_L.d.t.good_bad_slf.CI <- bootES(df.L1.V.SDT_ww$good_bad_slf,R = 20000, effect.type = "cohens.d")
+
+e7_L.d.tvalue.good_bad_slf <- round(as.numeric(e7_L.d.t.good_bad_slf[[1]]),3)
+e7_L.d.df.L1.good_bad_slf <- as.numeric(e7_L.d.t.good_bad_slf[[2]])
+e7_L.d.pvalue.good_bad_slf.adj <- p.adjust(as.numeric(e7_L.d.t.good_bad_slf[[3]]),"bonferroni",4)
+e7_L.d.cohens.good_bad_slf <- round(e7_L.d.t.good_bad_slf.CI[[1]],4) 
+e7_L.d.CI.L.good_bad_slf <- round(e7_L.d.t.good_bad_slf.CI[[12]][1],4)
+e7_L.d.CI.H.good_bad_slf <- round(e7_L.d.t.good_bad_slf.CI[[12]][2],4)
+
+# Good other vs. Bad other
+e7_L.d.t.good_bad_oth <- t.test(df.L1.V.SDT_ww$Other_Good,df.L1.V.SDT_ww$Other_Bad,paired = TRUE)
+df.L1.V.SDT_ww$good_bad_oth <- df.L1.V.SDT_ww$Other_Good - df.L1.V.SDT_ww$Other_Bad
+e7_L.d.t.good_bad_oth.CI <- bootES(df.L1.V.SDT_ww$good_bad_oth,R = 20000, effect.type = "cohens.d")
+
+e7_L.d.tvalue.good_bad_oth  <- round(as.numeric(e7_L.d.t.good_bad_oth[[1]]),3)
+e7_L.d.df.L1.good_bad_oth  <- as.numeric(e7_L.d.t.good_bad_oth[[2]])
+e7_L.d.pvalue.good_bad_oth.adj <- p.adjust(as.numeric(e7_L.d.t.good_bad_oth[[3]]),"bonferroni",4)
+e7_L.d.cohens.good_bad_oth <- round(e7_L.d.t.good_bad_oth.CI[[1]],4) 
+e7_L.d.CI.L.good_bad_oth <- round(e7_L.d.t.good_bad_oth.CI[[12]][1],4)
+e7_L.d.CI.H.good_bad_oth <- round(e7_L.d.t.good_bad_oth.CI[[12]][2],4)
+
+# Good self vs Good other
+e7_L.d.t.slf_oth_good <- t.test(df.L1.V.SDT_ww$Self_Good,df.L1.V.SDT_ww$Other_Good,paired = TRUE)
+df.L1.V.SDT_ww$slf_oth_good <- df.L1.V.SDT_ww$Self_Good - df.L1.V.SDT_ww$Other_Good
+e7_L.d.t.slf_oth_good.CI <- bootES(df.L1.V.SDT_ww$slf_oth_good,R = 20000, effect.type = "cohens.d")
+
+e7_L.d.tvalue.slf_oth_good  <- round(as.numeric(e7_L.d.t.slf_oth_good[[1]]),3)
+e7_L.d.df.L1.slf_oth_good  <- as.numeric(e7_L.d.t.slf_oth_good[[2]])
+e7_L.d.pvalue.slf_oth_good.adj <- p.adjust(as.numeric(e7_L.d.t.slf_oth_good[[3]]),"bonferroni",4)
+e7_L.d.cohens.slf_oth_good <- round(e7_L.d.t.slf_oth_good.CI[[1]],4) 
+e7_L.d.CI.L.slf_oth_good <- round(e7_L.d.t.slf_oth_good.CI[[12]][1],4)
+e7_L.d.CI.H.slf_oth_good <- round(e7_L.d.t.slf_oth_good.CI[[12]][2],4)
+
+# Bad self vs. Bad other
+e7_L.d.t.slf_oth_bad <- t.test(df.L1.V.SDT_ww$Self_Bad,df.L1.V.SDT_ww$Other_Bad,paired = TRUE)
+df.L1.V.SDT_ww$slf_oth_bad <- df.L1.V.SDT_ww$Self_Bad - df.L1.V.SDT_ww$Other_Bad
+e7_L.d.t.slf_oth_bad.CI <- bootES(df.L1.V.SDT_ww$slf_oth_bad,R = 20000, effect.type = "cohens.d")
+
+e7_L.d.tvalue.slf_oth_bad  <- round(as.numeric(e7_L.d.t.slf_oth_bad[[1]]),3)
+e7_L.d.df.L1.slf_oth_bad <- as.numeric(e7_L.d.t.slf_oth_bad[[2]])
+e7_L.d.pvalue.slf_oth_bad.adj <- p.adjust(as.numeric(e7_L.d.t.slf_oth_bad[[3]]),"bonferroni",4)
+e7_L.d.cohens.slf_oth_bad <- round(e7_L.d.t.slf_oth_bad.CI[[1]],4) 
+e7_L.d.CI.L.slf_oth_bad <- round(e7_L.d.t.slf_oth_bad.CI[[12]][1],4)
+e7_L.d.CI.H.slf_oth_bad <- round(e7_L.d.t.slf_oth_bad.CI[[12]][2],4)
+
+#####save the dprime and ACC data for late used####
+colnames(df.L1.V.SDT_ww) <- paste("L_d", colnames(df.L1.V.SDT_ww), sep = "_")
+write.csv(df.L1.V.SDT_ww,"data_matching_v_dprime.csv",row.names=FALSE)
+df.L1.V.acc <-  ddply(df.L1.V,.(Subject,Match,Identity,Morality), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+df.L1.V.acc_w <- dcast(df.L1.V.acc, Subject ~ Match + Identity + Morality ,value.var = "ACC")
+df.L1.V.acc_w$good_bad_slf <- df.L1.V.acc_w$match_Self_Good - df.L1.V.acc_w$match_Self_Bad
+df.L1.V.acc_w$good_oth <- df.L1.V.acc_w$match_Other_Good - df.L1.V.acc_w$match_Other_Bad
+df.L1.V.acc_w$slf_oth_good <- df.L1.V.acc_w$match_Self_Good - df.L1.V.acc_w$match_Other_Good
+df.L1.V.acc_w$slf_oth_bad <- df.L1.V.acc_w$match_Self_Bad - df.L1.V.acc_w$match_Other_Bad
+
+colnames(df.L1.V.acc_w) <- paste("L_acc", colnames(df.L1.V.acc_w), sep = "_")
+colnames(df.L1.V.acc_w)[colnames(df.L1.V.acc_w) == 'L_acc_Subject'] <- 'Subject'
+write.csv(df.L1.V.acc_w,"data_matching_v_acc.csv",row.names=FALSE)
+#####
+
+df.L1.V.SDT.sum <- summarySE(df.L1.V.SDT_w,measurevar = 'dprime',groupvars = c('Morality','Identity'))
+e7_L.d.mean.GoodSelf <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+e7_L.d.sd.GoodSelf <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+e7_L.d.mean.BadSelf <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+e7_L.d.sd.BadSelf <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+
+e7_L.d.mean.GoodOther <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+e7_L.d.sd.GoodOther <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+e7_L.d.mean.BadOther <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+e7_L.d.sd.BadOther <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+
+e7_L.p_dprime1 <- ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Identity, group = Morality,shape = Morality, fill = Morality)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3,width = .6) +    # Thinner lines
+        geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
+                      #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'self-referential',y = 'd prime') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("d prime for each condition") +
+        coord_cartesian(ylim=c(1,3.5))+
+        scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        apatheme
+
+
+e7_L.p_dprime2 <- ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Morality, group = Identity,shape = Identity, fill = Identity)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
+                      #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'd prime') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("d prime for each condition") +
+        coord_cartesian(ylim=c(1,3.5))+
+        scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        apatheme + 
+        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("self    ","other"))+
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+ggsave("e7_L.p_dprime2.pdf", e7_L.p_dprime2, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
+# tiff(filename = "e7_L.p_dprime2.tiff", width = 8, height = 8, units = 'in', res = 300)
+# e7_L.p_dprime2
+# dev.off()
+
+```
+ANOVA for *d'* with moral character and self-relatedness as within-subjects factors.
+
+The main effect of `r e7_L.d_anova[[1]][1,1]`, *F*(`r e7_L.d_anova[[1]][1,2]`, `r e7_L.d_anova[[1]][1,3]`) = `r round(e7_L.d_anova[[1]][1,4],3)`, *p* = `r round(e7_L.d_anova[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_L.d_anova[[1]][1,7],4)`, BF10 = r e7_L.dprime_anova_bf[1]. 
+
+The main effect of `r e7_L.d_anova[[1]][2,1]`: *F*(`r e7_L.d_anova[[1]][2,2]`, `r e7_L.d_anova[[1]][2,3]`) = `r round(e7_L.d_anova[[1]][2,4],3)`, *p* = `r round(e7_L.d_anova[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_L.d_anova[[1]][2,7],4)`,BF10 = r e7_L.dprime_anova_bf[2]
+
+The interaction between `r e7_L.d_anova[[1]][3,1]`: *F*(`r e7_L.d_anova[[1]][3,2]`, `r e7_L.d_anova[[1]][3,3]`) = `r round(e7_L.d_anova[[1]][3,4],3)`, *p* = `r round(e7_L.d_anova[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_L.d_anova[[1]][3,7],4)`, BF21 = r e7_L.dprime_anova_bf[4]/e7_L.dprime_anova_bf[3]
+
+Then we conducted post-hoc comparision:
+
+Good self (`r e7_L.d.mean.GoodSelf`  $\pm$ `r e7_L.d.sd.GoodSelf`) vs Bad self (`r e7_L.d.mean.BadSelf`  $\pm$ `r e7_L.d.sd.BadSelf`): *t*(`r e7_L.d.df.L1.good_bad_slf`) = `r e7_L.d.tvalue.good_bad_slf`, *p* = 
+`r e7_L.d.pvalue.good_bad_slf.adj`, *Cohen's* $d_z$ = `r e7_L.d.cohens.good_bad_slf`, 95% CI [`r e7_L.d.CI.L.good_bad_slf` `r e7_L.d.CI.H.good_bad_slf`]
+
+
+Good other (`r e7_L.d.mean.GoodOther`  $\pm$ `r e7_L.d.sd.GoodOther`) vs Bad other (`r e7_L.d.mean.BadOther`  $\pm$ `r e7_L.d.sd.BadOther`): *t*(`r e7_L.d.df.L1.good_bad_oth`) = `r e7_L.d.tvalue.good_bad_oth`, *p* = 
+`r e7_L.d.pvalue.good_bad_oth.adj`, *Cohen's* $d_z$ = `r e7_L.d.cohens.good_bad_oth`, 95% CI [`r e7_L.d.CI.L.good_bad_oth` `r e7_L.d.CI.H.good_bad_oth`]
+
+Good self (`r e7_L.d.mean.GoodSelf`  $\pm$ `r e7_L.d.sd.GoodSelf`) vs. Good other (`r e7_L.d.mean.GoodOther`  $\pm$ `r e7_L.d.sd.GoodOther`): *t*(`r e7_L.d.df.L1.slf_oth_good`) = `r e7_L.d.tvalue.slf_oth_good`, *p* = `r e7_L.d.pvalue.slf_oth_good.adj`, *Cohen's* $d_z$ = `r e7_L.d.cohens.slf_oth_good`, 95% CI [`r e7_L.d.CI.L.slf_oth_good` `r e7_L.d.CI.H.slf_oth_good`]
+
+Bad self (`r e7_L.d.mean.BadSelf` $\pm$ `r e7_L.d.sd.BadSelf`) vs. Bad other (`r e7_L.d.mean.BadOther`  $\pm$ `r e7_L.d.sd.BadOther`): *t*(`r e7_L.d.df.L1.slf_oth_bad`) = `r e7_L.d.tvalue.slf_oth_bad`, *p* = `r e7_L.d.pvalue.slf_oth_bad.adj`, *Cohen's* $d_z$ = `r e7_L.d.cohens.slf_oth_bad`, 95% CI [`r e7_L.d.CI.L.slf_oth_bad` `r e7_L.d.CI.H.slf_oth_bad`]
+
+```{r plot1 the d prime_e7_L, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Identity, group = Morality,shape = Morality, fill = Morality)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) + # Thinner lines
+        geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'self-referential',y = 'd prime') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("d prime for each condition") +
+        coord_cartesian(ylim=c(1,3.5))+
+        scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        apatheme
+
+# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+```
+
+The above figure shows the d prime for each condition (way 1)
+
+```{r plot2 the d prime_e7_L, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Morality, group = Identity,shape = Identity, fill = Identity)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'd prime') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("d prime for each condition") +
+        coord_cartesian(ylim=c(1,3.5))+
+        scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        apatheme
+
+# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+```
+
+The above figure shows the d prime for each condition (way 2)
+
+
+###Analaysis of reaction times
+```{r analyzing RT_e7_L,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+df.L1.V.RT <- df.L1.V[df.L1.V$ACC == 1,]
+
+df.L1.V.RT.subj <- summarySEwithin(df.L1.V.RT,measurevar = 'RT', withinvar = c('Subject','Match','Morality','Identity'),idvar = 'Subject', na.rm = TRUE)
+df.L1.V.RT.grand <- summarySE(df.L1.V.RT.subj,measurevar = 'RT', groupvar = c('Match','Morality','Identity'),na.rm = TRUE)
+
+df.L1.V.RT_match <- df.L1.V.RT[df.L1.V.RT$Match == "match",]
+df.L1.V.RT_nonmatch <- df.L1.V.RT[df.L1.V.RT$Match == "nonmatch",]
+df.L1.V.RT_match.self <- df.L1.V.RT_match[df.L1.V.RT_match$Identity == 'Self',]
+df.L1.V.RT_match.other <- df.L1.V.RT_match[df.L1.V.RT_match$Identity == 'Other',]
+
+e7_L.rt_anova <- ezANOVA(df.L1.V.RT,dv = RT, wid = Subject, within = .(Match,Morality,Identity),within_full =  .(Match,Morality,Identity), type = 3)
+e7_L.rt_anova.match <- ezANOVA(df.L1.V.RT_match,dv = RT, wid = Subject, within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
+e7_L.rt_anova.nonmatch <- ezANOVA(df.L1.V.RT_nonmatch,dv = RT, wid = Subject, within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
+
+## t-test 
+df.L1.V.RT.subj_w <- dcast(df.L1.V.RT.subj, Subject ~ Match + Identity + Morality ,value.var = "RT") 
+
+# Good self vs. Bad self
+e7_L.rt.t.m.good_bad_slf <- t.test(df.L1.V.RT.subj_w$match_Self_Good,df.L1.V.RT.subj_w$match_Self_Bad,paired = TRUE)
+df.L1.V.RT.subj_w$m.good_bad_slf <- df.L1.V.RT.subj_w$match_Self_Good - df.L1.V.RT.subj_w$match_Self_Bad
+e7_L.rt.t.m.good_bad_slf.CI <- bootES(df.L1.V.RT.subj_w$m.good_bad_slf, R = 5000,effect.type = "cohens.d")
+
+e7_L.rt.tvalue.good_bad_slf  <- round(as.numeric(e7_L.rt.t.m.good_bad_slf [[1]]),3)
+e7_L.rt.df.L1.good_bad_slf  <- as.numeric(e7_L.rt.t.m.good_bad_slf [[2]])
+e7_L.rt.pvalue.good_bad_slf.adj <- p.adjust(as.numeric(e7_L.rt.t.m.good_bad_slf [[3]]),"bonferroni",4)
+e7_L.rt.cohens.good_bad_slf <- round(e7_L.rt.t.m.good_bad_slf.CI[[1]],4) 
+e7_L.rt.CI.L.good_bad_slf <- round(e7_L.rt.t.m.good_bad_slf.CI[[12]][1],4)
+e7_L.rt.CI.H.good_bad_slf <- round(e7_L.rt.t.m.good_bad_slf.CI[[12]][2],4)
+
+# Good Other vs. Bad Other
+e7_L.rt.t.m.good_bad_oth <- t.test(df.L1.V.RT.subj_w$match_Other_Good,df.L1.V.RT.subj_w$match_Other_Bad,paired = TRUE)
+df.L1.V.RT.subj_w$m.good_bad_oth <- df.L1.V.RT.subj_w$match_Other_Good - df.L1.V.RT.subj_w$match_Other_Bad
+e7_L.rt.t.m.good_bad_oth.CI <- bootES(df.L1.V.RT.subj_w$m.good_bad_oth, R = 5000,effect.type = "cohens.d")
+
+e7_L.rt.tvalue.good_bad_oth  <- round(as.numeric(e7_L.rt.t.m.good_bad_oth [[1]]),3)
+e7_L.rt.df.L1.good_bad_oth  <- as.numeric(e7_L.rt.t.m.good_bad_oth [[2]])
+e7_L.rt.pvalue.good_bad_oth.adj <- p.adjust(as.numeric(e7_L.rt.t.m.good_bad_oth [[3]]),"bonferroni",4)
+e7_L.rt.cohens.good_bad_oth <- round(e7_L.rt.t.m.good_bad_oth.CI [[1]],4) 
+e7_L.rt.CI.L.good_bad_oth <- round(e7_L.rt.t.m.good_bad_oth.CI [[12]][1],4)
+e7_L.rt.CI.H.good_bad_oth <- round(e7_L.rt.t.m.good_bad_oth.CI [[12]][2],4)
+
+# good self v. good other
+e7_L.rt.t.m.slf_oth_good <- t.test(df.L1.V.RT.subj_w$match_Self_Good,df.L1.V.RT.subj_w$match_Other_Good,paired = TRUE)
+df.L1.V.RT.subj_w$m.slf_oth_good <- df.L1.V.RT.subj_w$match_Self_Good - df.L1.V.RT.subj_w$match_Other_Good
+e7_L.rt.t.m.slf_oth_good.CI <- bootES(df.L1.V.RT.subj_w$m.slf_oth_good, R = 5000,effect.type = "cohens.d")
+
+e7_L.rt.tvalue.slf_oth_good  <- round(as.numeric(e7_L.rt.t.m.slf_oth_good[[1]]),3)
+e7_L.rt.df.L1.slf_oth_good  <- as.numeric(e7_L.rt.t.m.slf_oth_good[[2]])
+e7_L.rt.pvalue.slf_oth_good.adj <- p.adjust(as.numeric(e7_L.rt.t.m.slf_oth_good[[3]]),"bonferroni",4)
+e7_L.rt.cohens.slf_oth_good <- round(e7_L.rt.t.m.slf_oth_good.CI[[1]],4) 
+e7_L.rt.CI.L.slf_oth_good <- round(e7_L.rt.t.m.slf_oth_good.CI[[12]][1],4)
+e7_L.rt.CI.H.slf_oth_good <- round(e7_L.rt.t.m.slf_oth_good.CI[[12]][2],4)
+
+e7_L.rt.t.m.slf_oth_bad <- t.test(df.L1.V.RT.subj_w$match_Self_Bad,df.L1.V.RT.subj_w$match_Other_Bad,paired = TRUE)
+df.L1.V.RT.subj_w$m.slf_oth_bad <- df.L1.V.RT.subj_w$match_Self_Bad - df.L1.V.RT.subj_w$match_Other_Bad
+e7_L.rt.t.m.slf_oth_bad.CI <- bootES(df.L1.V.RT.subj_w$m.slf_oth_bad, R = 5000,effect.type = "cohens.d")
+
+e7_L.rt.tvalue.slf_oth_bad  <- round(as.numeric(e7_L.rt.t.m.slf_oth_bad[[1]]),3)
+e7_L.rt.df.L1.slf_oth_bad  <- as.numeric(e7_L.rt.t.m.slf_oth_bad[[2]])
+e7_L.rt.pvalue.slf_oth_bad.adj <- p.adjust(as.numeric(e7_L.rt.t.m.slf_oth_bad[[3]]),"bonferroni",4)
+e7_L.rt.cohens.slf_oth_bad <- round(e7_L.rt.t.m.slf_oth_bad.CI[[1]],4) 
+e7_L.rt.CI.L.slf_oth_bad <- round(e7_L.rt.t.m.slf_oth_bad.CI[[12]][1],4)
+e7_L.rt.CI.H.slf_oth_bad <- round(e7_L.rt.t.m.slf_oth_bad.CI[[12]][2],4)
+
+df.L1.V.RT.grand.match <- df.L1.V.RT.grand[df.L1.V.RT.grand$Match == "match",]
+
+##### save the rt data for late used ####
+colnames(df.L1.V.RT.subj_w) <- paste("L_rt", colnames(df.L1.V.RT.subj_w), sep = "_")
+colnames(df.L1.V.RT.subj_w)[colnames(df.L1.V.RT.subj_w) == 'L_rt_Subject'] <- 'Subject'
+write.csv(df.L1.V.RT.subj_w,"data_matching_v_RT.csv",row.names=FALSE)
+#### save the rt data ###
+
+e7_L.rt.mean.GoodSelf <- round(df.L1.V.RT.grand.match$RT[df.L1.V.RT.grand.match$Morality == 'Good' & df.L1.V.RT.grand.match$Identity == 'Self'],0)
+e7_L.rt.sd.GoodSelf <- round(df.L1.V.RT.grand.match$sd[df.L1.V.RT.grand.match$Morality == 'Good' & df.L1.V.RT.grand.match$Identity == 'Self'],0)
+e7_L.rt.mean.BadSelf <- round(df.L1.V.RT.grand.match$RT[df.L1.V.RT.grand.match$Morality == 'Bad' & df.L1.V.RT.grand.match$Identity == 'Self'],0)
+e7_L.rt.sd.BadSelf <- round(df.L1.V.RT.grand.match$sd[df.L1.V.RT.grand.match$Morality == 'Bad' & df.L1.V.RT.grand.match$Identity == 'Self'],0)
+
+e7_L.rt.mean.GoodOther <- round(df.L1.V.RT.grand.match$RT[df.L1.V.RT.grand.match$Morality == 'Good' & df.L1.V.RT.grand.match$Identity == 'Other'],0)
+e7_L.rt.sd.GoodOther <- round(df.L1.V.RT.grand.match$sd[df.L1.V.RT.grand.match$Morality == 'Good' & df.L1.V.RT.grand.match$Identity == 'Other'],0)
+e7_L.rt.mean.BadOther <- round(df.L1.V.RT.grand.match$RT[df.L1.V.RT.grand.match$Morality == 'Bad' & df.L1.V.RT.grand.match$Identity == 'Other'],0)
+e7_L.rt.sd.BadOther <- round(df.L1.V.RT.grand.match$sd[df.L1.V.RT.grand.match$Morality == 'Bad' & df.L1.V.RT.grand.match$Identity == 'Other'],0)
+
+
+e7_L.p_rt1 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Identity,y=RT,group=Morality,shape = Morality,fill = Morality)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        xlab("Self-referential") +
+        ylab(" Reaction times (ms)") + 
+        coord_cartesian(ylim=c(500,800)) +
+        scale_y_continuous(breaks=seq(500,800,50),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter.
+        #ylim(0.3, 0.8) +
+        ggtitle("RT for each condition") +
+        #scale_y_continuous("Reation Times (ms)") + 
+        apatheme
+
+e7_L.p_rt2 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Identity,shape = Identity,fill = Identity)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +   # Thinner lines
+        geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        xlab("Moral valence") +
+        ylab(" Reaction times (ms)") + 
+        coord_cartesian(ylim=c(500,800))+
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter.
+        #ylim(0.3, 0.8) +
+        ggtitle("RT for each condition") +
+        #scale_y_continuous("Reation Times  (ms)",expand = c(0, 0)) +
+        scale_y_continuous("Reation Times  (ms)",breaks = seq(500,800,50),expand = c(0, 0)) +
+        apatheme + 
+        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("self    ","other")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+ggsave("e7_L.p_rt2.pdf", e7_L.p_rt2, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
+#tiff(filename = "e7_L.p_rt2.tiff", width = 8, height = 8, units = 'in', res = 300)
+#e7_L.p_rt2
+#dev.off()
+
+#tiff(filename = "Figure exp7. d prime and RTs of Experiment 7 (way 2).tiff", width = 8, height = 6, units = 'in', res = 300)
+#multiplot(e7_L.p_dprime2,e7_L.p_rt2,cols = 2)
+#dev.off()
+
+```
+
+We conducted a 2 * 3 * 2 rmANOVA for RT.
+
+The effect of `r e7_L.rt_anova[[1]][1,1]`: *F*(`r e7_L.rt_anova[[1]][1,2]`, `r e7_L.rt_anova[[1]][1,3]`) = `r round(e7_L.rt_anova[[1]][1,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][1,7],4)`
+
+The effect of `r e7_L.rt_anova[[1]][2,1]`: *F*(`r e7_L.rt_anova[[1]][2,2]`, `r e7_L.rt_anova[[1]][2,3]`) = `r round(e7_L.rt_anova[[1]][2,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][2,7],4)`
+
+The effect of `r e7_L.rt_anova[[1]][3,1]`: *F*(`r e7_L.rt_anova[[1]][3,2]`, `r e7_L.rt_anova[[1]][3,3]`) = `r round(e7_L.rt_anova[[1]][3,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][3,7],4)`.
+
+The effect of `r e7_L.rt_anova[[1]][4,1]`: *F*(`r e7_L.rt_anova[[1]][4,2]`, `r e7_L.rt_anova[[1]][4,3]`) = `r round(e7_L.rt_anova[[1]][4,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][4,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][4,7],4)`.
+
+The effect of `r e7_L.rt_anova[[1]][5,1]`: *F*(`r e7_L.rt_anova[[1]][5,2]`, `r e7_L.rt_anova[[1]][5,3]`) = `r round(e7_L.rt_anova[[1]][5,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][5,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][5,7],4)`.
+
+The effect of `r e7_L.rt_anova[[1]][6,1]`: *F*(`r e7_L.rt_anova[[1]][6,2]`, `r e7_L.rt_anova[[1]][6,3]`) = `r round(e7_L.rt_anova[[1]][6,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][6,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][6,7],4)`.
+
+The effect of `r e7_L.rt_anova[[1]][7,1]`: *F*(`r e7_L.rt_anova[[1]][7,2]`, `r e7_L.rt_anova[[1]][7,3]`) = `r round(e7_L.rt_anova[[1]][7,4],3)`, *p* = `r round(e7_L.rt_anova[[1]][7,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova[[1]][7,7],4)`.
+
+
+We conducted a 3 * 2 rmANOVA for RT.
+
+**For the matched trials**, 
+The effect of `r e7_L.rt_anova.match[[1]][1,1]`: *F*(`r e7_L.rt_anova.match[[1]][1,2]`, `r e7_L.rt_anova.match[[1]][1,3]`) = `r round(e7_L.rt_anova.match[[1]][1,4],3)`, *p* = `r round(e7_L.rt_anova.match[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova.match[[1]][1,7],4)`
+
+The effect of `r e7_L.rt_anova.match[[1]][2,1]`: *F*(`r e7_L.rt_anova.match[[1]][2,2]`, `r e7_L.rt_anova.match[[1]][2,3]`) = `r round(e7_L.rt_anova.match[[1]][2,4],3)`, *p* = `r round(e7_L.rt_anova.match[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova.match[[1]][2,7],4)`
+
+The effect of `r e7_L.rt_anova.match[[1]][3,1]`: *F*(`r e7_L.rt_anova.match[[1]][3,2]`, `r e7_L.rt_anova.match[[1]][3,3]`) = `r round(e7_L.rt_anova.match[[1]][3,4],3)`, *p* = `r round(e7_L.rt_anova.match[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova.match[[1]][3,7],4)`.
+
+**For the nonmatched trials**, 
+The effect of `r e7_L.rt_anova.nonmatch[[1]][1,1]`: *F*(`r e7_L.rt_anova.nonmatch[[1]][1,2]`, `r e7_L.rt_anova.nonmatch[[1]][1,3]`) = `r round(e7_L.rt_anova.nonmatch[[1]][1,4],3)`, *p* = `r round(e7_L.rt_anova.nonmatch[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova.nonmatch[[1]][1,7],4)`
+
+The effect of `r e7_L.rt_anova.nonmatch[[1]][2,1]`: *F*(`r e7_L.rt_anova.nonmatch[[1]][2,2]`, `r e7_L.rt_anova.nonmatch[[1]][2,3]`) = `r round(e7_L.rt_anova.nonmatch[[1]][2,4],3)`, *p* = `r round(e7_L.rt_anova.nonmatch[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova.nonmatch[[1]][2,7],4)`
+
+The effect of `r e7_L.rt_anova.nonmatch[[1]][3,1]`: *F*(`r e7_L.rt_anova.nonmatch[[1]][3,2]`, `r e7_L.rt_anova.nonmatch[[1]][3,3]`) = `r round(e7_L.rt_anova.nonmatch[[1]][3,4],3)`, *p* = `r round(e7_L.rt_anova.nonmatch[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_L.rt_anova.nonmatch[[1]][3,7],4)`.
+
+We conducted post-hoc comparison
+
+Good self (`r e7_L.rt.mean.GoodSelf` $\pm$ `r e7_L.rt.sd.GoodSelf`) vs Bad self (`r e7_L.rt.mean.BadSelf` $\pm$ `r e7_L.rt.sd.BadSelf`): *t*(`r e7_L.rt.df.L1.good_bad_slf`) = `r e7_L.rt.tvalue.good_bad_slf`, *p* = 
+`r e7_L.rt.pvalue.good_bad_slf.adj`, *Cohen's* $d_z$ = `r e7_L.rt.cohens.good_bad_slf`, 95% CI [`r e7_L.rt.CI.L.good_bad_slf` `r e7_L.rt.CI.H.good_bad_slf`]
+
+Good other (`r e7_L.rt.mean.GoodOther` $\pm$ `r e7_L.rt.sd.GoodOther`)  vs Bad other (`r e7_L.rt.mean.BadOther` $\pm$ `r e7_L.rt.sd.BadOther`): *t*(`r e7_L.rt.df.L1.good_bad_oth`) = `r e7_L.rt.tvalue.good_bad_oth`, *p* = 
+`r e7_L.rt.pvalue.good_bad_oth.adj`, *Cohen's* $d_z$ = `r e7_L.rt.cohens.good_bad_oth`, 95% CI [`r e7_L.rt.CI.L.good_bad_oth` `r e7_L.rt.CI.H.good_bad_oth`]
+
+Good self (`r e7_L.rt.mean.GoodSelf` $\pm$ `r e7_L.rt.sd.GoodSelf`) vs. Good other (`r e7_L.rt.mean.GoodOther` $\pm$ `r e7_L.rt.sd.GoodOther`) : *t*(`r e7_L.rt.df.L1.slf_oth_good`) = `r e7_L.rt.tvalue.slf_oth_good`, *p* = `r e7_L.rt.pvalue.slf_oth_good.adj`, *Cohen's* $d_z$ = `r e7_L.rt.cohens.slf_oth_good`, 95% CI [`r e7_L.rt.CI.L.slf_oth_good` `r e7_L.rt.CI.H.slf_oth_good`]
+
+Bad self (`r e7_L.rt.mean.BadSelf` $\pm$ `r e7_L.rt.sd.BadSelf`) vs. Bad other (`r e7_L.rt.mean.BadOther` $\pm$ `r e7_L.rt.sd.BadOther`): *t*(`r e7_L.rt.df.L1.slf_oth_bad`) = `r e7_L.rt.tvalue.slf_oth_bad`, *p* = `r e7_L.rt.pvalue.slf_oth_bad.adj`, *Cohen's* $d_z$ = `r e7_L.rt.cohens.slf_oth_bad`, 95% CI [`r e7_L.rt.CI.L.slf_oth_bad` `r e7_L.rt.CI.H.slf_oth_bad`]
+
+
+```{r plot2 the RT_e7_L, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+# change a way to plot
+ggplot(data = df.L1.V.RT.grand.match, aes(x=Identity,y=RT,group=Morality,shape = Morality,fill = Morality)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        xlab("Self-referential") +
+        ylab(" Reaction times (ms)") + 
+        coord_cartesian(ylim=c(500,800)) +
+        scale_y_continuous(breaks=seq(500,800,50),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter.
+        #ylim(0.3, 0.8) +
+        ggtitle("RT for each condition") +
+        #scale_y_continuous("Reation Times (ms)") + 
+        apatheme
+#ggsave('RT_mean_plot2.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+
+```
+
+The above is the reaction time for each condition (way 1)
+
+```{r plot1 the RT_e7_L, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+# df.L1.V.RT.grand.match <- df.L1.V.RT.grand[df.L1.V.RT.grand$Matchness == "match",]
+ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Identity,shape = Identity,fill = Identity)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) + # Thinner lines
+        geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        xlab("Moral valence") +
+        ylab(" Reaction times (ms)") + 
+        coord_cartesian(ylim=c(500,800))+
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter.
+        #ylim(0.3, 0.8) +
+        ggtitle("RT for each condition") +
+        scale_y_continuous("Reation Times  (ms)",expand = c(0, 0)) + 
+        apatheme
+#ggsave('RT_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+
+```
+
+The above is the reaction time for each condition (way 2)
+
+
+### Analyzing data from testing phase
+We only analyzed data for self-other categorization and Good-Bad categorization data
+
+#### analysis of ACC
+```{r clean the data_e7_T,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# df.T1.V <- df.T1.V[df.T1.V$Task != "importance",]
+df.T1.V$ACC[df.T1.V$ACC==-1] <-0
+
+df.T1.V.acc.subj <-  ddply(df.T1.V,.(Subject,Task,Morality,Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+# define the level of factor# make the variables in a specified order
+df.T1.V.acc.subj$Morality <- factor(df.T1.V.acc.subj$Morality, levels=c("Good","Bad")) 
+df.T1.V.acc.subj$Identity <- factor(df.T1.V.acc.subj$Identity, levels=c("Self","Other"))
+
+df.T1.V.acc.subj.Self <- df.T1.V.acc.subj[df.T1.V.acc.subj$Task == "Id_task",]
+df.T1.V.acc.subj.Good <- df.T1.V.acc.subj[df.T1.V.acc.subj$Task == "Valence_task",]
+
+
+e7_T.acc_anova <- ezANOVA(df.T1.V.acc.subj,dv = ACC, wid = Subject, within=.(Task,Morality,Identity), type=3)
+e7_T.acc_anova.self <- ezANOVA(df.T1.V.acc.subj.Self, dv = ACC, wid = Subject, within=.(Morality,Identity), type=3)
+e7_T.acc_anova.Good <- ezANOVA(df.T1.V.acc.subj.Good, dv = ACC, wid = Subject, within=.(Morality,Identity), type=3)
+
+df.T1.V.acc.sum <- summarySE(df.T1.V.acc.subj,measurevar = 'ACC',groupvars = c('Task','Morality','Identity'))
+
+df.T1.V.acc.subj_w  <- dcast(df.T1.V.acc.subj, Subject ~ Task + Identity + Morality ,value.var = "ACC")
+
+# calculate the mean difference for moral effect (Good-Bad)
+df.T1.V.acc.subj_w$Valence_good_bad_slf <- df.T1.V.acc.subj_w$Valence_task_Self_Good - df.T1.V.acc.subj_w$Valence_task_Self_Bad
+df.T1.V.acc.subj_w$Valence_good_bad_oth <- df.T1.V.acc.subj_w$Valence_task_Other_Good - df.T1.V.acc.subj_w$Valence_task_Other_Bad
+df.T1.V.acc.subj_w$Id_good_bad_slf      <- df.T1.V.acc.subj_w$Id_task_Self_Good - df.T1.V.acc.subj_w$Id_task_Self_Bad
+df.T1.V.acc.subj_w$ID_good_bad_oth      <- df.T1.V.acc.subj_w$Id_task_Other_Good - df.T1.V.acc.subj_w$Id_task_Other_Bad
+
+# calculate the mean difference for self effect (self-other)
+df.T1.V.acc.subj_w$Valence_slf_oth_good <- df.T1.V.acc.subj_w$Valence_task_Self_Good - df.T1.V.acc.subj_w$Valence_task_Other_Good
+df.T1.V.acc.subj_w$Valence_slf_oth_bad  <- df.T1.V.acc.subj_w$Valence_task_Self_Bad - df.T1.V.acc.subj_w$Valence_task_Other_Bad
+df.T1.V.acc.subj_w$Id_slf_oth_good  <- df.T1.V.acc.subj_w$Id_task_Self_Good - df.T1.V.acc.subj_w$Id_task_Other_Good
+df.T1.V.acc.subj_w$Id_slf_oth_bad   <- df.T1.V.acc.subj_w$Id_task_Self_Bad - df.T1.V.acc.subj_w$Id_task_Other_Bad
+
+colnames(df.T1.V.acc.subj_w) <- paste("T_acc", colnames(df.T1.V.acc.subj_w), sep = "_")
+colnames(df.T1.V.acc.subj_w)[colnames(df.T1.V.acc.subj_w) == 'T_acc_Subject'] <- 'Subject'
+write.csv(df.T1.V.acc.subj_w,"data_catigorization_v_acc.csv",row.names=FALSE)
+# write.csv(df.T1.V.acc.sum,"df.T1.V.acc.sum.csv",row.names=FALSE)
+
+# plot and save the ACC for each condition
+ACC_e7_T <- ggplot(data = df.T1.V.acc.sum,aes(y = ACC, x = Morality, group = Task,shape = Task, fill = Task)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = ACC - se, ymax = ACC + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'Accuracy') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("Accuracy for each condition") +
+        coord_cartesian(ylim=c(0.5,1)) +
+        scale_y_continuous(breaks=seq(0.5,1,0.1),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        facet_grid(.~ Identity) + 
+        apatheme +
+        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("id criteria    ","morality criteria")) +
+        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+ggsave("ACC_e7_T.pdf", ACC_e7_T, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
+
+```
+ANOVA for accuracy with task type (self-other, Good-Bad) * moral character (Good vs. Bad) and self-relatedness (self v. other) as within-subjects factors.
+
+The main effect of `r e7_T.acc_anova[[1]][1,1]`, *F*(`r e7_T.acc_anova[[1]][1,2]`, `r e7_T.acc_anova[[1]][1,3]`) = `r round(e7_T.acc_anova[[1]][1,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][1,7],4)`. 
+
+The main effect of `r e7_T.acc_anova[[1]][2,1]`: *F*(`r e7_T.acc_anova[[1]][2,2]`, `r e7_T.acc_anova[[1]][2,3]`) = `r round(e7_T.acc_anova[[1]][2,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][2,7],4)`
+
+The main effect of `r e7_T.acc_anova[[1]][3,1]`: *F*(`r e7_T.acc_anova[[1]][3,2]`, `r e7_T.acc_anova[[1]][3,3]`) = `r round(e7_T.acc_anova[[1]][3,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][3,7],4)`.
+
+The interaction between: `r e7_T.acc_anova[[1]][4,1]`: *F*(`r e7_T.acc_anova[[1]][4,2]`, `r e7_T.acc_anova[[1]][4,3]`) = `r round(e7_T.acc_anova[[1]][4,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][4,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][4,7],4)`.
+
+The interaction between: `r e7_T.acc_anova[[1]][5,1]`: *F*(`r e7_T.acc_anova[[1]][5,2]`, `r e7_T.acc_anova[[1]][5,3]`) = `r round(e7_T.acc_anova[[1]][5,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][5,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][5,7],4)`.
+
+
+The interaction between: `r e7_T.acc_anova[[1]][6,1]`: *F*(`r e7_T.acc_anova[[1]][6,2]`, `r e7_T.acc_anova[[1]][6,3]`) = `r round(e7_T.acc_anova[[1]][6,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][6,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][6,7],4)`.
+
+The interaction between: `r e7_T.acc_anova[[1]][7,1]`: *F*(`r e7_T.acc_anova[[1]][7,2]`, `r e7_T.acc_anova[[1]][7,3]`) = `r round(e7_T.acc_anova[[1]][7,4],3)`, *p* = `r round(e7_T.acc_anova[[1]][7,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova[[1]][7,7],4)`.
+
+Since there was no signficant interaction between Task type and other two variables, we combined the resuled from identity and valence based categorization. Given that the interaction between morality and identity was signficant, we further analyzed the simple effect.
+
+```{r ACC_e7_T_simple_effect, ,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# combine data cross task
+# tmp <- aggregate(df.T1.V.acc.subj[,7],list(df.T1.V.acc.subj$Subject,df.T1.V.acc.subj$Morality,df.T1.V.acc.subj$Identity),mean)
+df.T1.V.acc.subj.noTask <- summarySE(df.T1.V.acc.subj,measurevar = 'ACC',groupvars = c('Subject','Morality','Identity'))
+df.T1.V.acc.subj.noTask_w <- dcast(df.T1.V.acc.subj.noTask, Subject ~ Identity + Morality ,value.var = "ACC")
+
+df.T1.V.acc.subj.noTask_w$good_bad_slf <- df.T1.V.acc.subj.noTask_w$Self_Good - df.T1.V.acc.subj.noTask_w$Self_Bad
+df.T1.V.acc.subj.noTask_w$good_bad_oth <- df.T1.V.acc.subj.noTask_w$Other_Good - df.T1.V.acc.subj.noTask_w$Other_Bad
+df.T1.V.acc.subj.noTask_w$slf_oth_good <- df.T1.V.acc.subj.noTask_w$Self_Good - df.T1.V.acc.subj.noTask_w$Other_Good
+df.T1.V.acc.subj.noTask_w$slf_oth_bad <- df.T1.V.acc.subj.noTask_w$Self_Bad - df.T1.V.acc.subj.noTask_w$Other_Bad
+
+write.csv(df.T1.V.acc.subj.noTask_w, 'df.T1.V.acc.subj.noTask.csv',row.names = F)
+
+e7_T.acc_anova_noTask1 <- ezANOVA(df.T1.V.acc.subj.noTask,dv = ACC, wid = Subject, within=.(Morality,Identity), type=3)
+# e7_T.acc_anova_noTask1 is exactly the same as in three way rm ANOVA
+
+# simple effect:
+
+# Good self vs Bad self
+e7_T.acc.t.good_bad_slf <- t.test(df.T1.V.acc.subj.noTask_w$Self_Good,df.T1.V.acc.subj.noTask_w$Self_Bad,paired = TRUE)
+e7_T.acc.t.good_bad_slf.CI <- bootES(df.T1.V.acc.subj.noTask_w$good_bad_slf,R = 20000, effect.type = "cohens.d")
+
+e7_T.acc.tvalue.good_bad_slf <- round(as.numeric(e7_T.acc.t.good_bad_slf[[1]]),3)
+e7_T.acc.df.good_bad_slf <- as.numeric(e7_T.acc.t.good_bad_slf[[2]])
+e7_T.acc.pvalue.good_bad_slf.adj <- p.adjust(as.numeric(e7_T.acc.t.good_bad_slf[[3]]),"bonferroni",4)
+e7_T.acc.cohens.good_bad_slf <- round(e7_T.acc.t.good_bad_slf.CI[[1]],4) 
+e7_T.acc.CI.L.good_bad_slf <- round(e7_T.acc.t.good_bad_slf.CI[[12]][1],4)
+e7_T.acc.CI.H.good_bad_slf <- round(e7_T.acc.t.good_bad_slf.CI[[12]][2],4)
+
+# Good other vs Bad other
+e7_T.acc.t.good_bad_oth <- t.test(df.T1.V.acc.subj.noTask_w$Other_Good,df.T1.V.acc.subj.noTask_w$Other_Bad,paired = TRUE)
+e7_T.acc.t.good_bad_oth.CI <- bootES(df.T1.V.acc.subj.noTask_w$good_bad_oth,R = 20000, effect.type = "cohens.d")
+
+e7_T.acc.tvalue.good_bad_oth <- round(as.numeric(e7_T.acc.t.good_bad_oth[[1]]),3)
+e7_T.acc.df.good_bad_oth <- as.numeric(e7_T.acc.t.good_bad_oth[[2]])
+e7_T.acc.pvalue.good_bad_oth.adj <- p.adjust(as.numeric(e7_T.acc.t.good_bad_oth[[3]]),"bonferroni",4)
+e7_T.acc.cohens.good_bad_oth <- round(e7_T.acc.t.good_bad_oth.CI[[1]],4) 
+e7_T.acc.CI.L.good_bad_oth <- round(e7_T.acc.t.good_bad_oth.CI[[12]][1],4)
+e7_T.acc.CI.H.good_bad_oth <- round(e7_T.acc.t.good_bad_oth.CI[[12]][2],4)
+
+# Good self vs Good other
+e7_T.acc.t.slf_oth_good <- t.test(df.T1.V.acc.subj.noTask_w$Self_Good,df.T1.V.acc.subj.noTask_w$Other_Good,paired = TRUE)
+e7_T.acc.t.slf_oth_good.CI <- bootES(df.T1.V.acc.subj.noTask_w$slf_oth_good,R = 20000, effect.type = "cohens.d")
+
+e7_T.acc.tvalue.slf_oth_good <- round(as.numeric(e7_T.acc.t.slf_oth_good[[1]]),3)
+e7_T.acc.df.slf_oth_good <- as.numeric(e7_T.acc.t.slf_oth_good[[2]])
+e7_T.acc.pvalue.slf_oth_good.adj <- p.adjust(as.numeric(e7_T.acc.t.slf_oth_good[[3]]),"bonferroni",4)
+e7_T.acc.cohens.slf_oth_good <- round(e7_T.acc.t.slf_oth_good.CI[[1]],4) 
+e7_T.acc.CI.L.slf_oth_good <- round(e7_T.acc.t.slf_oth_good.CI[[12]][1],4)
+e7_T.acc.CI.H.slf_oth_good <- round(e7_T.acc.t.slf_oth_good.CI[[12]][2],4)
+
+# Bad self vs Bad other
+e7_T.acc.t.slf_oth_bad <- t.test(df.T1.V.acc.subj.noTask_w$Self_Bad,df.T1.V.acc.subj.noTask_w$Other_Bad,paired = TRUE)
+e7_T.acc.t.slf_oth_bad.CI <- bootES(df.T1.V.acc.subj.noTask_w$slf_oth_bad,R = 20000, effect.type = "cohens.d")
+
+e7_T.acc.tvalue.slf_oth_bad <- round(as.numeric(e7_T.acc.t.slf_oth_bad[[1]]),3)
+e7_T.acc.df.slf_oth_bad <- as.numeric(e7_T.acc.t.slf_oth_bad[[2]])
+e7_T.acc.pvalue.slf_oth_bad.adj <- p.adjust(as.numeric(e7_T.acc.t.slf_oth_bad[[3]]),"bonferroni",4)
+e7_T.acc.cohens.slf_oth_bad <- round(e7_T.acc.t.slf_oth_bad.CI[[1]],4) 
+e7_T.acc.CI.L.slf_oth_bad <- round(e7_T.acc.t.slf_oth_bad.CI[[12]][1],4)
+e7_T.acc.CI.H.slf_oth_bad <- round(e7_T.acc.t.slf_oth_bad.CI[[12]][2],4)
+
+df.T1.V.acc.sum.noTask <- summarySE(df.T1.V.acc.subj,measurevar = 'ACC',groupvars = c('Morality','Identity'))
+ACC.Mean.Good.Self <- df.T1.V.acc.sum.noTask$ACC[df.T1.V.acc.sum.noTask$Identity == 'Self' & df.T1.V.acc.sum.noTask$Morality == 'Good']
+ACC.SD.Good.Self <- df.T1.V.acc.sum.noTask$sd[df.T1.V.acc.sum.noTask$Identity == 'Self' & df.T1.V.acc.sum.noTask$Morality == 'Good']
+ACC.Mean.Bad.Self <- df.T1.V.acc.sum.noTask$ACC[df.T1.V.acc.sum.noTask$Identity == 'Self' & df.T1.V.acc.sum.noTask$Morality == 'Bad']
+ACC.SD.Bad.Self <- df.T1.V.acc.sum.noTask$sd[df.T1.V.acc.sum.noTask$Identity == 'Self' & df.T1.V.acc.sum.noTask$Morality == 'Bad']
+ACC.Mean.Good.Other <- df.T1.V.acc.sum.noTask$ACC[df.T1.V.acc.sum.noTask$Identity == 'Other' & df.T1.V.acc.sum.noTask$Morality == 'Good']
+ACC.SD.Good.Other <- df.T1.V.acc.sum.noTask$sd[df.T1.V.acc.sum.noTask$Identity == 'Other' & df.T1.V.acc.sum.noTask$Morality == 'Good']
+ACC.Mean.Bad.Other <- df.T1.V.acc.sum.noTask$ACC[df.T1.V.acc.sum.noTask$Identity == 'Other' & df.T1.V.acc.sum.noTask$Morality == 'Bad']
+ACC.SD.Bad.Other <- df.T1.V.acc.sum.noTask$sd[df.T1.V.acc.sum.noTask$Identity == 'Other' & df.T1.V.acc.sum.noTask$Morality == 'Bad']
+
+# e7_T.acc_anova_id2 <- ezANOVA(df.T1.V.acc.subj.noTask[df.T1.V.acc.subj.noTask$Identity == 'self',],dv = ACC, wid = Subject, within=.(Morality), type=3)
+
+# e7_T.acc_anova_id3 <- ezANOVA(df.T1.V.acc.subj[df.T1.V.acc.subj$Morality == 'Good',],dv = ACC, wid = Subject, within=.(Task,Identity), type=3)
+# e7_T.acc_anova_id4 <- ezANOVA(df.T1.V.acc.subj[df.T1.V.acc.subj$Morality == 'Bad',],dv = ACC, wid = Subject, within=.(Task,Identity), type=3)
+
+# plot the data without task variable
+ACC_e7_T_noTask <- ggplot(data =df.T1.V.acc.sum.noTask,aes(y = ACC, x =Morality, group = Identity,shape = Identity, fill = Identity))+
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = ACC - se, ymax = ACC + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'Accuracy') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("Accuracy for each condition") +
+        coord_cartesian(ylim=c(0.5,1)) +
+        scale_y_continuous(breaks=seq(0.5,1,0.1),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        #facet_grid(.~ Identity) + 
+        apatheme +
+        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Self       ","Other")) +
+        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+ggsave("ACC_e7_T_noTask.pdf", ACC_e7_T_noTask, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
+
+
+```
+
+2 by 2 ANOVA:
+The main effect of `r e7_T.acc_anova_noTask1[[1]][1,1]`, *F*(`r e7_T.acc_anova_noTask1[[1]][1,2]`, `r e7_T.acc_anova_noTask1[[1]][1,3]`) = `r round(e7_T.acc_anova_noTask1[[1]][1,4],3)`, *p* = `r round(e7_T.acc_anova_noTask1[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova_noTask1[[1]][1,7],4)`. 
+
+The main effect of `r e7_T.acc_anova_noTask1[[1]][2,1]`: *F*(`r e7_T.acc_anova_noTask1[[1]][2,2]`, `r e7_T.acc_anova_noTask1[[1]][2,3]`) = `r round(e7_T.acc_anova_noTask1[[1]][2,4],3)`, *p* = `r round(e7_T.acc_anova_noTask1[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova_noTask1[[1]][2,7],4)`
+
+The interaction `r e7_T.acc_anova_noTask1[[1]][3,1]`: *F*(`r e7_T.acc_anova_noTask1[[1]][3,2]`, `r e7_T.acc_anova_noTask1[[1]][3,3]`) = `r round(e7_T.acc_anova_noTask1[[1]][3,4],3)`, *p* = `r round(e7_T.acc_anova_noTask1[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_T.acc_anova_noTask1[[1]][3,7],4)`.
+
+
+As for the self condition, effect of moral valence was significante: t(`r e7_T.acc.df.good_bad_slf`) = `r e7_T.acc.tvalue.good_bad_slf`, p = `r e7_T.acc.pvalue.good_bad_slf.adj`, Cohen's d = `r e7_T.acc.cohens.good_bad_slf`, 95% CI[`r e7_T.acc.CI.L.good_bad_slf` `r e7_T.acc.CI.H.good_bad_slf`].
+For other condition, moral valence was not significante: t(`r e7_T.acc.df.good_bad_oth`) = `r e7_T.acc.tvalue.good_bad_oth`, p = `r e7_T.acc.pvalue.good_bad_oth.adj`, Cohen's d = `r e7_T.acc.cohens.good_bad_oth`, 95% CI[`r e7_T.acc.CI.L.good_bad_oth` `r e7_T.acc.CI.H.good_bad_oth`].
+
+The effect of identity:
+for moral condition, the difference between self and other was significant:t(`r e7_T.acc.df.slf_oth_good`) = `r e7_T.acc.tvalue.slf_oth_good`, p = `r e7_T.acc.pvalue.slf_oth_good.adj`, Cohen's d = `r e7_T.acc.cohens.slf_oth_good`, 95% CI[`r e7_T.acc.CI.L.slf_oth_good` `r e7_T.acc.CI.H.slf_oth_good`].
+for Bad condition, the difference between self and other was not significant:t(`r e7_T.acc.df.slf_oth_bad`) = `r e7_T.acc.tvalue.slf_oth_bad`, p = `r e7_T.acc.pvalue.slf_oth_bad.adj`, Cohen's d = `r e7_T.acc.cohens.slf_oth_bad`, 95% CI[`r e7_T.acc.CI.L.slf_oth_bad` `r e7_T.acc.CI.H.slf_oth_bad`].
+
+Good self: `r ACC.Mean.Good.Self` + `r ACC.SD.Good.Self`
+Bad self:`r ACC.Mean.Bad.Self` + `r ACC.SD.Bad.Self`
+Good other: `r ACC.Mean.Good.Other` + `r ACC.SD.Good.Other`
+Bad other: `r ACC.Mean.Bad.Other` + `r ACC.SD.Bad.Other`
+
+```{r plot2 the ACC_e7_T, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+ggplot(data = df.T1.V.acc.sum,aes(y = ACC, x = Morality, group = Identity,shape = Identity, fill = Identity)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = ACC - se, ymax = ACC + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'Accuracy') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("Accuracy for each condition") +
+        coord_cartesian(ylim=c(0.5,1))+
+        scale_y_continuous(breaks = seq(0.5,1,0.1),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        facet_grid(.~Task) + 
+        apatheme
+# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+```
+
+The above is the ACC for each condition. left panel is the results of moral-categorization task, the right panel is the self-other categorization task.
+
+###Analaysis of reaction times
+```{r analyzing RT_e7_T,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+df.T1.V.RT <- df.T1.V[df.T1.V$ACC == 1,]
+# excluded 7035 and subject8
+# df.T1.V.RT <- df.T1.V.RT[!(df.T1.V.RT$Subject %in% c("8","7035")),] 
+df.T1.V.RT.subj <- summarySEwithin(df.T1.V.RT,measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'),idvar = 'Subject', na.rm = TRUE)
+
+
+# define the level of factor
+df.T1.V.RT.subj$Morality <- factor(df.T1.V.RT.subj$Morality, levels=c("Good","Bad")) # make the variables in a specified order
+df.T1.V.RT.subj$Identity <- factor(df.T1.V.RT.subj$Identity, levels=c("Self","Other"))
+
+df.T1.V.RT.subj_w  <- dcast(df.T1.V.RT.subj, Subject ~ Task + Identity + Morality ,value.var = "RT")
+
+# calculate the mean difference for Good effect (Good-Bad)
+df.T1.V.RT.subj_w$Valence_good_bad_slf  <- df.T1.V.RT.subj_w$Valence_task_Self_Good - df.T1.V.RT.subj_w$Valence_task_Self_Bad
+df.T1.V.RT.subj_w$Valence_good_bad_oth <- df.T1.V.RT.subj_w$Valence_task_Other_Good - df.T1.V.RT.subj_w$Valence_task_Other_Bad
+df.T1.V.RT.subj_w$Id_good_bad_slf     <- df.T1.V.RT.subj_w$Id_task_Self_Good   - df.T1.V.RT.subj_w$Id_task_Self_Bad
+df.T1.V.RT.subj_w$ID_good_bad_oth    <- df.T1.V.RT.subj_w$Id_task_Other_Good - df.T1.V.RT.subj_w$Id_task_Other_Bad
+
+# calculate the mean difference for self effect (self-other)
+df.T1.V.RT.subj_w$Valence_slf_oth_good <- df.T1.V.RT.subj_w$Valence_task_Self_Good   - df.T1.V.RT.subj_w$Valence_task_Other_Good
+df.T1.V.RT.subj_w$valence_slf_oth_bad <- df.T1.V.RT.subj_w$Valence_task_Self_Bad - df.T1.V.RT.subj_w$Valence_task_Other_Bad
+df.T1.V.RT.subj_w$Id_slf_oth_good    <- df.T1.V.RT.subj_w$Id_task_Self_Good - df.T1.V.RT.subj_w$Id_task_Other_Good
+df.T1.V.RT.subj_w$Id_slf_oth_bad    <- df.T1.V.RT.subj_w$Id_task_Self_Bad - df.T1.V.RT.subj_w$Id_task_Other_Bad
+
+#### save the rt data for later use ####
+colnames(df.T1.V.RT.subj_w) <- paste("T_rt", colnames(df.T1.V.RT.subj_w), sep = "_")
+colnames(df.T1.V.RT.subj_w)[colnames(df.T1.V.RT.subj_w) == 'T_rt_Subject'] <- 'Subject'
+write.csv(df.T1.V.RT.subj_w,"data_catigorization_v_rt.csv",row.names=FALSE)
+###########
+
+df.T1.V.RT.grand <- summarySE(df.T1.V.RT.subj,measurevar = 'RT', groupvar = c('Task','Morality','Identity'),na.rm = TRUE)
+
+df.T1.V.RT_Id_task <- df.T1.V.RT[df.T1.V.RT$Task == "Id_task",]
+df.T1.V.RT_Val_task <- df.T1.V.RT[df.T1.V.RT$Task == "Valence_task",]
+#df.T1.V.RT_match.self <- df.T1.V.RT_match[df.T1.V.RT_match$Identity == 'self',]
+#df.T1.V.RT_match.other <- df.T1.V.RT_match[df.T1.V.RT_match$Identity == 'other',]
+
+e7_T.rt_anova <- ezANOVA(df.T1.V.RT,dv = RT, wid = Subject, within=.(Task,Morality,Identity),within_full=.(Task,Identity,Morality), type=3)
+
+e7_T.rt_anova.Id_task <- ezANOVA(df.T1.V.RT_Id_task,dv = RT, wid = Subject, within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
+
+e7_T.rt_anova.val_task <- ezANOVA(df.T1.V.RT_Val_task,dv = RT, wid = Subject, within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
+
+RT_e7_T <- ggplot(data = df.T1.V.RT.grand,aes(y = RT, x = Morality, group = Task,shape = Task, fill = Task)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = RT - se, ymax = RT + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'Reaction times') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("Reaction times for each condition") +
+        coord_cartesian(ylim=c(500,800)) +
+        scale_y_continuous(breaks=seq(500,800,50),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        facet_grid(.~ Identity) + 
+        apatheme +
+        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("id criteria    ","morality criteria")) +
+        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+ggsave("RT_e7_T.pdf", RT_e7_T, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
+# tiff(filename = "RT_e7_T.tiff", width = 8, height = 8, units = 'in', res = 300)
+# RT_e7_T
+# dev.off()
+
+
+```
+
+ANOVA for RT with task type (self-other, Good-Bad) * moral character (Good vs. Bad) and self-relatedness (self v. other) as within-subjects factors.
+
+The main effect of `r e7_T.rt_anova[[1]][1,1]`, *F*(`r e7_T.rt_anova[[1]][1,2]`, `r e7_T.rt_anova[[1]][1,3]`) = `r round(e7_T.rt_anova[[1]][1,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][1,7],4)`. 
+
+The main effect of `r e7_T.rt_anova[[1]][2,1]`: *F*(`r e7_T.rt_anova[[1]][2,2]`, `r e7_T.rt_anova[[1]][2,3]`) = `r round(e7_T.rt_anova[[1]][2,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][2,7],4)`
+
+The main effect of `r e7_T.rt_anova[[1]][3,1]`: *F*(`r e7_T.rt_anova[[1]][3,2]`, `r e7_T.rt_anova[[1]][3,3]`) = `r round(e7_T.rt_anova[[1]][3,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][3,7],4)`.
+
+The interaction between: `r e7_T.rt_anova[[1]][4,1]`: *F*(`r e7_T.rt_anova[[1]][4,2]`, `r e7_T.rt_anova[[1]][4,3]`) = `r round(e7_T.rt_anova[[1]][4,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][4,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][4,7],4)`.
+
+The interaction between: `r e7_T.rt_anova[[1]][5,1]`: *F*(`r e7_T.rt_anova[[1]][5,2]`, `r e7_T.rt_anova[[1]][5,3]`) = `r round(e7_T.rt_anova[[1]][5,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][5,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][5,7],4)`.
+
+
+The interaction between: `r e7_T.rt_anova[[1]][6,1]`: *F*(`r e7_T.rt_anova[[1]][6,2]`, `r e7_T.rt_anova[[1]][6,3]`) = `r round(e7_T.rt_anova[[1]][6,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][6,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][6,7],4)`.
+
+The interaction between: `r e7_T.rt_anova[[1]][7,1]`: *F*(`r e7_T.rt_anova[[1]][7,2]`, `r e7_T.rt_anova[[1]][7,3]`) = `r round(e7_T.rt_anova[[1]][7,4],3)`, *p* = `r round(e7_T.rt_anova[[1]][7,5],4)`, $\eta_g^2$ = `r round(e7_T.rt_anova[[1]][7,7],4)`.
+
+Since there was no signficant interaction between identity and other two variables for RT, we combined the results from different shape identity. Given that the interaction between Task and moral valence was signficant, we further analyzed the simple effect.
+
+```{r RT_e7_T_simple_effect_noID, ,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# combine data cross identity
+# tmp <- aggregate(df.T1.V.acc.subj[,7],list(df.T1.V.acc.subj$Subject,df.T1.V.acc.subj$Morality,df.T1.V.acc.subj$Identity),mean)
+df.T1.V.RT.subj.noID <- summarySE(df.T1.V.RT.subj,measurevar = 'RT',groupvars = c('Subject','Task','Morality'))
+df.T1.V.RT.subj.noID_w <- dcast(df.T1.V.RT.subj.noID, Subject ~ Task + Morality ,value.var = "RT")
+
+# valence effect under different task
+df.T1.V.RT.subj.noID_w$good_bad_ID <- df.T1.V.RT.subj.noID_w$Id_task_Good - df.T1.V.RT.subj.noID_w$Id_task_Bad
+df.T1.V.RT.subj.noID_w$good_bad_Val <- df.T1.V.RT.subj.noID_w$Valence_task_Good - df.T1.V.RT.subj.noID_w$Valence_task_Bad
+
+# task effect for differnt valence
+df.T1.V.RT.subj.noID_w$ID_Val_good <- df.T1.V.RT.subj.noID_w$Id_task_Good - df.T1.V.RT.subj.noID_w$Valence_task_Good
+df.T1.V.RT.subj.noID_w$ID_Val_bad <- df.T1.V.RT.subj.noID_w$Id_task_Bad - df.T1.V.RT.subj.noID_w$Valence_task_Bad
+
+write.csv(df.T1.V.RT.subj.noID_w, 'df.T1.V.RT.subj.noID_w.csv',row.names = F)
+
+e7_T.RT_anova_noID <- ezANOVA(df.T1.V.RT.subj.noID,dv = RT, wid = Subject, within=.(Task,Morality), type=3)
+# e7_T.acc_anova_noTask1 is exactly the same as in three way rm ANOVA
+
+# simple effect:
+
+# Id categorization task: Good v. Bad
+e7_T.RT.t.good_bad_ID <- t.test(df.T1.V.RT.subj.noID_w$Id_task_Good,df.T1.V.RT.subj.noID_w$Id_task_Bad,paired = TRUE)
+e7_T.RT.t.good_bad_ID.CI <- bootES(df.T1.V.RT.subj.noID_w$good_bad_ID,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.good_bad_ID <- round(as.numeric(e7_T.RT.t.good_bad_ID[[1]]),3)
+e7_T.RT.df.good_bad_ID <- as.numeric(e7_T.RT.t.good_bad_ID[[2]])
+e7_T.RT.pvalue.good_bad_ID.adj <- p.adjust(as.numeric(e7_T.RT.t.good_bad_ID[[3]]),"bonferroni",4)
+e7_T.RT.cohens.good_bad_ID <- round(e7_T.RT.t.good_bad_ID.CI[[1]],4) 
+e7_T.RT.CI.L.good_bad_ID <- round(e7_T.RT.t.good_bad_ID.CI[[12]][1],4)
+e7_T.RT.CI.H.good_bad_ID <- round(e7_T.RT.t.good_bad_ID.CI[[12]][2],4)
+
+# moral task: Good v. Bad
+e7_T.RT.t.good_bad_Val <- t.test(df.T1.V.RT.subj.noID_w$Valence_task_Good,df.T1.V.RT.subj.noID_w$Valence_task_Bad,paired = TRUE)
+e7_T.RT.t.good_bad_Val.CI <- bootES(df.T1.V.RT.subj.noID_w$good_bad_Val,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.good_bad_Val <- round(as.numeric(e7_T.RT.t.good_bad_Val[[1]]),3)
+e7_T.RT.df.good_bad_Val <- as.numeric(e7_T.RT.t.good_bad_Val[[2]])
+e7_T.RT.pvalue.good_bad_Val.adj <- p.adjust(as.numeric(e7_T.RT.t.good_bad_Val[[3]]),"bonferroni",4)
+e7_T.RT.cohens.good_bad_Val <- round(e7_T.RT.t.good_bad_Val.CI[[1]],4) 
+e7_T.RT.CI.L.good_bad_Val <- round(e7_T.RT.t.good_bad_Val.CI[[12]][1],4)
+e7_T.RT.CI.H.good_bad_Val <- round(e7_T.RT.t.good_bad_Val.CI[[12]][2],4)
+
+# Good valence: self task v. moral task
+e7_T.RT.t.ID_Val_good <- t.test(df.T1.V.RT.subj.noID_w$Id_task_Good,df.T1.V.RT.subj.noID_w$Valence_task_Good,paired = TRUE)
+e7_T.RT.t.ID_Val_good.CI <- bootES(df.T1.V.RT.subj.noID_w$ID_Val_good,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.ID_Val_good <- round(as.numeric(e7_T.RT.t.ID_Val_good[[1]]),3)
+e7_T.RT.df.ID_Val_good <- as.numeric(e7_T.RT.t.ID_Val_good[[2]])
+e7_T.RT.pvalue.ID_Val_good.adj <- p.adjust(as.numeric(e7_T.RT.t.ID_Val_good[[3]]),"bonferroni",4)
+e7_T.RT.cohens.ID_Val_good <- round(e7_T.RT.t.ID_Val_good.CI[[1]],4) 
+e7_T.RT.CI.L.ID_Val_good <- round(e7_T.RT.t.ID_Val_good.CI[[12]][1],4)
+e7_T.RT.CI.H.ID_Val_good <- round(e7_T.RT.t.ID_Val_good.CI[[12]][2],4)
+
+
+# Bad valence: self task v. moral task
+e7_T.RT.t.ID_Val_bad <- t.test(df.T1.V.RT.subj.noID_w$Id_task_Bad,df.T1.V.RT.subj.noID_w$Valence_task_Bad,paired = TRUE)
+e7_T.RT.t.ID_Val_bad.CI <- bootES(df.T1.V.RT.subj.noID_w$ID_Val_bad,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.ID_Val_bad <- round(as.numeric(e7_T.RT.t.ID_Val_bad[[1]]),3)
+e7_T.RT.df.ID_Val_bad <- as.numeric(e7_T.RT.t.ID_Val_bad[[2]])
+e7_T.RT.pvalue.ID_Val_bad.adj <- p.adjust(as.numeric(e7_T.RT.t.ID_Val_bad[[3]]),"bonferroni",4)
+e7_T.RT.cohens.ID_Val_bad <- round(e7_T.RT.t.ID_Val_bad.CI[[1]],4) 
+e7_T.RT.CI.L.ID_Val_bad <- round(e7_T.RT.t.ID_Val_bad.CI[[12]][1],4)
+e7_T.RT.CI.H.ID_Val_bad <- round(e7_T.RT.t.ID_Val_bad.CI[[12]][2],4)
+
+RT.Mean.ID_task.Good  <- mean(df.T1.V.RT.subj.noID_w$Id_task_Good)
+RT.SD.ID_task.Good  <- sd(df.T1.V.RT.subj.noID_w$Id_task_Good)
+RT.Mean.ID_task.Bad <- mean(df.T1.V.RT.subj.noID_w$Id_task_Bad)
+RT.SD.ID_task.Bad <- sd(df.T1.V.RT.subj.noID_w$Id_task_Bad)
+RT.Mean.Val_task.Good <- mean(df.T1.V.RT.subj.noID_w$Valence_task_Good)
+RT.SD.Val_task.Good <- sd(df.T1.V.RT.subj.noID_w$Valence_task_Bad)
+RT.Mean.Val_task.Bad <- mean(df.T1.V.RT.subj.noID_w$Valence_task_Bad)
+RT.SD.Val_task.Bad <- sd(df.T1.V.RT.subj.noID_w$Valence_task_Bad)
+```
+2 by 2 ANOVA:
+The main effect of `r e7_T.RT_anova_noID[[1]][1,1]`, *F*(`r e7_T.RT_anova_noID[[1]][1,2]`, `r e7_T.RT_anova_noID[[1]][1,3]`) = `r round(e7_T.RT_anova_noID[[1]][1,4],3)`, *p* = `r round(e7_T.RT_anova_noID[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_T.RT_anova_noID[[1]][1,7],4)`. 
+
+The main effect of `r e7_T.RT_anova_noID[[1]][2,1]`: *F*(`r e7_T.RT_anova_noID[[1]][2,2]`, `r e7_T.RT_anova_noID[[1]][2,3]`) = `r round(e7_T.RT_anova_noID[[1]][2,4],3)`, *p* = `r round(e7_T.RT_anova_noID[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_T.RT_anova_noID[[1]][2,7],4)`
+
+The interaction `r e7_T.RT_anova_noID[[1]][3,1]`: *F*(`r e7_T.RT_anova_noID[[1]][3,2]`, `r e7_T.RT_anova_noID[[1]][3,3]`) = `r round(e7_T.RT_anova_noID[[1]][3,4],3)`, *p* = `r round(e7_T.RT_anova_noID[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_T.RT_anova_noID[[1]][3,7],4)`.
+
+As for the Identity task, effect of moral valence was significante: t(`r e7_T.RT.df.good_bad_ID`) = `r e7_T.RT.tvalue.good_bad_ID`, p = `r e7_T.RT.pvalue.good_bad_ID.adj`, Cohen's d = `r e7_T.RT.cohens.good_bad_ID`, 95% CI[`r e7_T.RT.CI.L.good_bad_ID` `r e7_T.RT.CI.H.good_bad_ID`].
+For moral task : t(`r e7_T.RT.df.good_bad_Val`) = `r e7_T.RT.tvalue.good_bad_Val`, p = `r e7_T.RT.pvalue.good_bad_Val.adj`, Cohen's d = `r e7_T.RT.cohens.good_bad_Val`, 95% CI[`r e7_T.RT.CI.L.good_bad_Val` `r e7_T.RT.CI.H.good_bad_Val`].
+
+The effect of task:
+for moral condition, the difference between self and moral task:t(`r e7_T.RT.df.ID_Val_good`) = `r e7_T.RT.tvalue.ID_Val_good`, p = `r e7_T.RT.pvalue.ID_Val_good.adj`, Cohen's d = `r e7_T.RT.cohens.ID_Val_good`, 95% CI[`r e7_T.RT.CI.L.ID_Val_good` `r e7_T.RT.CI.H.ID_Val_good`].
+for Bad condition, the difference between self and moral task :t(`r e7_T.RT.df.ID_Val_bad`) = `r e7_T.RT.tvalue.ID_Val_bad`, p = `r e7_T.RT.pvalue.ID_Val_bad.adj`, Cohen's d = `r e7_T.RT.cohens.ID_Val_bad`, 95% CI[`r e7_T.RT.CI.L.ID_Val_bad` `r e7_T.RT.CI.H.ID_Val_bad`].
+
+Moral valence for self condition: `r RT.Mean.ID_task.Good ` + `r RT.SD.ID_task.Good `
+Bad for self condition:`r RT.Mean.ID_task.Bad` + `r RT.SD.ID_task.Bad`
+Good for moral condition: `r RT.Mean.Val_task.Good` + `r RT.SD.Val_task.Good`
+Bad for moral condition: `r RT.Mean.Val_task.Bad` + `r RT.SD.Val_task.Bad`
+
+
+```{r RT_e7_T_simple_effect_noTask, ,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+df.T1.V.RT.subj.noTask <- summarySE(df.T1.V.RT.subj,measurevar = 'RT',groupvars = c('Subject','Identity','Morality'))
+df.T1.V.RT.subj.noTask_w <- dcast(df.T1.V.RT.subj.noTask, Subject ~ Identity + Morality ,value.var = "RT")
+
+df.T1.V.RT.subj.noTask_w$good_bad_slf <- df.T1.V.RT.subj.noTask_w$Self_Good - df.T1.V.RT.subj.noTask_w$Self_Bad
+df.T1.V.RT.subj.noTask_w$good_bad_oth <- df.T1.V.RT.subj.noTask_w$Other_Good - df.T1.V.RT.subj.noTask_w$Other_Bad
+df.T1.V.RT.subj.noTask_w$slf_oth_good <- df.T1.V.RT.subj.noTask_w$Self_Good - df.T1.V.RT.subj.noTask_w$Other_Good
+df.T1.V.RT.subj.noTask_w$slf_oth_bad <- df.T1.V.RT.subj.noTask_w$Self_Bad - df.T1.V.RT.subj.noTask_w$Other_Bad
+
+write.csv(df.T1.V.RT.subj.noTask_w, 'df.T1.V.RT.subj.noTask_w.csv',row.names = F)
+
+e7_T.RT_anova_noTask <- ezANOVA(df.T1.V.RT.subj.noTask,dv = RT, wid = Subject, within=.(Morality,Identity), type=3)
+# e7_T.RT_anova_noTask1 is exactly the same as in three way rm ANOVA
+
+# simple effect:
+
+# Good self vs Bad self
+e7_T.RT.t.good_bad_slf <- t.test(df.T1.V.RT.subj.noTask_w$Self_Good,df.T1.V.RT.subj.noTask_w$Self_Bad,paired = TRUE)
+e7_T.RT.t.good_bad_slf.CI <- bootES(df.T1.V.RT.subj.noTask_w$good_bad_slf,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.good_bad_slf <- round(as.numeric(e7_T.RT.t.good_bad_slf[[1]]),3)
+e7_T.RT.df.good_bad_slf <- as.numeric(e7_T.RT.t.good_bad_slf[[2]])
+e7_T.RT.pvalue.good_bad_slf.adj <- p.adjust(as.numeric(e7_T.RT.t.good_bad_slf[[3]]),"bonferroni",4)
+e7_T.RT.cohens.good_bad_slf <- round(e7_T.RT.t.good_bad_slf.CI[[1]],4) 
+e7_T.RT.CI.L.good_bad_slf <- round(e7_T.RT.t.good_bad_slf.CI[[12]][1],4)
+e7_T.RT.CI.H.good_bad_slf <- round(e7_T.RT.t.good_bad_slf.CI[[12]][2],4)
+
+# Good other vs Bad other
+e7_T.RT.t.good_bad_oth <- t.test(df.T1.V.RT.subj.noTask_w$Other_Good,df.T1.V.RT.subj.noTask_w$Other_Bad,paired = TRUE)
+e7_T.RT.t.good_bad_oth.CI <- bootES(df.T1.V.RT.subj.noTask_w$good_bad_oth,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.good_bad_oth <- round(as.numeric(e7_T.RT.t.good_bad_oth[[1]]),3)
+e7_T.RT.df.good_bad_oth <- as.numeric(e7_T.RT.t.good_bad_oth[[2]])
+e7_T.RT.pvalue.good_bad_oth.adj <- p.adjust(as.numeric(e7_T.RT.t.good_bad_oth[[3]]),"bonferroni",4)
+e7_T.RT.cohens.good_bad_oth <- round(e7_T.RT.t.good_bad_oth.CI[[1]],4) 
+e7_T.RT.CI.L.good_bad_oth <- round(e7_T.RT.t.good_bad_oth.CI[[12]][1],4)
+e7_T.RT.CI.H.good_bad_oth <- round(e7_T.RT.t.good_bad_oth.CI[[12]][2],4)
+
+# Good self vs Good other
+e7_T.RT.t.slf_oth_good <- t.test(df.T1.V.RT.subj.noTask_w$Self_Good,df.T1.V.RT.subj.noTask_w$Other_Good,paired = TRUE)
+e7_T.RT.t.slf_oth_good.CI <- bootES(df.T1.V.RT.subj.noTask_w$slf_oth_good,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.slf_oth_good <- round(as.numeric(e7_T.RT.t.slf_oth_good[[1]]),3)
+e7_T.RT.df.slf_oth_good <- as.numeric(e7_T.RT.t.slf_oth_good[[2]])
+e7_T.RT.pvalue.slf_oth_good.adj <- p.adjust(as.numeric(e7_T.RT.t.slf_oth_good[[3]]),"bonferroni",4)
+e7_T.RT.cohens.slf_oth_good <- round(e7_T.RT.t.slf_oth_good.CI[[1]],4) 
+e7_T.RT.CI.L.slf_oth_good <- round(e7_T.RT.t.slf_oth_good.CI[[12]][1],4)
+e7_T.RT.CI.H.slf_oth_good <- round(e7_T.RT.t.slf_oth_good.CI[[12]][2],4)
+
+# Bad self vs Bad other
+e7_T.RT.t.slf_oth_bad <- t.test(df.T1.V.RT.subj.noTask_w$Self_Bad,df.T1.V.RT.subj.noTask_w$Other_Bad,paired = TRUE)
+e7_T.RT.t.slf_oth_bad.CI <- bootES(df.T1.V.RT.subj.noTask_w$slf_oth_bad,R = 20000, effect.type = "cohens.d")
+
+e7_T.RT.tvalue.slf_oth_bad <- round(as.numeric(e7_T.RT.t.slf_oth_bad[[1]]),3)
+e7_T.RT.df.slf_oth_bad <- as.numeric(e7_T.RT.t.slf_oth_bad[[2]])
+e7_T.RT.pvalue.slf_oth_bad.adj <- p.adjust(as.numeric(e7_T.RT.t.slf_oth_bad[[3]]),"bonferroni",4)
+e7_T.RT.cohens.slf_oth_bad <- round(e7_T.RT.t.slf_oth_bad.CI[[1]],4) 
+e7_T.RT.CI.L.slf_oth_bad <- round(e7_T.RT.t.slf_oth_bad.CI[[12]][1],4)
+e7_T.RT.CI.H.slf_oth_bad <- round(e7_T.RT.t.slf_oth_bad.CI[[12]][2],4)
+
+RT.Mean.Good.Self <- mean(df.T1.V.RT.subj.noTask_w$Self_Good)
+RT.SD.Good.Self <- sd(df.T1.V.RT.subj.noTask_w$Self_Good)
+RT.Mean.Bad.Self <- mean(df.T1.V.RT.subj.noTask_w$Self_Bad)
+RT.SD.Bad.Self <- sd(df.T1.V.RT.subj.noTask_w$Self_Bad)
+RT.Mean.Good.Other <- mean(df.T1.V.RT.subj.noTask_w$Other_Good)
+RT.SD.Good.Other <- sd(df.T1.V.RT.subj.noTask_w$Other_Good)
+RT.Mean.Bad.Other <- mean(df.T1.V.RT.subj.noTask_w$Other_Bad)
+RT.SD.Bad.Other <- sd(df.T1.V.RT.subj.noTask_w$Other_Bad)
+
+df.T1.V.RT.sum.noTask <- summarySE(df.T1.V.RT.subj,measurevar = 'RT',groupvars = c('Morality','Identity'))
+RT.Mean.Good.Self <- df.T1.V.RT.sum.noTask$RT[df.T1.V.RT.sum.noTask$Identity == 'self' & df.T1.V.RT.sum.noTask$Morality == 'Good']
+RT.SD.Good.Self <- df.T1.V.RT.sum.noTask$sd[df.T1.V.RT.sum.noTask$Identity == 'self' & df.T1.V.RT.sum.noTask$Morality == 'Good']
+RT.Mean.Bad.Self <- df.T1.V.RT.sum.noTask$RT[df.T1.V.RT.sum.noTask$Identity == 'self' & df.T1.V.RT.sum.noTask$Morality == 'Bad']
+RT.SD.Bad.Self <- df.T1.V.RT.sum.noTask$sd[df.T1.V.RT.sum.noTask$Identity == 'self' & df.T1.V.RT.sum.noTask$Morality == 'Bad']
+RT.Mean.Good.Other <- df.T1.V.RT.sum.noTask$RT[df.T1.V.RT.sum.noTask$Identity == 'other' & df.T1.V.RT.sum.noTask$Morality == 'Good']
+RT.SD.Good.Other <- df.T1.V.RT.sum.noTask$sd[df.T1.V.RT.sum.noTask$Identity == 'other' & df.T1.V.RT.sum.noTask$Morality == 'Good']
+RT.Mean.Bad.Other <- df.T1.V.RT.sum.noTask$RT[df.T1.V.RT.sum.noTask$Identity == 'other' & df.T1.V.RT.sum.noTask$Morality == 'Bad']
+RT.SD.Bad.Other <- df.T1.V.RT.sum.noTask$sd[df.T1.V.RT.sum.noTask$Identity == 'other' & df.T1.V.RT.sum.noTask$Morality == 'Bad']
+
+# plot the data without task varaible.
+RT_e7_T_noTask <- ggplot(data =df.T1.V.RT.sum.noTask,aes(y = RT, x =Morality, group = Identity,shape = Identity, fill = Identity))+
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = RT - se, ymax = RT + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'Reaction times') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("Reaction times for each condition") +
+        coord_cartesian(ylim=c(500,800)) +
+        scale_y_continuous(breaks=seq(500,800,50),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        apatheme +
+        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Self       ","Other")) +
+        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+
+ggsave("RT_e7_T_noTask.pdf", RT_e7_T_noTask, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
+
+
+
+```
+2 by 2 ANOVA:
+The main effect of `r e7_T.RT_anova_noTask[[1]][1,1]`, *F*(`r e7_T.RT_anova_noTask[[1]][1,2]`, `r e7_T.RT_anova_noTask[[1]][1,3]`) = `r round(e7_T.RT_anova_noTask[[1]][1,4],3)`, *p* = `r round(e7_T.RT_anova_noTask[[1]][1,5],4)`, $\eta_g^2$ = `r round(e7_T.RT_anova_noTask[[1]][1,7],4)`. 
+
+The main effect of `r e7_T.RT_anova_noTask[[1]][2,1]`: *F*(`r e7_T.RT_anova_noTask[[1]][2,2]`, `r e7_T.RT_anova_noTask[[1]][2,3]`) = `r round(e7_T.RT_anova_noTask[[1]][2,4],3)`, *p* = `r round(e7_T.RT_anova_noTask[[1]][2,5],4)`, $\eta_g^2$ = `r round(e7_T.RT_anova_noTask[[1]][2,7],4)`
+
+The interaction `r e7_T.RT_anova_noTask[[1]][3,1]`: *F*(`r e7_T.RT_anova_noTask[[1]][3,2]`, `r e7_T.RT_anova_noTask[[1]][3,3]`) = `r round(e7_T.RT_anova_noTask[[1]][3,4],3)`, *p* = `r round(e7_T.RT_anova_noTask[[1]][3,5],4)`, $\eta_g^2$ = `r round(e7_T.RT_anova_noTask[[1]][3,7],4)`.
+
+As for the self condition, effect of moral valence was significant: t(`r e7_T.RT.df.good_bad_slf`) = `r e7_T.RT.tvalue.good_bad_slf`, p = `r e7_T.RT.pvalue.good_bad_slf.adj`, Cohen's d = `r e7_T.RT.cohens.good_bad_slf`, 95% CI[`r e7_T.RT.CI.L.good_bad_slf` `r e7_T.RT.CI.H.good_bad_slf`].
+For other condition, moral valence was not significante: t(`r e7_T.RT.df.good_bad_oth`) = `r e7_T.RT.tvalue.good_bad_oth`, p = `r e7_T.RT.pvalue.good_bad_oth.adj`, Cohen's d = `r e7_T.RT.cohens.good_bad_oth`, 95% CI[`r e7_T.RT.CI.L.good_bad_oth` `r e7_T.RT.CI.H.good_bad_oth`].
+
+The effect of identity:
+for moral condition, the difference between self and other was significant:t(`r e7_T.RT.df.slf_oth_good`) = `r e7_T.RT.tvalue.slf_oth_good`, p = `r e7_T.RT.pvalue.slf_oth_good.adj`, Cohen's d = `r e7_T.RT.cohens.slf_oth_good`, 95% CI[`r e7_T.RT.CI.L.slf_oth_good` `r e7_T.RT.CI.H.slf_oth_good`].
+for Bad condition, the difference between self and other was not significant:t(`r e7_T.RT.df.slf_oth_bad`) = `r e7_T.RT.tvalue.slf_oth_bad`, p = `r e7_T.RT.pvalue.slf_oth_bad.adj`, Cohen's d = `r e7_T.RT.cohens.slf_oth_bad`, 95% CI[`r e7_T.RT.CI.L.slf_oth_bad` `r e7_T.RT.CI.H.slf_oth_bad`].
+
+Good self: `r RT.Mean.Good.Self` + `r RT.SD.Good.Self`
+Bad self:`r RT.Mean.Bad.Self` + `r RT.SD.Bad.Self`
+Good other: `r RT.Mean.Good.Other` + `r RT.SD.Good.Other`
+Bad other: `r RT.Mean.Bad.Other` + `r RT.SD.Bad.Other`
+
+
+```{r plot2 the RT_e7_T, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+ggplot(data = df.T1.V.RT.grand,aes(y = RT, x = Morality, group = Task,shape = Task, fill = Task)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = RT - se, ymax = RT + se),
+        #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = .3,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'Reaction times') +
+        #ylab(" Reaction times") + 
+        #ylim(1, 4) +
+        ggtitle("Reaction times for each condition") +
+        coord_cartesian(ylim=c(500,800)) +
+        scale_y_continuous(breaks=seq(500,800,50),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        #theme_classic()
+        facet_grid(.~ Identity) + 
+        apatheme
+
+# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+```
+
+The above is the RT for each condition. left panel is the results of moral-categorization task, the right panel is the self-other categorization task.
+
+####Correlation analysis: 
+
+The correlation between ACC of match trials in match task and ACC of categorization task
+```{r correlattion between learning and testing_ACC,echo=FALSE,warning=FALSE,message=FALSE }
+# matching task -- d prime
+#ncol(df.L1.V.SDT_ww)
+# matching task -- ACC
+#ncol(df.L1.V.acc_w)
+# matching task -- rt
+#ncol(df.L1.V.RT.subj_w)
+# categorization task -- ACC
+#ncol(df.T1.V.acc.subj_w)
+# categorization task -- rt
+#ncol(df.T1.V.RT.subj_w)
+
+## correlation analysis for ACC
+df.corr.acc <- merge(df.L1.V.acc_w[,1:5],df.T1.V.acc.subj_w[,1:9],by = 'Subject')
+df.corr.acc <- df.corr.acc[,2:13]
+acc.corr <- corr.test(df.corr.acc, use = "pairwise", method = "pearson",adjust = "holm")
+
+postscript("corr_acc_original_p_05.eps", width = 2048, height = 2048)
+# ,main = "acc_original"
+corrplot.mixed(acc.corr[[1]],p.mat = acc.corr[[4]],sig.level = 0.05,insig = "blank")
+dev.off()
+corrplot.mixed(acc.corr[[1]],p.mat = acc.corr[[4]],sig.level = 0.05,insig = "blank")
+```
+
+The correlation between the self-bias and moral bias of ACC of match trials in match task and ACC of categorization task
+```{r correlattion between learning and testing_ACC-bias,echo=FALSE,warning=FALSE,message=FALSE }
+#df.L1.V.acc_w <- read.csv("data_matching_v_acc.csv",header = TRUE, sep = ",")
+#df.T1.V.acc.subj_w <- read.csv("data_catigorization_v_acc.csv",header = TRUE,sep = ",")
+
+df.corr.bias_acc <- merge(df.L1.V.acc_w[,c(1,10:13)],df.T1.V.acc.subj_w[,c(1,10:17)],by = 'Subject')
+df.corr.bias_acc <- df.corr.bias_acc[,2:13]
+acc_bias.corr <- corr.test(df.corr.bias_acc,use = "pairwise",method="pearson",adjust="holm", alpha=.05,ci=TRUE)
+postscript("corr_acc_bias_p_05.eps", width = 2048, height = 1024)
+#:main = "corr coefficient (matching-categorization) - ACC_bias"
+corrplot.mixed(acc_bias.corr[[1]],p.mat = acc_bias.corr[[4]],sig.level = 0.05,insig = "blank")
+dev.off()
+corrplot.mixed(acc_bias.corr[[1]],p.mat = acc_bias.corr[[4]],sig.level = 0.05,insig = "blank")
+```
+
+The correlation between RT of match trials in match task and ACC of categorization task
+```{r correlattion between learning and testing_RT,echo=FALSE,warning=FALSE,message=FALSE }
+# correlaton analysis for rt
+df.corr.rt <- merge(df.L1.V.RT.subj_w[,1:5],df.T1.V.RT.subj_w[,1:9],by = 'Subject')
+df.corr.rt <- df.corr.rt[,2:13]
+rt.corr <- corr.test(df.corr.rt)
+postscript("corr_rt_original_p_05.eps", width = 2048, height = 2048)
+# ,main = "acc_original"
+corrplot.mixed(rt.corr[[1]],p.mat = rt.corr[[4]],sig.level = 0.05,insig = "blank")
+dev.off()
+corrplot.mixed(rt.corr[[1]],p.mat = rt.corr[[4]],sig.level = 0.05,insig = "blank")
+```
+
+The correlation between the self-bias and moral bias of RT of match trials in match task and ACC of categorization task
+```{r correlattion between learning and testing_RT-bias,echo=FALSE,warning=FALSE,message=FALSE }
+# merge the data by subj ID
+df.corr.bias_rt <- merge(df.L1.V.RT.subj_w[,c(1,10:13)],df.T1.V.RT.subj_w[,c(1,10:17)],by = 'Subject')
+df.corr.bias_rt <- df.corr.bias_rt[,2:13]
+rt_bias.corr <- corr.test(df.corr.bias_rt)
+
+postscript("corr_rt_bias_p_05.eps", width = 2048, height = 1024)
+#:main = "corr coefficient (matching-categorization) - ACC_bias"
+corrplot.mixed(rt_bias.corr[[1]],p.mat = rt_bias.corr[[4]],sig.level = 0.05,insig = "blank")
+dev.off()
+corrplot.mixed(rt_bias.corr[[1]],p.mat = rt_bias.corr[[4]],sig.level = 0.05,insig = "blank")
+```
+
+the effect of self on ACC
+The correlation of accuracy between matching task and categrization based on morality criteria
+```{r correlation of self-effect on ACC between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+acc.self_bias_moral <- cor.test(df.corr.bias_acc$L_acc_slf_oth_good,df.corr.bias_acc$T_acc_Valence_slf_oth_good)
+df.acc.self_bias_moral <- df.corr.bias_acc[,c("L_acc_slf_oth_good","T_acc_Valence_slf_oth_good")]
+colnames(df.acc.self_bias_moral) <- c("ACC_self_bias_match","ACC_self_bias_moral_categorization")
+ggplot(df.acc.self_bias_moral, aes(x=ACC_self_bias_match, y=ACC_self_bias_moral_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm) +   
+    ggtitle("Correlation between ACC of Matching and moral categorization (self-effect)") +
+    apatheme
+#ggsave("p_corr_acc_self1.eps", p_corr_acc_self1, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_acc_self1.pdf",out.type="cairo", width=8, height=6)
+```
+
+The correlation of accuracy between matching task and categrization based on identity criteria
+```{r correlation of self-effect on ACC between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+acc.self_bias_id <- cor.test(df.corr.bias_acc$L_acc_slf_oth_good,df.corr.bias_acc$T_acc_Id_slf_oth_good)
+df.acc.self_bias_id <- df.corr.bias_acc[,c("L_acc_slf_oth_good","T_acc_Id_slf_oth_good")]
+colnames(df.acc.self_bias_id) <- c("ACC_self_bias_match","ACC_self_bias_id_categorization")
+ggplot(df.acc.self_bias_id, aes(x=ACC_self_bias_match, y=ACC_self_bias_id_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm) +   
+    ggtitle("Correlation between ACC of Matching and id categorization (self-effect)") +
+    apatheme
+#ggsave("p_corr_acc_self2.eps", p_corr_acc_self2, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_acc_self2.pdf",out.type="cairo", width=8, height=6)
+```
+
+
+The effect of morality 
+The correlation of accuracy between matching task and categrization based on morality criteria
+```{r correlation of moral-effect on ACC between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+acc.moral_bias_moral <- cor.test(df.corr.bias_acc$L_acc_good_bad_slf,df.corr.bias_acc$T_acc_Valence_good_bad_slf)
+df.acc.moral_bias_moral <- df.corr.bias_acc[,c("L_acc_good_bad_slf","T_acc_Valence_good_bad_slf")]
+colnames(df.acc.moral_bias_moral) <- c("ACC_moral_bias_match","ACC_moral_bias_moral_categorization")
+ggplot(df.acc.moral_bias_moral, aes(x=ACC_moral_bias_match, y=ACC_moral_bias_moral_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm,fill = "gray") +   
+    ggtitle("Correlation between ACC of Matching and moral categorization (moral effect)") +
+    apatheme
+#ggsave("p_corr_acc_moral1.eps", p_corr_acc_moral1, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_acc_moral1.pdf",out.type="cairo", width=8, height=6)
+```
+
+
+The correlation of accuracy between matching task and categrization based on identity criteria
+```{r correlation of moral-effect on ACC between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+acc.moral_bias_id <- cor.test(df.corr.bias_acc$L_acc_good_bad_slf,df.corr.bias_acc$T_acc_Id_good_bad_slf)
+df.acc.moral_bias_id <- df.corr.bias_acc[,c("L_acc_good_bad_slf","T_acc_Id_good_bad_slf")]
+colnames(df.acc.moral_bias_id) <- c("ACC_moral_bias_match","ACC_moral_bias_id_categorization")
+ggplot(df.acc.moral_bias_id, aes(x=ACC_moral_bias_match, y=ACC_moral_bias_id_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm,fill = "gray") +   
+    ggtitle("Correlation between ACC of Matching and id categorization (moral effect)") +
+    apatheme
+# ggsave("p_corr_acc_moral2.eps", p_corr_acc_moral2, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_acc_moral2.pdf",out.type="cairo", width=8, height=6)
+```
+
+
+```{r correlation of self-effect on RT between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+rt.self_bias_moral <- cor.test(df.corr.bias_rt$L_rt_m.slf_oth_good,df.corr.bias_rt$T_rt_Valence_slf_oth_good)
+df.rt.self_bias_moral <- df.corr.bias_rt[,c("L_rt_m.slf_oth_good","T_rt_Valence_slf_oth_good")]
+colnames(df.rt.self_bias_moral) <- c("RT_self_bias_match","RT_self_bias_moral_categorization")
+ggplot(df.rt.self_bias_moral, aes(x=RT_self_bias_match, y=RT_self_bias_moral_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm) +   
+    ggtitle("Correlation between RT of Matching and moral categorization (self-effect)") +
+    apatheme
+#ggsave("p_corr_RT_self1.eps", p_corr_RT_self1, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_RT_self1.pdf",out.type="cairo", width=8, height=6)
+```
+
+```{r correlation of self-effect on RT between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+rt.self_bias_id <- cor.test(df.corr.bias_rt$L_rt_m.slf_oth_good,df.corr.bias_rt$T_rt_Id_slf_oth_good)
+df.rt.self_bias_id <- df.corr.bias_rt[,c("L_rt_m.slf_oth_good","T_rt_Id_slf_oth_good")]
+colnames(df.rt.self_bias_id) <- c("RT_self_bias_match","RT_self_bias_id_categorization")
+ggplot(df.rt.self_bias_id, aes(x=RT_self_bias_match, y=RT_self_bias_id_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm,fill = "gray") +   
+    ggtitle("Correlation between RT of Matching and id categorization (self-effect)") +
+    apatheme
+#ggsave("p_corr_RT_self2.eps", p_corr_RT_self2, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_RT_self2.pdf",out.type="cairo", width=8, height=6)
+
+```
+
+```{r correlation of moral-effect on RT between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+rt.moral_bias_val <- cor.test(df.corr.bias_rt$L_rt_m.good_bad_slf,df.corr.bias_rt$T_rt_Valence_good_bad_slf)
+df.rt.moral_bias_moral <- df.corr.bias_rt[,c("L_rt_m.good_bad_slf","T_rt_Valence_good_bad_slf")]
+colnames(df.rt.moral_bias_moral) <- c("RT_moral_bias_match","RT_moral_bias_moral_categorization")
+ggplot(df.rt.moral_bias_moral, aes(x=RT_moral_bias_match, y=RT_moral_bias_moral_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm) +   
+    ggtitle("Correlation between RT of Matching and moral categorization (moral-effect)") +
+    apatheme
+#ggsave("p_corr_RT_self1.eps", p_corr_RT_self1, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_RT_moral1.pdf",out.type="cairo", width=8, height=6)
+```
+
+```{r correlation of moral-effect on RT between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+rt.moral_bias_id <- cor.test(df.corr.bias_rt$L_rt_m.good_bad_slf,df.corr.bias_rt$T_rt_Id_good_bad_slf)
+df.rt.moral_bias_id <- df.corr.bias_rt[,c("L_rt_m.good_bad_slf","T_rt_Id_good_bad_slf")]
+colnames(df.rt.moral_bias_id) <- c("RT_moral_bias_match","RT_moral_bias_id_categorization")
+ggplot(df.rt.moral_bias_id, aes(x=RT_moral_bias_match, y=RT_moral_bias_id_categorization)) +
+    geom_point() +    # Use hollow circles
+    geom_smooth(method=lm) +   
+    ggtitle("Correlation between RT of Matching and id categorization (moral-effect)") +
+    apatheme
+#ggsave("p_corr_RT_self1.eps", p_corr_RT_self1, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+dev.copy2pdf(file="p_corr_RT_moral2.pdf",out.type="cairo", width=8, height=6)
+```
