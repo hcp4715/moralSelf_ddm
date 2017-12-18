@@ -1,19 +1,10 @@
-function Moral_self_asso_exp7_learn_vf(subID,gender,age,handness,numOfBlock,binNum)
+function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,binNum)
 %%
 % History: Based on :LiuMinghui 2013, SelfLabelMatching; Guo Jichengsi 2013;
 % 
 % Date         Author          Notes for change
 % =========================================================================
-% 25/05/2016   hcp4715         modified the code for categorization tasks.
-% 28/05/2016   hcp4715         change the way to control the trial practice
-% 29/05/2016   hcp4715         change the way of counterbalance   
-% 29/05/2016   hcp4715         delete subject input in this script, cite
-% these variable from the other script.
-% 30/05/2016   hcp4715         delete other unneccessary code
-% 21/06/2016   hcp4715         change the learning to matching task, fixed
-%                              number of trials
-
-% 02/07/2016   hcp4715         modified to small circles
+% 2017/12/19   hcp             modified for replication of exp7
 
 % =========================================================================
 % Aim: The learning phase is to make sure the pariticipants associate
@@ -21,39 +12,43 @@ function Moral_self_asso_exp7_learn_vf(subID,gender,age,handness,numOfBlock,binN
 % correctlyh for 6 times in a row.
 
 % Experimental design: 
-% 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
-% 3(tasks type: morality, self, or importance)
+% 2 (id: self vs. other) * 3 (moral valence: postive, neutral vs. negative)
 
 % Input variables:
 % subjects' ID, age, sex, and condition;
 
 % Learning phase: matching task
-% Categorization phase: categorization
+% Categorization phase: categorization task
 % One trials for task: 
 % Fixation: 500ms + target display: 200ms + blank: 800-1200ms, No feedback
 
 % One trial: 1500-2100ms
 
 % Stimuli: 
-% 4 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive vs. negative);
+% 6 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive, neutral vs. negative);
 
-% Moral Self(MS), Immoral Self (IS); Moral Other (MO), Immoral Other (IO);
+% Moral Self(MS),   Neutral Self (NS),  Immoral Self (IS); 
+% Moral Other (MO), Neutral Other (NN), Immoral Other (IO);
 
-% Four labels in this Exp.;
-% "好我","坏我";"好人","坏人"
+% Six labels in this Exp.;
+% "好我","常我","坏我";"好人","常人","坏人"
 % Task：Categorization, Whether the shape presented belongs to one categories?
 
 % counterbalance between shape and label:
-%           "好我"     "坏我"    "好人"     "坏人"        M/S/Imp      Imm/Oth/Unim
-% ============================================================================
-% expGroup1: circle,   square,   pentagon,  trapezoid,  left        right
-% expGroup2: square,   pentagon, trapezoid, circle,     left        right
-% expGroup3: pentagon, trapezoid, circle,   square,     left        right
-% expGroup4: trapezoid, circle,   square,   pentagon,   left        right
-% expGroup5: circle,   square,   pentagon,  trapezoid,  right       left
-% expGroup6: square,   pentagon, trapezoid, circle,     right       left
-% expGroup7: pentagon, trapezoid, circle,   square,     right       left
-% expGroup8: trapezoid, circle,   square,   pentagon,   right       left
+%           "好我"     "常我"      "坏我"   "好人"      "常人"      "坏人"      match/M/S   mismathc/Imm/Oth
+% ============================================================================＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+% expGroup1: circle,   square,   pentagon,  trapezoid,  hexagon    dimond       left         right
+% expGroup2: square,   pentagon, trapezoid, hexagon     dimond,    circle,      left         right
+% expGroup3: pentagon, trapezoid,hexagon    dimond,     circle,    square,      left         right
+% expGroup4: trapezoid,hexagon   dimond,    circle,     square,    pentagon,    left         right
+% expGroup5: hexagon   dimond,   circle,    square,     pentagon,  trapezoid,   left         right
+% expGroup6: dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     left         right
+% expGroup7: circle,   square,   pentagon,  trapezoid,  hexagon    dimond       right        left
+% expGroup8: square,   pentagon, trapezoid, hexagon     dimond,    circle,      right        left
+% expGroup9: pentagon, trapezoid,hexagon    dimond,     circle,    square,      right        left
+% expGroup10:trapezoid,hexagon   dimond,    circle,     square,    pentagon,    right        left
+% expGroup11:hexagon   dimond,   circle,    square,     pentagon,  trapezoid,   right        left
+% expGroup12:dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     right        left
 % ============================================================================
 
 %Total block: 6, number of trials in each block: 120
