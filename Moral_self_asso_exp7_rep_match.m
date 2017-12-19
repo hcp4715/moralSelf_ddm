@@ -11,8 +11,8 @@ function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,bin
 % between shapes and labels. each assoication had to be responded
 % correctlyh for 6 times in a row.
 
-% Experimental design: 
-% 2 (id: self vs. other) * 3 (moral valence: postive, neutral vs. negative)
+% Experimental design for matching task: 
+% 2(matchness: match v. nonmatch) * 2 (id: self vs. other) * 3 (moral valence: postive, neutral vs. negative)
 
 % Input variables:
 % subjects' ID, age, sex, and condition;
@@ -51,45 +51,49 @@ function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,bin
 % expGroup12:dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     right        left
 % ============================================================================
 
-%Total block: 6, number of trials in each block: 120
-%number of practice trials: 12
+% Number of practice trials: 36
+
+% Total block for matching task: 7;
+% The first three blocks contains 120 trials for each (360 trials)
+% The rest 6 blocks interweaved with categorization task, each has 60 trials 
 
 % counterbalance of block order: see getParams.m
 
-%result is collected in the file: Exp_behav_moral_asso_exp7_pilot2_learn_(subID).out
+% Output:data_exp7_rep_match_(subID).out
 %%
 %initialization
 % Screen('Preference', 'SkipSyncTests', 1)
 global params    % get all parameters from in params 
 
 %%
-%MainFlow
+% MainFlow
 try
     %open a window and setup display location
     [window,rect] = Screen('OpenWindow', params.whichscreen,params.gray,params.winSize);
     HideCursor;
     %setup response record
     cd(params.dataDir);
-    responseRecord = fopen(['Moral_self_asso_exp7_pilot2_learn_vf_' num2str(subID) '.out'],'a');
+    % create a data file for this task
+    responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
     fprintf(responseRecord,'SubjectID Age Gender Handness moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey Block Bin Trial Identity Morality Match RT ResponseKey Accuracy\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
     %makeTextrue
-    instrucTex=Screen('MakeTexture',window, params.learnInstruc);
-    restInstrucTex=Screen('MakeTexture',window,params.learnRestInstruc);
-%     pracInstrucTex=Screen('MakeTexture',window,pracInstruc);
-    moralSelfTex = Screen('MakeTexture', window, params.moralSelf);
-    immoralSelfTex = Screen('MakeTexture', window, params.immoralSelf);
-    moralOtherTex = Screen('MakeTexture', window, params.moralOther);
+    instrucTex      = Screen('MakeTexture', window, params.learnInstruc);
+    restInstrucTex  = Screen('MakeTexture', window, params.learnRestInstruc);
+%   pracInstrucTex  = Screen('MakeTexture',window,pracInstruc);
+    moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
+    immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
+    moralOtherTex   = Screen('MakeTexture', window, params.moralOther);
     immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
     
-    labelmoralSelfTex = Screen('MakeTexture', window, params.labelmoralSelf);
-    labelimmoralSelfTex = Screen('MakeTexture',window, params.labelimmoralSelf);
-    labelmoralOtherTex = Screen('MakeTexture', window, params.labelmoralOther);
-    labelimmoralOtherTex = Screen('MakeTexture', window,  params.labelimmoralOther);
+    labelmoralSelfTex    = Screen('MakeTexture', window, params.labelmoralSelf);
+    labelimmoralSelfTex  = Screen('MakeTexture', window, params.labelimmoralSelf);
+    labelmoralOtherTex   = Screen('MakeTexture', window, params.labelmoralOther);
+    labelimmoralOtherTex = Screen('MakeTexture', window, params.labelimmoralOther);
     
-    feedCorrectTex = Screen('MakeTexture',window,params.feedbackCorrectImage);
+    feedCorrectTex   = Screen('MakeTexture',window,params.feedbackCorrectImage);
     feedIncorrectTex = Screen('MakeTexture',window,params.feedbackIncorrectImage);
     
     % put all labels in a cell, to randomly chose the mismatch trials
@@ -99,7 +103,7 @@ try
     Screen('DrawTexture', window, instrucTex);
     Screen('Flip',window);
     [secs, keyCode]=KbWait;
-    while keyCode(params.spaceKey)==0
+    while keyCode(params.spaceKey) == 0
          [secs,keyCode]=KbWait;
     end
     
@@ -107,13 +111,14 @@ try
         accFeed = 0; % init Accuracy of the block Feedback;
         for blockBin = 1:binNum
             % generate the random order for trials
-            tmpCondition = {'moralSelf','immoralSelf','moralOther','immoralOther','moralSelf',...
-                'immoralSelf','moralOther','immoralOther';1,1,1,1,2,2,2,2};
+            tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
+                'neutralOther','immoralOther','moralSelf','neutralSelf',...
+                'immoralSelf','moralOther','neutralOther','immoralOther';1,1,1,1,1,1,2,2,2,2,2,2};
             tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
-            tmpOrderSmallblock = Shuffle(1:24);
+            tmpOrderSmallblock = Shuffle(1:36);
             trialNum = length(tmpOrderSmallblock);
             trialOrderSmallblock = {};
-            for ii = 1:24
+            for ii = 1:36
                 trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,tmpOrderSmallblock(ii));
                 trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,tmpOrderSmallblock(ii));
             end
@@ -279,7 +284,7 @@ try
                 WaitSecs(params.ISI-0.5*params.ifi);         % time for ISI
                 %response record
                 cd(params.dataDir)
-                responseRecord = fopen(['Moral_self_asso_exp7_pilot2_learn_vf_' num2str(subID) '.out'],'a');
+                responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
                 fprintf(responseRecord,'%d %d %s %s %s %s %s %s %s %s %d %d %d %s %s %s %.4f %s %d\n',...
                     subID, age, gender,handness, params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
                     params.matchResponKey,params.mismatchResponKey,blockNum,blockBin,trial, identity,... 
