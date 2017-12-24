@@ -50,7 +50,7 @@ pkgTest <- function(x)
   }
 }
 
-pkgNeeded <- (c("ez","plyr","ggplot2", "reshape2", "MBESS", "bootES","BayesFactor","psych","corrplot"))
+pkgNeeded <- (c("tidyverse","plyr","ggplot2", "reshape2","ez", "bootES","MBESS", "BayesFactor","psych","corrplot"))
 
 lapply(pkgNeeded,pkgTest)
 rm(pkgNeeded)
@@ -227,7 +227,7 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 ```
 
 
-```{r loadingData_e7_L,echo=FALSE,results='hide'}
+```{r loadingData_e7,echo=FALSE,results='hide'}
 df.L <- read.csv("df.Learn.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
 df.T <- read.csv("df.Test.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
 # render the numeric column
@@ -265,7 +265,7 @@ df.T$Morality <- factor(df.T$Morality, levels=c("Good","Bad")) # make the variab
 df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other")) # make the variables in a specified order
 ```
 
-```{r clean the data_e7_L,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+```{r clean the data_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
 df.L1 <- df.L
 df.T1 <- df.T
 df.L1$RT <- df.L1$RT*1000 # transfer from seconds to min seconds
@@ -1506,7 +1506,7 @@ corrplot.mixed(rt_bias.corr[[1]],p.mat = rt_bias.corr[[4]],sig.level = 0.05,insi
 
 the effect of self on ACC
 The correlation of accuracy between matching task and categrization based on morality criteria
-```{r correlation of self-effect on ACC between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr ACC_selfBias_between matching and categorization_val,echo=FALSE,warning=FALSE,message=FALSE }
 acc.self_bias_moral <- cor.test(df.corr.bias_acc$L_acc_slf_oth_good,df.corr.bias_acc$T_acc_Valence_slf_oth_good)
 df.acc.self_bias_moral <- df.corr.bias_acc[,c("L_acc_slf_oth_good","T_acc_Valence_slf_oth_good")]
 colnames(df.acc.self_bias_moral) <- c("ACC_self_bias_match","ACC_self_bias_moral_categorization")
@@ -1520,7 +1520,7 @@ dev.copy2pdf(file="p_corr_acc_self1.pdf",out.type="cairo", width=8, height=6)
 ```
 
 The correlation of accuracy between matching task and categrization based on identity criteria
-```{r correlation of self-effect on ACC between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr ACC_selfBias between matching and categorization_id,echo=FALSE,warning=FALSE,message=FALSE }
 acc.self_bias_id <- cor.test(df.corr.bias_acc$L_acc_slf_oth_good,df.corr.bias_acc$T_acc_Id_slf_oth_good)
 df.acc.self_bias_id <- df.corr.bias_acc[,c("L_acc_slf_oth_good","T_acc_Id_slf_oth_good")]
 colnames(df.acc.self_bias_id) <- c("ACC_self_bias_match","ACC_self_bias_id_categorization")
@@ -1536,7 +1536,7 @@ dev.copy2pdf(file="p_corr_acc_self2.pdf",out.type="cairo", width=8, height=6)
 
 The effect of morality 
 The correlation of accuracy between matching task and categrization based on morality criteria
-```{r correlation of moral-effect on ACC between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr ACC_valBais between matching and categorization_val,echo=FALSE,warning=FALSE,message=FALSE }
 acc.moral_bias_moral <- cor.test(df.corr.bias_acc$L_acc_good_bad_slf,df.corr.bias_acc$T_acc_Valence_good_bad_slf)
 df.acc.moral_bias_moral <- df.corr.bias_acc[,c("L_acc_good_bad_slf","T_acc_Valence_good_bad_slf")]
 colnames(df.acc.moral_bias_moral) <- c("ACC_moral_bias_match","ACC_moral_bias_moral_categorization")
@@ -1551,7 +1551,7 @@ dev.copy2pdf(file="p_corr_acc_moral1.pdf",out.type="cairo", width=8, height=6)
 
 
 The correlation of accuracy between matching task and categrization based on identity criteria
-```{r correlation of moral-effect on ACC between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr ACC_valBias between matching and categorization_id,echo=FALSE,warning=FALSE,message=FALSE }
 acc.moral_bias_id <- cor.test(df.corr.bias_acc$L_acc_good_bad_slf,df.corr.bias_acc$T_acc_Id_good_bad_slf)
 df.acc.moral_bias_id <- df.corr.bias_acc[,c("L_acc_good_bad_slf","T_acc_Id_good_bad_slf")]
 colnames(df.acc.moral_bias_id) <- c("ACC_moral_bias_match","ACC_moral_bias_id_categorization")
@@ -1565,7 +1565,7 @@ dev.copy2pdf(file="p_corr_acc_moral2.pdf",out.type="cairo", width=8, height=6)
 ```
 
 
-```{r correlation of self-effect on RT between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr RT_selfBias between matching and categorization_val,echo=FALSE,warning=FALSE,message=FALSE }
 rt.self_bias_moral <- cor.test(df.corr.bias_rt$L_rt_m.slf_oth_good,df.corr.bias_rt$T_rt_Valence_slf_oth_good)
 df.rt.self_bias_moral <- df.corr.bias_rt[,c("L_rt_m.slf_oth_good","T_rt_Valence_slf_oth_good")]
 colnames(df.rt.self_bias_moral) <- c("RT_self_bias_match","RT_self_bias_moral_categorization")
@@ -1578,7 +1578,7 @@ ggplot(df.rt.self_bias_moral, aes(x=RT_self_bias_match, y=RT_self_bias_moral_cat
 dev.copy2pdf(file="p_corr_RT_self1.pdf",out.type="cairo", width=8, height=6)
 ```
 
-```{r correlation of self-effect on RT between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr RT_selfBias between matching and categorization_id,echo=FALSE,warning=FALSE,message=FALSE }
 rt.self_bias_id <- cor.test(df.corr.bias_rt$L_rt_m.slf_oth_good,df.corr.bias_rt$T_rt_Id_slf_oth_good)
 df.rt.self_bias_id <- df.corr.bias_rt[,c("L_rt_m.slf_oth_good","T_rt_Id_slf_oth_good")]
 colnames(df.rt.self_bias_id) <- c("RT_self_bias_match","RT_self_bias_id_categorization")
@@ -1592,7 +1592,7 @@ dev.copy2pdf(file="p_corr_RT_self2.pdf",out.type="cairo", width=8, height=6)
 
 ```
 
-```{r correlation of moral-effect on RT between matching and categorization of moral,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr RT_valBias between matching and categorization_val,echo=FALSE,warning=FALSE,message=FALSE }
 rt.moral_bias_val <- cor.test(df.corr.bias_rt$L_rt_m.good_bad_slf,df.corr.bias_rt$T_rt_Valence_good_bad_slf)
 df.rt.moral_bias_moral <- df.corr.bias_rt[,c("L_rt_m.good_bad_slf","T_rt_Valence_good_bad_slf")]
 colnames(df.rt.moral_bias_moral) <- c("RT_moral_bias_match","RT_moral_bias_moral_categorization")
@@ -1605,7 +1605,7 @@ ggplot(df.rt.moral_bias_moral, aes(x=RT_moral_bias_match, y=RT_moral_bias_moral_
 dev.copy2pdf(file="p_corr_RT_moral1.pdf",out.type="cairo", width=8, height=6)
 ```
 
-```{r correlation of moral-effect on RT between matching and categorization of id,echo=FALSE,warning=FALSE,message=FALSE }
+```{r corr RT_valBias between matching and categorization_id,echo=FALSE,warning=FALSE,message=FALSE }
 rt.moral_bias_id <- cor.test(df.corr.bias_rt$L_rt_m.good_bad_slf,df.corr.bias_rt$T_rt_Id_good_bad_slf)
 df.rt.moral_bias_id <- df.corr.bias_rt[,c("L_rt_m.good_bad_slf","T_rt_Id_good_bad_slf")]
 colnames(df.rt.moral_bias_id) <- c("RT_moral_bias_match","RT_moral_bias_id_categorization")
