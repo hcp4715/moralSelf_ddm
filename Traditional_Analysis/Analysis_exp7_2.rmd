@@ -1,7 +1,7 @@
 ---
-title: "Analysis_exp7"
+title: "Data_Analysis_exp7"
 author: "hcp"
-date: "2016-10-28"
+date: "2017-12"
 output: word_document
 ---
 <style type="text/css">
@@ -50,7 +50,7 @@ pkgTest <- function(x)
   }
 }
 
-pkgNeeded <- (c("tidyverse","plyr","ggplot2", "reshape2","ez", "bootES","MBESS", "BayesFactor","psych","corrplot"))
+pkgNeeded <- (c("plyr","tidyverse","ggplot2", "reshape2","ez", "bootES","MBESS", "BayesFactor","psych","corrplot"))
 
 lapply(pkgNeeded,pkgTest)
 rm(pkgNeeded)
@@ -228,47 +228,52 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 
 ```{r loadingData_e7,echo=FALSE,results='hide'}
-df.L <- read.csv("df.Learn.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
-df.T <- read.csv("df.Test.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
-# render the numeric column
-cols.num <- c("Age","Block","Bin","Trial","RT","Accuracy")
-# Tcols.num <- c("SubjectID","Age","Block","Bin","Trial","RT","Accuracy")
-df.L[cols.num] <- sapply(df.L[cols.num], as.numeric)
-df.T[cols.num] <- sapply(df.T[cols.num], as.numeric)
+df.L <- read.csv("df.Learn.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for matching task
+df.T <- read.csv("df.Test.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)  # data for categorization task
 
-colnames(df.L)[colnames(df.L)=="Accuracy"] <- "ACC"
-colnames(df.T)[colnames(df.T)=="Accuracy"] <- "ACC"
+# render the data in numeric format for future analysis
+cols.num <- c("Age","Block","Bin","Trial","RT","Accuracy")
+df.L[cols.num] <- sapply(df.L[cols.num], as.numeric)  
+df.T[cols.num] <- sapply(df.T[cols.num], as.numeric)  
+
+# rename columns
+colnames(df.L)[colnames(df.L)=="Accuracy"]  <- "ACC"
+colnames(df.T)[colnames(df.T)=="Accuracy"]  <- "ACC"
 colnames(df.L)[colnames(df.L)=="SubjectID"] <- "Subject"
 colnames(df.T)[colnames(df.T)=="SubjectID"] <- "Subject"
 
 df.L$Subject <- factor(df.L$Subject)
 df.T$Subject <- factor(df.T$Subject)
 
-df.L$Morality[df.L$Morality == 'moral'] <- 'Good'
+# Change the name for different levels of independent variables
+df.L$Morality[df.L$Morality == 'moral']   <- 'Good'
 df.L$Morality[df.L$Morality == 'immoral'] <- 'Bad'
-df.L$Identity[df.L$Identity == 'self'] <- 'Self'
-df.L$Identity[df.L$Identity == 'other'] <- 'Other'
+df.L$Identity[df.L$Identity == 'self']    <- 'Self'
+df.L$Identity[df.L$Identity == 'other']   <- 'Other'
 
-df.L$Morality <- factor(df.L$Morality, levels=c("Good","Bad")) # make the variables in a specified order
-df.L$Identity <- factor(df.L$Identity, levels=c("Self","Other")) # make the variables in a specified order
-df.L$Match <- factor(df.L$Match, levels=c("match","nonmatch")) # make the variables in a specified order
+# make the variables in a specified order
+df.L$Morality <- factor(df.L$Morality, levels = c("Good","Bad"))    
+df.L$Identity <- factor(df.L$Identity, levels = c("Self","Other"))  
+df.L$Match    <- factor(df.L$Match,    levels = c("match","nonmatch"))
 
-
-df.T$Morality[df.T$Morality == 'moral'] <- 'Good'
+# Change the name for different levels of independent variables
+df.T$Morality[df.T$Morality == 'moral']   <- 'Good'
 df.T$Morality[df.T$Morality == 'immoral'] <- 'Bad'
-df.T$Identity[df.T$Identity == 'self'] <- 'Self'
-df.T$Identity[df.T$Identity == 'other'] <- 'Other'
-df.T$Task[df.T$Task == 'Self'] <- 'ID'
-df.T$Task[df.T$Task == 'self'] <- 'Id_task'
-df.T$Task[df.T$Task == 'moral'] <- 'Valence_task'
-df.T$Morality <- factor(df.T$Morality, levels=c("Good","Bad")) # make the variables in a specified order
-df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other")) # make the variables in a specified order
+df.T$Identity[df.T$Identity == 'self']    <- 'Self'
+df.T$Identity[df.T$Identity == 'other']   <- 'Other'
+df.T$Task[df.T$Task == 'Self']            <- 'ID'
+df.T$Task[df.T$Task == 'self']            <- 'Id_task'
+df.T$Task[df.T$Task == 'moral']           <- 'Valence_task'
+
+# make the variables in a specified order
+df.T$Morality <- factor(df.T$Morality, levels=c("Good","Bad"))    
+df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other"))
 ```
 
 ```{r clean the data_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
 df.L1 <- df.L
 df.T1 <- df.T
-df.L1$RT <- df.L1$RT*1000 # transfer from seconds to min seconds
+df.L1$RT <- df.L1$RT * 1000 # transfer from seconds to min seconds
 df.T1$RT <- df.T1$RT * 1000
 
 # no response equal to wrong
@@ -307,18 +312,19 @@ df.T1.acc.g <-  ddply(df.T1,.(Subject), summarise,
                     countN = sum(ACC),
                     ACC = sum(ACC)/length(ACC))
 
-excld.sub <- df.L1.acc.g$Subject[df.L1.acc.g$ACC < 0.5]      # less 50% accuracy in matching task
-excld.sub.T <- df.T1.acc.g$Subject[df.T1.acc.g$ACC < 0.5]    # less than 50% accuracy in categorization task
-df.L1.valid <- df.L1.fm[!(df.L1.fm$Subject %in% excld.sub),] # exclude the invalid subjects
+excld.sub   <- df.L1.acc.g$Subject[df.L1.acc.g$ACC < 0.5]      # less 50% accuracy in matching task
+excld.sub.T <- df.T1.acc.g$Subject[df.T1.acc.g$ACC < 0.5]      # less than 50% accuracy in categorization task
+df.L1.valid <- df.L1.fm[!(df.L1.fm$Subject %in% excld.sub),]   # exclude the invalid subjects
 df.T1.valid <- df.T1[!(df.T1$Subject %in% excld.sub),]
 df.T1.valid <- df.T1.valid[!(df.T1.valid$Subject %in% excld.sub.T),]
 
+# check the number of participants are correct
 length(unique(df.L1.valid$Subject)) + length(excld.sub) == length(unique(df.L1$Subject))
 # excld.trials3 <- excld.trials[!(excld.trials$Subject %in% excld.sub),]
 excld.trials.L <- df.L1.valid[df.L1.valid$RT <= 200,]
-df.L1.V <- df.L1.valid[!(df.L1.valid$RT <= 200),] 
+df.L1.V        <- df.L1.valid[!(df.L1.valid$RT <= 200),]  # valid trial data for match task
 excld.trials.T <- df.T1.valid[df.T1.valid$RT <= 200,]
-df.T1.V <- df.T1.valid[!(df.T1.valid$RT <= 200),] 
+df.T1.V        <- df.T1.valid[!(df.T1.valid$RT <= 200),]  # valid trial data for categorization task
 nrow(excld.trials.T) + nrow(df.T1.V) == nrow(df.T1.valid) # if true, everything is ok
 
 ## Basic information of the data ####
@@ -358,7 +364,8 @@ For the learning phase, we excluded the first 24 trials, which is suppose to be 
 ### Results of Learning phase
 #### Analaysis of d prime
 ```{r analyzing for d prime_e7_L, echo=FALSE, results='hide',warning=FALSE, message=FALSE}
-# calculate the d prime for each condition
+## calculate the d prime for each condition
+# calculate the number of hit,CR,miss or FA 
 df.L1.V$sdt <- NA
 for (i in 1:nrow(df.L1.V)){
         if (df.L1.V$ACC[i] == 1 & df.L1.V$Match[i] == "match" & !is.na(df.L1.V$ResponseKey[i])){
@@ -378,8 +385,8 @@ df.L1.V.SDT <- df.L1.V.SDT[complete.cases(df.L1.V.SDT$sdt),] # exclude NA, which
 
 # long format to wide
 df.L1.V.SDT_w <- dcast(df.L1.V.SDT, Subject + Morality + Identity ~ sdt,value.var = "N")
-df.L1.V.SDT_w$miss[is.na(df.L1.V.SDT_w$miss)] <- 0
-df.L1.V.SDT_w$FA[is.na(df.L1.V.SDT_w$FA)] <- 0
+df.L1.V.SDT_w$miss[is.na(df.L1.V.SDT_w$miss)] <- 0 # transfer NA to 0
+df.L1.V.SDT_w$FA[is.na(df.L1.V.SDT_w$FA)]     <- 0
 df.L1.V.SDT_w$hitR <- df.L1.V.SDT_w$hit/(df.L1.V.SDT_w$hit + df.L1.V.SDT_w$miss)
 df.L1.V.SDT_w$faR <- df.L1.V.SDT_w$FA/(df.L1.V.SDT_w$FA + df.L1.V.SDT_w$CR)
 
