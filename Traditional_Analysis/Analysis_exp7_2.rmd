@@ -363,7 +363,7 @@ For the learning phase, we excluded the first 24 trials, which is suppose to be 
 
 ### Results of Learning phase
 #### Analaysis of d prime
-```{r analyzing for d prime_e7_L, echo=FALSE, results='hide',warning=FALSE, message=FALSE}
+```{r analyzing for d prime_e7_L, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 ## calculate the d prime for each condition
 # calculate the number of hit,CR,miss or FA 
 df.L1.V$sdt <- NA
@@ -1475,6 +1475,7 @@ The correlation between the self-bias and moral bias of ACC of match trials in m
 #df.T1.V.acc.subj_w <- read.csv("data_catigorization_v_acc.csv",header = TRUE,sep = ",")
 
 df.corr.bias_acc <- merge(df.L1.V.acc_w[,c(1,10:13)],df.T1.V.acc.subj_w[,c(1,10:17)],by = 'Subject')
+write.csv(df.corr.bias_acc,"df.corr.bias_acc.csv",row.names = F)
 df.corr.bias_acc <- df.corr.bias_acc[,2:13]
 acc_bias.corr <- corr.test(df.corr.bias_acc,use = "pairwise",method="pearson",adjust="holm", alpha=.05,ci=TRUE)
 postscript("corr_acc_bias_p_05.eps", width = 2048, height = 1024)
@@ -1501,6 +1502,7 @@ The correlation between the self-bias and moral bias of RT of match trials in ma
 ```{r correlattion between learning and testing_RT-bias,echo=FALSE,warning=FALSE,message=FALSE }
 # merge the data by subj ID
 df.corr.bias_rt <- merge(df.L1.V.RT.subj_w[,c(1,10:13)],df.T1.V.RT.subj_w[,c(1,10:17)],by = 'Subject')
+write.csv(df.corr.bias_rt,"df.corr.bias_rt.csv",row.names = F)
 df.corr.bias_rt <- df.corr.bias_rt[,2:13]
 rt_bias.corr <- corr.test(df.corr.bias_rt)
 
