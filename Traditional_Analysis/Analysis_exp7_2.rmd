@@ -52,11 +52,10 @@ pkgTest <- function(x)
 
 pkgNeeded <- (c("plyr","tidyverse","ggplot2", "reshape2","ez", "bootES","MBESS", "BayesFactor","psych","corrplot"))
 
-lapply(pkgNeeded,pkgTest)
-rm(pkgNeeded)
-# using APA style plot
-# Save some time and stor APA format-related code in an object so you can easily
-# use it in multiple plots
+lapply(pkgNeeded,pkgTest) # please pay attention to the overlap between differen libraries.
+rm(pkgNeeded)             # remove the pkgNeeded variable
+
+# using APA style plot for later use
 windowsFonts(Times=windowsFont("TT Times New Roman")) # explicit mapping to "times"
 apatheme=theme_bw()+
         theme(panel.grid.major = element_blank(),
@@ -98,7 +97,7 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                        )
         # Rename the "mean" column
         
-        datac <- rename(datac,c("mean" = measurevar))
+        datac <- plyr::rename(datac,c("mean" = measurevar))
         
         datac$se <- datac$sd /sqrt(datac$N)   # calculate standard error of the mean
         
@@ -274,7 +273,7 @@ df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other"))
 df.L1 <- df.L
 df.T1 <- df.T
 df.L1$RT <- df.L1$RT * 1000 # transfer from seconds to min seconds
-df.T1$RT <- df.T1$RT * 1000
+df.T1$RT <- df.T1$RT * 1000 # careful about the scale of time when using HDDM or ex-Gaussian
 
 # no response equal to wrong
 df.L1$ACC[df.L1$ACC == -1] <- 0
@@ -363,7 +362,7 @@ For the learning phase, we excluded the first 24 trials, which is suppose to be 
 
 ### Results of Learning phase
 #### Analaysis of d prime
-```{r analyzing for d prime_e7_L, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
+```{r analyzing for d prime_e7_match, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 ## calculate the d prime for each condition
 # calculate the number of hit,CR,miss or FA 
 df.L1.V$sdt <- NA
@@ -412,15 +411,17 @@ df.L1.V.SDT_ww <- dcast(df.L1.V.SDT_w, Subject ~ Identity + Morality ,value.var 
 # anova for d prime with 2*2 design
 e7_L.d_anova <- ezANOVA(df.L1.V.SDT_w,dv = dprime, wid = Subject, within=.(Morality,Identity), type=3)
 
-# summary(aov(dprime ~ Morality*Identity + Error(Subject/(Morality*Identity)), data=df.L1.V.SDT_w))
-df.L1.V.SDT_w$Subject <- factor(df.L1.V.SDT_w$Subject)
-e7_L.dprime_anova_bf = anovaBF(dprime ~ Morality*Identity + Subject, data = df.L1.V.SDT_w, whichRandom = "Subject")
+df.L1.V.SDT_w$Subject <- factor(df.L1.V.SDT_w$Subject)  # make the subject "factor"
+
+# using Bayesfactor analysis (which is not reported in the document)
+e7_L.dprime_anova_bf  <- anovaBF(dprime ~ Morality*Identity + Subject, data = df.L1.V.SDT_w, whichRandom = "Subject")
 
 # Good self vs Bad self
-e7_L.d.t.good_bad_slf <- t.test(df.L1.V.SDT_ww$Self_Good,df.L1.V.SDT_ww$Self_Bad,paired = TRUE)
-df.L1.V.SDT_ww$good_bad_slf <- df.L1.V.SDT_ww$Self_Good - df.L1.V.SDT_ww$Self_Bad
-e7_L.d.t.good_bad_slf.CI <- bootES(df.L1.V.SDT_ww$good_bad_slf,R = 20000, effect.type = "cohens.d")
+e7_L.d.t.good_bad_slf <- t.test(df.L1.V.SDT_ww$Self_Good,df.L1.V.SDT_ww$Self_Bad,paired = TRUE)     # t-test
+df.L1.V.SDT_ww$good_bad_slf <- df.L1.V.SDT_ww$Self_Good - df.L1.V.SDT_ww$Self_Bad                   # calculate the differences
+e7_L.d.t.good_bad_slf.CI <- bootES(df.L1.V.SDT_ww$good_bad_slf,R = 20000, effect.type = "cohens.d") # calculate the cI using BootES
 
+# give new names for each key information, for later use in the markdown
 e7_L.d.tvalue.good_bad_slf <- round(as.numeric(e7_L.d.t.good_bad_slf[[1]]),3)
 e7_L.d.df.L1.good_bad_slf <- as.numeric(e7_L.d.t.good_bad_slf[[2]])
 e7_L.d.pvalue.good_bad_slf.adj <- p.adjust(as.numeric(e7_L.d.t.good_bad_slf[[3]]),"bonferroni",4)
@@ -464,7 +465,7 @@ e7_L.d.cohens.slf_oth_bad <- round(e7_L.d.t.slf_oth_bad.CI[[1]],4)
 e7_L.d.CI.L.slf_oth_bad <- round(e7_L.d.t.slf_oth_bad.CI[[12]][1],4)
 e7_L.d.CI.H.slf_oth_bad <- round(e7_L.d.t.slf_oth_bad.CI[[12]][2],4)
 
-#####save the dprime and ACC data for late used####
+#####save the dprime and ACC data for late used ####
 colnames(df.L1.V.SDT_ww) <- paste("L_d", colnames(df.L1.V.SDT_ww), sep = "_")
 write.csv(df.L1.V.SDT_ww,"data_matching_v_dprime.csv",row.names=FALSE)
 df.L1.V.acc <-  ddply(df.L1.V,.(Subject,Match,Identity,Morality), summarise,
@@ -480,24 +481,24 @@ df.L1.V.acc_w$slf_oth_bad <- df.L1.V.acc_w$match_Self_Bad - df.L1.V.acc_w$match_
 colnames(df.L1.V.acc_w) <- paste("L_acc", colnames(df.L1.V.acc_w), sep = "_")
 colnames(df.L1.V.acc_w)[colnames(df.L1.V.acc_w) == 'L_acc_Subject'] <- 'Subject'
 write.csv(df.L1.V.acc_w,"data_matching_v_acc.csv",row.names=FALSE)
-#####
+##### save data for later analysis ####
 
-df.L1.V.SDT.sum <- summarySE(df.L1.V.SDT_w,measurevar = 'dprime',groupvars = c('Morality','Identity'))
+df.L1.V.SDT.sum      <- summarySE(df.L1.V.SDT_w,measurevar = 'dprime',groupvars = c('Morality','Identity'))
 e7_L.d.mean.GoodSelf <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Self'],3)
-e7_L.d.sd.GoodSelf <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Self'],3)
-e7_L.d.mean.BadSelf <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Self'],3)
-e7_L.d.sd.BadSelf <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+e7_L.d.sd.GoodSelf   <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+e7_L.d.mean.BadSelf  <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Self'],3)
+e7_L.d.sd.BadSelf    <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Self'],3)
 
 e7_L.d.mean.GoodOther <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Other'],3)
-e7_L.d.sd.GoodOther <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Other'],3)
-e7_L.d.mean.BadOther <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Other'],3)
-e7_L.d.sd.BadOther <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+e7_L.d.sd.GoodOther   <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Good' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+e7_L.d.mean.BadOther  <- round(df.L1.V.SDT.sum$dprime[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Other'],3)
+e7_L.d.sd.BadOther    <- round(df.L1.V.SDT.sum$sd[df.L1.V.SDT.sum$Morality == 'Bad' & df.L1.V.SDT.sum$Identity == 'Other'],3)
 
 e7_L.p_dprime1 <- ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Identity, group = Morality,shape = Morality, fill = Morality)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3,width = .6) +    # Thinner lines
         geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
                       #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'self-referential',y = 'd prime') +
@@ -508,39 +509,41 @@ e7_L.p_dprime1 <- ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Identity, gr
         scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
         scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
         #theme_classic()
-        apatheme
-
-
-e7_L.p_dprime2 <- ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Morality, group = Identity,shape = Identity, fill = Identity)) +
-        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
-        geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
-                      #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
-                      width = .2,
-                      position=position_dodge(.6)) +
-        labs(x = 'Moral valence',y = 'd prime') +
-        #ylab(" Reaction times") + 
-        #ylim(1, 4) +
-        ggtitle("d prime for each condition") +
-        coord_cartesian(ylim=c(1,3.5))+
-        scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
-        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
-        #theme_classic()
-        apatheme + 
-        theme(axis.text = element_text (size = 24)) + 
+        apatheme  + 
+        theme(axis.text = element_text (size = 24,color = 'black')) + 
         theme(axis.title = element_text (size = 24)) + 
         theme(plot.title = element_text(size = 24)) +
         theme(legend.text = element_text(size =24)) +
         theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
         theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
-        scale_fill_manual(values=c("grey20", "grey80"),labels=c("self    ","other"))+
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Good   ","Bad"))+
         theme(axis.line.x = element_line(color="black", size = 1),
         axis.line.y = element_line(color="black", size = 1))
 
+e7_L.p_dprime2 <- ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Morality, group = Identity,shape = Identity, fill = Identity)) +
+        geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
+        geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
+                      #geom_errorbar(aes(ymin = 1, ymax = 4),
+                      size = 1,
+                      width = .2,
+                      position=position_dodge(.6)) +
+        labs(x = 'Moral valence',y = 'd prime') +
+        ggtitle("d prime for each condition") +
+        coord_cartesian(ylim=c(1,3.5))+
+        scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
+        scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
+        apatheme + 
+        theme(axis.text = element_text (size = 24,color = 'black')) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce between title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("self    ","other"))+
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+# save the plot to pdf file
 ggsave("e7_L.p_dprime2.pdf", e7_L.p_dprime2, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
-# tiff(filename = "e7_L.p_dprime2.tiff", width = 8, height = 8, units = 'in', res = 300)
-# e7_L.p_dprime2
-# dev.off()
 
 ```
 ANOVA for *d'* with moral character and self-relatedness as within-subjects factors.
@@ -564,25 +567,30 @@ Good self (`r e7_L.d.mean.GoodSelf`  $\pm$ `r e7_L.d.sd.GoodSelf`) vs. Good othe
 
 Bad self (`r e7_L.d.mean.BadSelf` $\pm$ `r e7_L.d.sd.BadSelf`) vs. Bad other (`r e7_L.d.mean.BadOther`  $\pm$ `r e7_L.d.sd.BadOther`): *t*(`r e7_L.d.df.L1.slf_oth_bad`) = `r e7_L.d.tvalue.slf_oth_bad`, *p* = `r e7_L.d.pvalue.slf_oth_bad.adj`, *Cohen's* $d_z$ = `r e7_L.d.cohens.slf_oth_bad`, 95% CI [`r e7_L.d.CI.L.slf_oth_bad` `r e7_L.d.CI.H.slf_oth_bad`]
 
-```{r plot1 the d prime_e7_L, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
+```{r plot1 the d prime_e7_match, fig.width=4, fig.height=6,echo=FALSE,warning=FALSE,message=FALSE }
 ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Identity, group = Morality,shape = Morality, fill = Morality)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) + # Thinner lines
         geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,     # width of the error bar
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'self-referential',y = 'd prime') +
-        #ylab(" Reaction times") + 
-        #ylim(1, 4) +
         ggtitle("d prime for each condition") +
         coord_cartesian(ylim=c(1,3.5))+
         scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
         scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
-        #theme_classic()
-        apatheme
+        apatheme + 
+        theme(axis.text = element_text (size = 24,color = 'black')) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce between title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Good    ","Bad")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 
-# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
 ```
 
 The above figure shows the d prime for each condition (way 1)
@@ -592,7 +600,7 @@ ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Morality, group = Identity,sha
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = dprime - se, ymax = dprime + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'd prime') +
@@ -603,9 +611,17 @@ ggplot(data = df.L1.V.SDT.sum,aes(y = dprime, x = Morality, group = Identity,sha
         scale_y_continuous(breaks = seq(1,3.5,0.5),expand = c(0, 0)) +
         scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
         #theme_classic()
-        apatheme
+        apatheme + 
+        theme(axis.text = element_text (size = 24,color = 'black')) +   # set the font size and color of the axis title
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("self    ","other"))+
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 
-# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
 ```
 
 The above figure shows the d prime for each condition (way 2)
@@ -683,7 +699,7 @@ df.L1.V.RT.grand.match <- df.L1.V.RT.grand[df.L1.V.RT.grand$Match == "match",]
 colnames(df.L1.V.RT.subj_w) <- paste("L_rt", colnames(df.L1.V.RT.subj_w), sep = "_")
 colnames(df.L1.V.RT.subj_w)[colnames(df.L1.V.RT.subj_w) == 'L_rt_Subject'] <- 'Subject'
 write.csv(df.L1.V.RT.subj_w,"data_matching_v_RT.csv",row.names=FALSE)
-#### save the rt data ###
+#### save the rt data ####
 
 e7_L.rt.mean.GoodSelf <- round(df.L1.V.RT.grand.match$RT[df.L1.V.RT.grand.match$Morality == 'Good' & df.L1.V.RT.grand.match$Identity == 'Self'],0)
 e7_L.rt.sd.GoodSelf <- round(df.L1.V.RT.grand.match$sd[df.L1.V.RT.grand.match$Morality == 'Good' & df.L1.V.RT.grand.match$Identity == 'Self'],0)
@@ -699,7 +715,7 @@ e7_L.rt.sd.BadOther <- round(df.L1.V.RT.grand.match$sd[df.L1.V.RT.grand.match$Mo
 e7_L.p_rt1 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Identity,y=RT,group=Morality,shape = Morality,fill = Morality)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         xlab("Self-referential") +
@@ -710,12 +726,21 @@ e7_L.p_rt1 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Identity,y=RT,group=Mo
         #ylim(0.3, 0.8) +
         ggtitle("RT for each condition") +
         #scale_y_continuous("Reation Times (ms)") + 
-        apatheme
+        apatheme + 
+        theme(axis.text    = element_text(size = 24, color = 'black')) + 
+        theme(axis.title   = element_text(size = 24)) + 
+        theme(plot.title   = element_text(size = 24)) +
+        theme(legend.text  = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Good   ","Bad")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 
 e7_L.p_rt2 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Identity,shape = Identity,fill = Identity)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +   # Thinner lines
         geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         xlab("Moral valence") +
@@ -724,10 +749,9 @@ e7_L.p_rt2 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Id
         scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter.
         #ylim(0.3, 0.8) +
         ggtitle("RT for each condition") +
-        #scale_y_continuous("Reation Times  (ms)",expand = c(0, 0)) +
         scale_y_continuous("Reation Times  (ms)",breaks = seq(500,800,50),expand = c(0, 0)) +
         apatheme + 
-        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.text = element_text (size = 24, color = 'black')) + 
         theme(axis.title = element_text (size = 24)) + 
         theme(plot.title = element_text(size = 24)) +
         theme(legend.text = element_text(size =24)) +
@@ -738,13 +762,6 @@ e7_L.p_rt2 <- ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Id
         axis.line.y = element_line(color="black", size = 1))
 
 ggsave("e7_L.p_rt2.pdf", e7_L.p_rt2, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
-#tiff(filename = "e7_L.p_rt2.tiff", width = 8, height = 8, units = 'in', res = 300)
-#e7_L.p_rt2
-#dev.off()
-
-#tiff(filename = "Figure exp7. d prime and RTs of Experiment 7 (way 2).tiff", width = 8, height = 6, units = 'in', res = 300)
-#multiplot(e7_L.p_dprime2,e7_L.p_rt2,cols = 2)
-#dev.off()
 
 ```
 
@@ -799,7 +816,7 @@ Bad self (`r e7_L.rt.mean.BadSelf` $\pm$ `r e7_L.rt.sd.BadSelf`) vs. Bad other (
 ggplot(data = df.L1.V.RT.grand.match, aes(x=Identity,y=RT,group=Morality,shape = Morality,fill = Morality)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         xlab("Self-referential") +
@@ -810,8 +827,16 @@ ggplot(data = df.L1.V.RT.grand.match, aes(x=Identity,y=RT,group=Morality,shape =
         #ylim(0.3, 0.8) +
         ggtitle("RT for each condition") +
         #scale_y_continuous("Reation Times (ms)") + 
-        apatheme
-#ggsave('RT_mean_plot2.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+        apatheme + 
+        theme(axis.text = element_text (size = 24,color = 'black')) +   # set the font size and color of the axis title
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Good    ","Bad"))+
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 
 ```
 
@@ -822,7 +847,7 @@ The above is the reaction time for each condition (way 1)
 ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Identity,shape = Identity,fill = Identity)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) + # Thinner lines
         geom_errorbar(aes(ymin = RT-se, ymax = RT + se),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         xlab("Moral valence") +
@@ -832,8 +857,16 @@ ggplot(data = df.L1.V.RT.grand.match, aes(x=Morality,y=RT,group=Identity,shape =
         #ylim(0.3, 0.8) +
         ggtitle("RT for each condition") +
         scale_y_continuous("Reation Times  (ms)",expand = c(0, 0)) + 
-        apatheme
-#ggsave('RT_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+        apatheme + 
+        theme(axis.text = element_text (size = 24,color = 'black')) +   # set the font size and color of the axis title
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("self    ","other")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 
 ```
 
@@ -891,7 +924,7 @@ ACC_e7_T <- ggplot(data = df.T1.V.acc.sum,aes(y = ACC, x = Morality, group = Tas
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = ACC - se, ymax = ACC + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'Accuracy') +
@@ -904,7 +937,7 @@ ACC_e7_T <- ggplot(data = df.T1.V.acc.sum,aes(y = ACC, x = Morality, group = Tas
         #theme_classic()
         facet_grid(.~ Identity) + 
         apatheme +
-        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.text = element_text (size = 24, color = 'black')) + 
         theme(axis.title = element_text (size = 24)) + 
         theme(plot.title = element_text(size = 24)) +
         theme(legend.text = element_text(size =24)) +
@@ -1019,7 +1052,7 @@ ACC_e7_T_noTask <- ggplot(data =df.T1.V.acc.sum.noTask,aes(y = ACC, x =Morality,
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = ACC - se, ymax = ACC + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'Accuracy') +
@@ -1032,12 +1065,12 @@ ACC_e7_T_noTask <- ggplot(data =df.T1.V.acc.sum.noTask,aes(y = ACC, x =Morality,
         #theme_classic()
         #facet_grid(.~ Identity) + 
         apatheme +
-        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.text = element_text (size = 24, color = 'black')) + 
         theme(axis.title = element_text (size = 24)) + 
         theme(plot.title = element_text(size = 24)) +
         theme(legend.text = element_text(size =24)) +
-        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
-        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce between title and x axis
         scale_fill_manual(values=c("grey20", "grey80"),labels=c("Self       ","Other")) +
         theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
         theme(axis.line.x = element_line(color="black", size = 1),
@@ -1073,7 +1106,7 @@ ggplot(data = df.T1.V.acc.sum,aes(y = ACC, x = Morality, group = Identity,shape 
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = ACC - se, ymax = ACC + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'Accuracy') +
@@ -1085,8 +1118,17 @@ ggplot(data = df.T1.V.acc.sum,aes(y = ACC, x = Morality, group = Identity,shape 
         scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
         #theme_classic()
         facet_grid(.~Task) + 
-        apatheme
-# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+        apatheme  +
+        theme(axis.text = element_text (size = 24, color = 'black')) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce between title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Self       ","Other")) +
+        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 ```
 
 The above is the ACC for each condition. left panel is the results of moral-categorization task, the right panel is the self-other categorization task.
@@ -1107,15 +1149,15 @@ df.T1.V.RT.subj_w  <- dcast(df.T1.V.RT.subj, Subject ~ Task + Identity + Moralit
 
 # calculate the mean difference for Good effect (Good-Bad)
 df.T1.V.RT.subj_w$Valence_good_bad_slf  <- df.T1.V.RT.subj_w$Valence_task_Self_Good - df.T1.V.RT.subj_w$Valence_task_Self_Bad
-df.T1.V.RT.subj_w$Valence_good_bad_oth <- df.T1.V.RT.subj_w$Valence_task_Other_Good - df.T1.V.RT.subj_w$Valence_task_Other_Bad
-df.T1.V.RT.subj_w$Id_good_bad_slf     <- df.T1.V.RT.subj_w$Id_task_Self_Good   - df.T1.V.RT.subj_w$Id_task_Self_Bad
-df.T1.V.RT.subj_w$ID_good_bad_oth    <- df.T1.V.RT.subj_w$Id_task_Other_Good - df.T1.V.RT.subj_w$Id_task_Other_Bad
+df.T1.V.RT.subj_w$Valence_good_bad_oth  <- df.T1.V.RT.subj_w$Valence_task_Other_Good - df.T1.V.RT.subj_w$Valence_task_Other_Bad
+df.T1.V.RT.subj_w$Id_good_bad_slf       <- df.T1.V.RT.subj_w$Id_task_Self_Good   - df.T1.V.RT.subj_w$Id_task_Self_Bad
+df.T1.V.RT.subj_w$ID_good_bad_oth       <- df.T1.V.RT.subj_w$Id_task_Other_Good - df.T1.V.RT.subj_w$Id_task_Other_Bad
 
 # calculate the mean difference for self effect (self-other)
 df.T1.V.RT.subj_w$Valence_slf_oth_good <- df.T1.V.RT.subj_w$Valence_task_Self_Good   - df.T1.V.RT.subj_w$Valence_task_Other_Good
-df.T1.V.RT.subj_w$valence_slf_oth_bad <- df.T1.V.RT.subj_w$Valence_task_Self_Bad - df.T1.V.RT.subj_w$Valence_task_Other_Bad
-df.T1.V.RT.subj_w$Id_slf_oth_good    <- df.T1.V.RT.subj_w$Id_task_Self_Good - df.T1.V.RT.subj_w$Id_task_Other_Good
-df.T1.V.RT.subj_w$Id_slf_oth_bad    <- df.T1.V.RT.subj_w$Id_task_Self_Bad - df.T1.V.RT.subj_w$Id_task_Other_Bad
+df.T1.V.RT.subj_w$valence_slf_oth_bad  <- df.T1.V.RT.subj_w$Valence_task_Self_Bad - df.T1.V.RT.subj_w$Valence_task_Other_Bad
+df.T1.V.RT.subj_w$Id_slf_oth_good      <- df.T1.V.RT.subj_w$Id_task_Self_Good - df.T1.V.RT.subj_w$Id_task_Other_Good
+df.T1.V.RT.subj_w$Id_slf_oth_bad       <- df.T1.V.RT.subj_w$Id_task_Self_Bad - df.T1.V.RT.subj_w$Id_task_Other_Bad
 
 #### save the rt data for later use ####
 colnames(df.T1.V.RT.subj_w) <- paste("T_rt", colnames(df.T1.V.RT.subj_w), sep = "_")
@@ -1130,17 +1172,20 @@ df.T1.V.RT_Val_task <- df.T1.V.RT[df.T1.V.RT$Task == "Valence_task",]
 #df.T1.V.RT_match.self <- df.T1.V.RT_match[df.T1.V.RT_match$Identity == 'self',]
 #df.T1.V.RT_match.other <- df.T1.V.RT_match[df.T1.V.RT_match$Identity == 'other',]
 
-e7_T.rt_anova <- ezANOVA(df.T1.V.RT,dv = RT, wid = Subject, within=.(Task,Morality,Identity),within_full=.(Task,Identity,Morality), type=3)
+e7_T.rt_anova <- ezANOVA(df.T1.V.RT,dv = RT, wid = Subject, within=.(Task,Morality,Identity),
+                         within_full=.(Task,Identity,Morality), type=3)
 
-e7_T.rt_anova.Id_task <- ezANOVA(df.T1.V.RT_Id_task,dv = RT, wid = Subject, within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
+e7_T.rt_anova.Id_task <- ezANOVA(df.T1.V.RT_Id_task,dv = RT, wid = Subject, 
+                                 within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
 
-e7_T.rt_anova.val_task <- ezANOVA(df.T1.V.RT_Val_task,dv = RT, wid = Subject, within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
+e7_T.rt_anova.val_task <- ezANOVA(df.T1.V.RT_Val_task,dv = RT, wid = Subject,
+                                  within=.(Morality,Identity),within_full=.(Identity,Morality), type=3)
 
 RT_e7_T <- ggplot(data = df.T1.V.RT.grand,aes(y = RT, x = Morality, group = Task,shape = Task, fill = Task)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = RT - se, ymax = RT + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'Reaction times') +
@@ -1153,22 +1198,18 @@ RT_e7_T <- ggplot(data = df.T1.V.RT.grand,aes(y = RT, x = Morality, group = Task
         #theme_classic()
         facet_grid(.~ Identity) + 
         apatheme +
-        theme(axis.text = element_text (size = 24)) + 
+        theme(axis.text = element_text (size = 24, color = 'black')) + 
         theme(axis.title = element_text (size = 24)) + 
         theme(plot.title = element_text(size = 24)) +
         theme(legend.text = element_text(size =24)) +
         theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +  # increase the space between title and y axis
         theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce betwen title and x axis
         scale_fill_manual(values=c("grey20", "grey80"),labels=c("id criteria    ","morality criteria")) +
-        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(strip.text.x = element_text(size = 16, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
         theme(axis.line.x = element_line(color="black", size = 1),
         axis.line.y = element_line(color="black", size = 1))
 
 ggsave("RT_e7_T.pdf", RT_e7_T, scale = 1,height = 8, width = 8, dpi = 300, family = "Times")
-# tiff(filename = "RT_e7_T.tiff", width = 8, height = 8, units = 'in', res = 300)
-# RT_e7_T
-# dev.off()
-
 
 ```
 
@@ -1193,7 +1234,6 @@ Since there was no signficant interaction between identity and other two variabl
 
 ```{r RT_e7_T_simple_effect_noID, ,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
 # combine data cross identity
-# tmp <- aggregate(df.T1.V.acc.subj[,7],list(df.T1.V.acc.subj$Subject,df.T1.V.acc.subj$Morality,df.T1.V.acc.subj$Identity),mean)
 df.T1.V.RT.subj.noID <- summarySE(df.T1.V.RT.subj,measurevar = 'RT',groupvars = c('Subject','Task','Morality'))
 df.T1.V.RT.subj.noID_w <- dcast(df.T1.V.RT.subj.noID, Subject ~ Task + Morality ,value.var = "RT")
 
@@ -1208,7 +1248,6 @@ df.T1.V.RT.subj.noID_w$ID_Val_bad <- df.T1.V.RT.subj.noID_w$Id_task_Bad - df.T1.
 write.csv(df.T1.V.RT.subj.noID_w, 'df.T1.V.RT.subj.noID_w.csv',row.names = F)
 
 e7_T.RT_anova_noID <- ezANOVA(df.T1.V.RT.subj.noID,dv = RT, wid = Subject, within=.(Task,Morality), type=3)
-# e7_T.acc_anova_noTask1 is exactly the same as in three way rm ANOVA
 
 # simple effect:
 
@@ -1244,7 +1283,6 @@ e7_T.RT.pvalue.ID_Val_good.adj <- p.adjust(as.numeric(e7_T.RT.t.ID_Val_good[[3]]
 e7_T.RT.cohens.ID_Val_good <- round(e7_T.RT.t.ID_Val_good.CI[[1]],4) 
 e7_T.RT.CI.L.ID_Val_good <- round(e7_T.RT.t.ID_Val_good.CI[[12]][1],4)
 e7_T.RT.CI.H.ID_Val_good <- round(e7_T.RT.t.ID_Val_good.CI[[12]][2],4)
-
 
 # Bad valence: self task v. moral task
 e7_T.RT.t.ID_Val_bad <- t.test(df.T1.V.RT.subj.noID_w$Id_task_Bad,df.T1.V.RT.subj.noID_w$Valence_task_Bad,paired = TRUE)
@@ -1370,7 +1408,7 @@ RT_e7_T_noTask <- ggplot(data =df.T1.V.RT.sum.noTask,aes(y = RT, x =Morality, gr
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = RT - se, ymax = RT + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'Reaction times') +
@@ -1423,21 +1461,26 @@ ggplot(data = df.T1.V.RT.grand,aes(y = RT, x = Morality, group = Task,shape = Ta
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3, width = 0.6) +  # Thinner lines
         geom_errorbar(aes(ymin = RT - se, ymax = RT + se),
         #geom_errorbar(aes(ymin = 1, ymax = 4),
-                      size = .3,
+                      size = 1,
                       width = .2,
                       position=position_dodge(.6)) +
         labs(x = 'Moral valence',y = 'Reaction times') +
-        #ylab(" Reaction times") + 
-        #ylim(1, 4) +
         ggtitle("Reaction times for each condition") +
         coord_cartesian(ylim=c(500,800)) +
         scale_y_continuous(breaks=seq(500,800,50),expand = c(0, 0)) +
         scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
-        #theme_classic()
         facet_grid(.~ Identity) + 
-        apatheme
-
-# ggsave('dprime_mean_plot.png', width=4, height=6, unit='in', dpi=300)  # save the plot
+        apatheme +
+        theme(axis.text = element_text (size = 24, color = 'black')) + 
+        theme(axis.title = element_text (size = 24)) + 
+        theme(plot.title = element_text(size = 24)) +
+        theme(legend.text = element_text(size =24)) +
+        theme(axis.title.y = element_text(margin=margin(0,20,0,0))) +   # increase the space between title and y axis
+        theme(axis.title.x = element_text(margin=margin(20,0,0,0))) +   # increase the sapce between title and x axis
+        scale_fill_manual(values=c("grey20", "grey80"),labels=c("Id_task  ","Moral_task")) +
+        theme(strip.text.x = element_text(size = 24, colour = "black", angle = 0),panel.margin.x = unit(4, "lines")) +
+        theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
 ```
 
 The above is the RT for each condition. left panel is the results of moral-categorization task, the right panel is the self-other categorization task.
