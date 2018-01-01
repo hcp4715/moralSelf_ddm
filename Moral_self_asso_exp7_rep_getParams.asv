@@ -35,8 +35,8 @@ balanceMatrix.selfResp     = repmat({'F','F','F','J','J','J','F','F','F','J','J'
 balanceMatrix.otherResp    = repmat({'J','J','J','F','F','F','J','J','J','F','F','F'},[1,6]);  % response for "other" trials in self-other categorization  in match tasks
 balanceMatrix.moralResp    = repmat({'U','U','U','R','R','R','U','U','U','R','R','R'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
 balanceMatrix.immoralResp  = repmat({'R','R','R','U','U','U','R','R','R','U','U','U'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
-balanceMatrix.importResp   = repmat({'Q','Q','Q','P','P','P','Q','Q','Q','P','P','P'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
-balanceMatrix.unimportResp = repmat({'P','P','P','Q','Q','Q','P','P','P','Q','Q','Q'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
+balanceMatrix.importResp   = repmat({'Q','Q','Q','P','P','P','Q','Q','Q',},[1,9]);  % response for "immoral" trials in immoral-otherwise categorization 
+balanceMatrix.unimportResp = repmat({'P','P','P','O','O','O','Pw','P'},[1,9]);  % response for "immoral" trials in immoral-otherwise categorization 
 
 % balance categorization tasks
 balanceMatrix.block1 = repmat({'self','moral','immoral','moral','immoral','self','immoral','self','moral'},[1,8]);  % counterbalance the categorization task
