@@ -1,40 +1,46 @@
 function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,binNum)
-%%
+%% Information about this script
 % History: Based on :LiuMinghui 2013, SelfLabelMatching; Guo Jichengsi 2013;
 % 
 % Date         Author          Notes for change
 % =========================================================================
 % 2017/12/19   hcp             modified for replication of exp7
-
+% 2018/01/03   hcp             save practice data separately;
+%                              save shape and label, instead of identity
+%                              and moral valence separately, to avoid time
+%                              consumed during the proceduring running.
+%% Information about the task
 % =========================================================================
 % Aim: The learning phase is to make sure the pariticipants associate
 % between shapes and labels. each assoication had to be responded
-% correctlyh for 6 times in a row.
+% correctly for 6 times in a row.
 
 % Experimental design for matching task: 
-% 2(matchness: match v. nonmatch) * 2 (id: self vs. other) * 3 (moral valence: postive, neutral vs. negative)
+% 2 (matchness: match v. nonmatch) * 2 (id: self vs. other) * 3 (moral valence: postive, neutral vs. negative)
+% Therefore: 12 conditions
 
 % Input variables:
 % subjects' ID, age, sex, and condition;
 
 % Learning phase: matching task
 % Categorization phase: categorization task
-% One trials for task: 
+
+% One trials for matching task: 
 % Fixation: 500ms + target display: 200ms + blank: 800-1200ms, No feedback
 
 % One trial: 1500-2100ms
 
 % Stimuli: 
-% 6 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive, neutral vs. negative);
+% 6 shapes in this Exp: 2(identity: self vs. other)* 3( moral valence: positive, neutral vs. negative);
 
-% Moral Self(MS),   Neutral Self (NS),  Immoral Self (IS); 
+% Moral Self (MS),  Neutral Self (NS),  Immoral Self (IS); 
 % Moral Other (MO), Neutral Other (NN), Immoral Other (IO);
 
 % Six labels in this Exp.;
 % "好我","常我","坏我";"好人","常人","坏人"
 % Task：Categorization, Whether the shape presented belongs to one categories?
 
-% counterbalance between shape and label:
+% counterbalance between shape and label (matched with "Moral_self_asso_exp7_rep_getParams.m" ):
 %           "好我"     "常我"      "坏我"   "好人"      "常人"      "坏人"      match/M/S   mismathc/Imm/Oth
 % ============================================================================＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
 % expGroup1: circle,   square,   pentagon,  trapezoid,  hexagon    dimond       left         right
@@ -51,11 +57,12 @@ function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,bin
 % expGroup12:dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     right        left
 % ============================================================================
 
+% In this experiment, we added 36 trials for practices for matching task (3 matched trial with 3 mismatched trials).
 % Number of practice trials: 36
 
-% Total block for matching task: 7;
+% Total block for matching task: 8;
 % The first three blocks contains 120 trials for each (360 trials)
-% The rest 6 blocks interweaved with categorization task, each has 60 trials 
+% The rest 5 blocks interweaved with categorization task, each has 72 trials 
 
 % counterbalance of block order: see getParams.m
 
@@ -68,38 +75,49 @@ global params    % get all parameters from in params
 %%
 % MainFlow
 try
-    %open a window and setup display location
+    % Open a window and setup display location
     [window,rect] = Screen('OpenWindow', params.whichscreen,params.gray,params.winSize);
     HideCursor;
-    %setup response record
+    % Setup response record
     cd(params.dataDir);
-    % create a data file for this task
-    responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
-    fprintf(responseRecord,'SubjectID Age Gender Handness moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey Block Bin Trial Identity Morality Match RT ResponseKey Accuracy\n');
+    % Create a data file for this task
+    % save data of practice and formal data differently
+    if initNumBlock < 1
+        responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
+    else
+        responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
+    end
+    fprintf(responseRecord,...
+        'SubjectID Age Gender Handness moralSelfShape neutralSelfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape matchKey mismatchKey Block Bin Trial Shape Label Match RT ResponseKey Accuracy\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
-    %makeTextrue
+    % MakeTexture of the shape and label, for presenting
     instrucTex      = Screen('MakeTexture', window, params.learnInstruc);
     restInstrucTex  = Screen('MakeTexture', window, params.learnRestInstruc);
-%   pracInstrucTex  = Screen('MakeTexture',window,pracInstruc);
+    pracInstrucTex  = Screen('MakeTexture', window, params.learnPracInstruc);
     moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
+    neutralSelfTex  = Screen('MakeTexture', window, params.neutralSelf);
     immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
+    neutralOtherTex = Screen('MakeTexture', window, params.neutralOther);
     moralOtherTex   = Screen('MakeTexture', window, params.moralOther);
     immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
     
     labelmoralSelfTex    = Screen('MakeTexture', window, params.labelmoralSelf);
+    labelneutralSelfTex  = Screen('MakeTexture', window, params.labelneutralSelf);
     labelimmoralSelfTex  = Screen('MakeTexture', window, params.labelimmoralSelf);
     labelmoralOtherTex   = Screen('MakeTexture', window, params.labelmoralOther);
+    labelneutralOtherTex = Screen('MakeTexture', window, params.labelneutralOther);
     labelimmoralOtherTex = Screen('MakeTexture', window, params.labelimmoralOther);
     
     feedCorrectTex   = Screen('MakeTexture',window,params.feedbackCorrectImage);
+    feedNoRespTex    = Screen('MakeTexture',window,params.feedbackNoRespImage);
     feedIncorrectTex = Screen('MakeTexture',window,params.feedbackIncorrectImage);
     
-    % put all labels in a cell, to randomly chose the mismatch trials
-    labelCell = {labelmoralSelfTex,labelimmoralSelfTex,labelmoralOtherTex,labelimmoralOtherTex};
+    % Put all labels in a cell, to randomly chose the mismatch trials
+    labelCell = {labelmoralSelfTex,labelneutralSelfTex,labelimmoralSelfTex,labelmoralOtherTex,labelneutralOtherTex, labelimmoralOtherTex};
     
-    %Show Instruction
+    % Show Instruction
     Screen('DrawTexture', window, instrucTex);
     Screen('Flip',window);
     [secs, keyCode]=KbWait;
@@ -110,79 +128,86 @@ try
     for blockNum = 1:numOfBlock
         accFeed = 0; % init Accuracy of the block Feedback;
         for blockBin = 1:binNum
-            % generate the random order for trials
+            % Important!! Generate the random order for trials in each bin
+            % and for each bin, the order is randomize once.
             tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
                 'neutralOther','immoralOther','moralSelf','neutralSelf',...
-                'immoralSelf','moralOther','neutralOther','immoralOther';1,1,1,1,1,1,2,2,2,2,2,2};
+                'immoralSelf','moralOther','neutralOther','immoralOther';...
+                'match','match','match','match','match','match',...
+                'mistmatch','mistmatch','mistmatch','mistmatch','mistmatch','mistmatch'};
             tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
-            tmpOrderSmallblock = Shuffle(1:36);
-            trialNum = length(tmpOrderSmallblock);
+            randomOrder = Shuffle(1:36);
+            trialNum = length(randomOrder);
             trialOrderSmallblock = {};
+            
+            % generate randomized trial order by randomOrder
             for ii = 1:36
-                trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,tmpOrderSmallblock(ii));
-                trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,tmpOrderSmallblock(ii));
+                trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
+                trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
             end
-            
-            
             
             for trial = 1:trialNum  % binNum trials for one small circle.
                 startTrialT = GetSecs;
                 currentShape = trialOrderSmallblock{1,trial};  % current shape condition
                 currentMatch = trialOrderSmallblock{2,trial};  % current match condition
+%                 
+%                 % determine the shape time
+%                 if strcmp(currentShape,'moralSelf') == 1
+%                     targetCondition = 1;
+%                 elseif strcmp(currentShape,'neutralSelf') == 1
+%                     targetCondition = 2;
+%                 elseif strcmp(currentShape,'immoralSelf') == 1
+%                     targetCondition = 3;
+%                 elseif strcmp(currentShape,'moralOther') == 1
+%                     targetCondition = 4;
+%                 elseif strcmp(currentShape,'neutralOther') == 1
+%                     targetCondition = 5;    
+%                 elseif strcmp(currentShape,'immoralOther') == 1
+%                     targetCondition = 6;
+%                 end
                 
-                % define the conditions
-                if strcmp(currentShape,'moralSelf') == 1
-                    targetCondition = 1;
-                elseif strcmp(currentShape,'immoralSelf') == 1
-                    targetCondition = 2;
-                elseif strcmp(currentShape,'moralOther') == 1
-                    targetCondition = 3;
-                elseif strcmp(currentShape,'immoralOther') == 1
-                    targetCondition = 4;
-                end
-                
-                % get the shape for presenting
-                if targetCondition == 1 && currentMatch == 1
-                    currentTarget = moralSelfTex;
-                    currentLabel = labelmoralSelfTex;
-                    identity = 'self';morality = 'moral'; matchness = 'match';
-                elseif targetCondition == 1 && currentMatch == 2
-                    currentTarget = moralSelfTex;
-                    currentLabelIndex = Shuffle([2,3,4]);
-                    currentLabelIndex = currentLabelIndex(1,1);
-                    currentLabel = labelCell{currentLabelIndex};
-                    identity = 'self';morality = 'moral'; matchness = 'nonmatch';
-                elseif targetCondition == 2 && currentMatch == 1
-                    currentTarget = immoralSelfTex;
-                    currentLabel = labelimmoralSelfTex;
-                    identity = 'self';morality = 'immoral';matchness = 'match';
-                elseif targetCondition == 2 && currentMatch == 2
-                    currentTarget = immoralSelfTex;
-                    currentLabelIndex = Shuffle([1,3,4]);
-                    currentLabelIndex = currentLabelIndex(1,1);
-                    currentLabel = labelCell{currentLabelIndex};
-                    identity = 'self';morality = 'immoral';matchness = 'nonmatch';
-                elseif targetCondition == 3 && currentMatch == 1
-                    currentTarget = moralOtherTex;
-                    currentLabel = labelmoralOtherTex;
-                    identity = 'other';morality = 'moral';matchness = 'match';
-                elseif targetCondition == 3 && currentMatch == 2
-                    currentTarget = moralOtherTex;
-                    currentLabelIndex = Shuffle([1,2,4]);
-                    currentLabelIndex = currentLabelIndex(1,1);
-                    currentLabel = labelCell{currentLabelIndex};
-                    identity = 'other';morality = 'moral';matchness = 'nonmatch';    
-                elseif targetCondition == 4 && currentMatch == 1
-                    currentTarget = immoralOtherTex;
-                    currentLabel = labelimmoralOtherTex;
-                    identity = 'other';morality = 'immoral';matchness = 'match';
-                elseif targetCondition == 4 && currentMatch == 2
-                    currentTarget = immoralOtherTex;
-                    currentLabelIndex = Shuffle([1,2,3]);
-                    currentLabelIndex = currentLabelIndex(1,1);
-                    currentLabel = labelCell{currentLabelIndex};
-                    identity = 'other';morality = 'immoral';matchness = 'nonmatch';
-                end
+%                 % get the shape for presenting
+%                 if targetCondition == 1 && currentMatch == 1
+%                     currentTarget = moralSelfTex;
+%                     currentLabel = labelmoralSelfTex;
+%                     identity = 'self';morality = 'moral'; matchness = 'match';
+%                 elseif targetCondition == 1 && currentMatch == 2
+%                     currentTarget = moralSelfTex;
+%                     currentLabelIndex = Shuffle([2,3,4]);
+%                     currentLabelIndex = currentLabelIndex(1,1);
+%                     currentLabel = labelCell{currentLabelIndex};
+%                     identity = 'self';morality = 'moral'; matchness = 'nonmatch';
+%                 elseif targetCondition == 2 && currentMatch == 1
+%                     currentTarget = immoralSelfTex;
+%                     currentLabel = labelimmoralSelfTex;
+%                     identity = 'self';morality = 'immoral';matchness = 'match';
+%                 elseif targetCondition == 2 && currentMatch == 2
+%                     currentTarget = immoralSelfTex;
+%                     currentLabelIndex = Shuffle([1,3,4]);
+%                     currentLabelIndex = currentLabelIndex(1,1);
+%                     currentLabel = labelCell{currentLabelIndex};
+%                     identity = 'self';morality = 'immoral';matchness = 'nonmatch';
+%                 elseif targetCondition == 3 && currentMatch == 1
+%                     currentTarget = moralOtherTex;
+%                     currentLabel = labelmoralOtherTex;
+%                     identity = 'other';morality = 'moral';matchness = 'match';
+%                 elseif targetCondition == 3 && currentMatch == 2
+%                     currentTarget = moralOtherTex;
+%                     currentLabelIndex = Shuffle([1,2,4]);
+%                     currentLabelIndex = currentLabelIndex(1,1);
+%                     currentLabel = labelCell{currentLabelIndex};
+%                     identity = 'other';morality = 'moral';matchness = 'nonmatch';    
+%                 elseif targetCondition == 4 && currentMatch == 1
+%                     currentTarget = immoralOtherTex;
+%                     currentLabel = labelimmoralOtherTex;
+%                     identity = 'other';morality = 'immoral';matchness = 'match';
+%                 elseif targetCondition == 4 && currentMatch == 2
+%                     currentTarget = immoralOtherTex;
+%                     currentLabelIndex = Shuffle([1,2,3]);
+%                     currentLabelIndex = currentLabelIndex(1,1);
+%                     currentLabel = labelCell{currentLabelIndex};
+%                     identity = 'other';morality = 'immoral';matchness = 'nonmatch';
+%                 end
                 
                 params.shapeRect = OffsetRect (rect, 0,-params.offset);   % the rect for shape is below the fixation
                 params.labelRect = OffsetRect (rect, 0,params.offset);    % the rect for label upon the fixation
@@ -240,7 +265,7 @@ try
                     if keyCode(params.matchResponKey)
                     
 %                     currentRT2 = secs - t0;
-                        if currentMatch == 1
+                        if strcmp(currentMatch,'match') == 1
                             response_record = 1;
                         elseif currentMatch == 2
                             response_record = 0;
@@ -249,9 +274,9 @@ try
                     elseif keyCode(params.mismatchResponKey)
 %                       currentRT = secs - stimOnsetTime;
 %                       currentRT2 = secs - t0;
-                        if currentMatch == 2
+                        if strcmp(currentMatch,'mismatch') == 1
                             response_record = 1;
-                        elseif currentMatch == 1
+                        else
                             response_record = 0;
                         end
                         responseKey = params.mismatchResponKey;
@@ -287,8 +312,8 @@ try
                 responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
                 fprintf(responseRecord,'%d %d %s %s %s %s %s %s %s %s %d %d %d %s %s %s %.4f %s %d\n',...
                     subID, age, gender,handness, params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
-                    params.matchResponKey,params.mismatchResponKey,blockNum,blockBin,trial, identity,... 
-                    morality, matchness, currentRT, responseKey, response);
+                    params.matchResponKey,params.mismatchResponKey,blockNum,blockBin,trial, currentShape,... 
+                    label, currentMatch, currentRT, responseKey, response);
 %               moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey 
                 fclose(responseRecord);
                 cd(params.rootDir);

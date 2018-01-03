@@ -90,19 +90,18 @@ HideCursor;
 %% 定义实验参数
 params = Moral_self_asso_exp7_getParams(subID); % mind the trials per condition in params file!
 
-%% ******** practicing **********
+%% ******** Practicing for matching task **********
 initNumBlock = 1;  % !!!! change to 1 before real experiment
-initNumBin = 2;    % !!!! change to 2 before real experiment
+initNumBin   = 2;  % !!!! change to 2 before real experiment
 Moral_self_asso_exp7_match(subID,gender,age,handness,initNumBlock,initNumBin);
 
-
-%% ********* Learning phrase **************
+%% ********* Matching task **************
 % study two blocks at the beginning
-initNumBlock = 2;  % !!! change to 2 before real experiment
-initNumBin = 5;    % !!! change to 5 before real experiment
+initNumBlock = 3;  % !!! change to 3 before real experiment
+initNumBin   = 5;  % !!! change to 5 before real experiment
 Moral_self_asso_exp7_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
-%% ******** Categrozation phrase *************
+%% ******** Categrozation task *************
 for block = 1:6     %  6 blocks
     task = cell2mat(params.taskMatrix{block});
     numBinTest = 6;   % !!!!change to 6 before real experiment

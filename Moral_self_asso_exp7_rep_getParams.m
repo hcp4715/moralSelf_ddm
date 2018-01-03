@@ -12,6 +12,7 @@ function params = Moral_self_asso_exp7_rep_getParams(subID)
 %                                       finished
 % hcp             2016/06/19            adjust for new balance design
 % hcp             2017/12/17            modified to repliation of exp7
+% hcp             2018/01/03            changed the matrix for new design
 
 %% define the useful directory in this experiment
 params.rootDir = pwd;
@@ -20,7 +21,8 @@ params.dataDir = [params.rootDir '\data\'];
 
 %% Set the experimental conditions
 % make counterbalance matrix
-% balance the relationship between shape and label
+% balance the relationship between shape and label 
+% 12 elements * 6 repetition = 72 conditions  
 balanceMatrix.moralSelf    = repmat({'C','S','P','Tra','H','D','C','S','P','Tra','H','D'},[1,6]);
 balanceMatrix.neutralSelf  = repmat({'S','P','Tra','H','D','C','S','P','Tra','H','D','C'},[1,6]);
 balanceMatrix.immoralSelf  = repmat({'P','Tra','H','D','C','S','P','Tra','H','D','C','S'},[1,6]);
@@ -29,16 +31,18 @@ balanceMatrix.neutralOther = repmat({'H','D','C','S','P','Tra','H','D','C','S','
 balanceMatrix.immoralOther = repmat({'D','C','S','P','Tra','H','D','C','S','P','Tra','H'},[1,6]);
 
 % balance responding keys
-balanceMatrix.matchResp    = repmat({'N','N','N','N','N','N','M','M','M','M','M','M'},[1,6]);  % response for "match" trials in match tasks
-balanceMatrix.mismatchResp = repmat({'M','M','M','M','M','M','N','N','N','N','N','N'},[1,6]);  % response for "mismatch" trials in match tasks
-balanceMatrix.selfResp     = repmat({'F','F','F','J','J','J','F','F','F','J','J','J'},[1,6]);  % response for "self" trials in self-other categorization tasks
-balanceMatrix.otherResp    = repmat({'J','J','J','F','F','F','J','J','J','F','F','F'},[1,6]);  % response for "other" trials in self-other categorization  in match tasks
-balanceMatrix.moralResp    = repmat({'U','U','U','R','R','R','U','U','U','R','R','R'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
-balanceMatrix.immoralResp  = repmat({'R','R','R','U','U','U','R','R','R','U','U','U'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
-balanceMatrix.importResp   = repmat({'Q','Q','Q','P','P','P','Q','Q','Q','P','P','P'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
-balanceMatrix.unimportResp = repmat({'P','P','P','Q','Q','Q','P','P','P','Q','Q','Q'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
+% 12 elements * 6 repetition = 72 conditions
+balanceMatrix.matchResp      = repmat({'N','N','N','N','N','N','M','M','M','M','M','M'},[1,6]);  % response for "match" trials in match tasks
+balanceMatrix.mismatchResp   = repmat({'M','M','M','M','M','M','N','N','N','N','N','N'},[1,6]);  % response for "mismatch" trials in match tasks
+balanceMatrix.selfResp       = repmat({'F','F','F','J','J','J','F','F','F','J','J','J'},[1,6]);  % response for "self" trials in self-other categorization tasks
+balanceMatrix.otherResp      = repmat({'J','J','J','F','F','F','J','J','J','F','F','F'},[1,6]);  % response for "other" trials in self-other categorization  in match tasks
+balanceMatrix.moralResp      = repmat({'U','U','U','R','R','R','U','U','U','R','R','R'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
+balanceMatrix.notmoralResp   = repmat({'R','R','R','U','U','U','R','R','R','U','U','U'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
+balanceMatrix.immoralResp    = repmat({'Q','Q','Q','P','P','P','Q','Q','Q','P','P','P'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
+balanceMatrix.notimmoralResp = repmat({'P','P','P','Q','Q','Q','P','P','P','Q','Q','Q'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
 
 % balance categorization tasks
+% 9 elements * 8 repetition = 72 conditions
 balanceMatrix.block1 = repmat({'self','moral','immoral','moral','immoral','self','immoral','self','moral'},[1,8]);  % counterbalance the categorization task
 balanceMatrix.block2 = repmat({'moral','immoral','self','immoral','self','moral','self','moral','immoral'},[1,8]);
 balanceMatrix.block3 = repmat({'immoral','self','moral','self','moral','immoral','moral','immoral','self'},[1,8]);
@@ -51,36 +55,32 @@ balanceMatrix.block9 = repmat({'moral','immoral','self','immoral','self','moral'
 
 % assign picture and response keys to current participants
 subIndex = mod(subID,72) + 1;
-params.moralSelfPicName = balanceMatrix.moralSelf(subIndex); 
-params.moralSelfPicName = params.moralSelfPicName{1};    % convert cell to char
+params.moralSelfPicName   = balanceMatrix.moralSelf(subIndex); 
+params.moralSelfPicName   = params.moralSelfPicName{1};    % convert cell to char
+params.neutralSelfPicName = balanceMatrix.neutralSelf(subIndex); 
+params.neutralSelfPicName = params.neutralSelfPicName{1};    % convert cell to char
 params.immoralSelfPicName = balanceMatrix.immoralSelf(subIndex);
 params.immoralSelfPicName = params.immoralSelfPicName{1};
-params.moralOtherPicName = balanceMatrix.moralOther(subIndex);
-params.moralOtherPicName = params.moralOtherPicName{1};
+
+params.moralOtherPicName   = balanceMatrix.moralOther(subIndex);
+params.moralOtherPicName   = params.moralOtherPicName{1};
+params.neutralOtherPicName = balanceMatrix.neutralOther(subIndex);
+params.neutralOtherPicName = params.neutralOtherPicName{1};
 params.immoralOtherPicName = balanceMatrix.immoralOther(subIndex);
 params.immoralOtherPicName = params.immoralOtherPicName{1};
 
-
-% escapeKey = KbName('ESC');
-% define the response keys
 KbName('UnifyKeyNames');
-% params.Key1 = KbName('F');  
-% params.Key2 = KbName('J');  % 
-% params.Key3 = KbName('M');  %
-
-params.matchResponKey=KbName(balanceMatrix.matchResp(subIndex));         % match
-params.mismatchResponKey=KbName(balanceMatrix.mismatchResp(subIndex));   % non-match,other
-params.selfResponKey=KbName(balanceMatrix.selfResp(subIndex));         % self
-params.otherResponKey=KbName(balanceMatrix.otherResp(subIndex));   % other
-params.moralResponKey=KbName(balanceMatrix.moralResp(subIndex));         % moral
-params.immoralResponKey=KbName(balanceMatrix.immoralResp(subIndex));   % immoral
-params.importResponKey=KbName(balanceMatrix.importResp(subIndex));         % important
-params.unimportResponKey=KbName(balanceMatrix.unimportResp(subIndex));   % unimportant
+params.matchResponKey      = KbName(balanceMatrix.matchResp(subIndex));      % match
+params.mismatchResponKey   = KbName(balanceMatrix.mismatchResp(subIndex));   % non-match,other
+params.selfResponKey       = KbName(balanceMatrix.selfResp(subIndex));       % self
+params.otherResponKey      = KbName(balanceMatrix.otherResp(subIndex));      % other
+params.moralResponKey      = KbName(balanceMatrix.moralResp(subIndex));      % moral
+params.notmoralResponKey   = KbName(balanceMatrix.notmoralResp(subIndex));   % not-moral
+params.immoralResponKey    = KbName(balanceMatrix.immoralResp(subIndex));    % immoral
+params.notimmoralResponKey = KbName(balanceMatrix.notimmoralResp(subIndex)); % not-immoral
 
 params.escapeKey = KbName('ESCAPE');
 params.spaceKey = KbName('SPACE');
-% params.ImportantKey = KbName('i');
-% params.UnImportantKey = KbName('u');
 
 % assign block to current paricipants 
 params.taskMatrix = {balanceMatrix.block1(subIndex),balanceMatrix.block2(subIndex),balanceMatrix.block3(subIndex),...
@@ -100,6 +100,7 @@ params.labelimmoralOther  = imread(['immoralOther','.bmp']);
     
 % Load Intructions for each participant
 params.learnInstruc = imread(['Instruct_learn_',num2str(mod(subID,8)+1),'.jpg']);
+params.learnPracInstruc = imread(['Instruct_learn_prac_',num2str(mod(subID,8)+1),'.jpg']);
 params.learnRestInstruc = imread(['Instruct_rest_',num2str(mod(subID,8)+1),'.jpg']);
 params.testInstrucSelf1 = imread('test_self_1.jpg');
 params.testInstrucSelf2 = imread('test_self_2.jpg');
@@ -116,7 +117,8 @@ params.testRestInstrucimmoral2 = imread('test_rest_immoral_2.jpg');
 % pracInstruc = imread(['Instruct_condition_',num2str(mod(subID,8)+1),'.jpg']);
 % restInstruc = imread(['Instruct_condition_',num2str(mod(subID,8)+1),'.jpg']);
 params.feedbackCorrectImage = imread('feed_correct.jpg');
-params.feedbackIncorrectImage = imread('feed_incorrect.jpg');
+params.feedbackIncorrectImage = imread('feed_wrong.jpg');
+params.feedbackNoRespImage = imread('feed_tooSlow.jpg');
 cd(params.rootDir);
 
 %%  ******************************* 
@@ -135,19 +137,19 @@ params.XCenter = rect(3)/2;                           %获得水平方向中心的坐标
 params.YCenter = rect(4)/2;                           %获得水平方向中心的坐标
 
 HideCursor
-params.pixsPerDeg=1366/(2*atand(34.5/2/60)); % 每一度视角的像素数目：Monitor.Width/(2*atand(Monitor.Width/2/ Monitor.Distance));
-params.pixsPerDeg=round(params.pixsPerDeg);
-params.TargetDeg =3.6; % 图像视角
-params.distDeg=3.5;    % 图像中心与注意点的视角
+params.pixsPerDeg = 1366/(2*atand(34.5/2/60)); % voxel for 1 degree：Monitor.Width/(2*atand(Monitor.Width/2/ Monitor.Distance));
+params.pixsPerDeg = round(params.pixsPerDeg);
+params.TargetDeg  = 3.6;    % visual angle of the target shape
+params.distDeg    = 3.5;    % visual angle between the center of shape and the fixation
 
 %% parameters for presenting location of stimuli
-params.shapeWidth = round(params.TargetDeg*params.pixsPerDeg);         % the width of shape;
+params.shapeWidth  = round(params.TargetDeg*params.pixsPerDeg);        % the width of shape;
 params.shapeLength = round(params.TargetDeg*params.pixsPerDeg);        % the length of shape;
-params.shapeSize = [0 0 params.shapeWidth params.shapeLength];         % size of shape
-params.labelWidth = round(params.TargetDeg*params.pixsPerDeg);         % the width of label
-params.labelHight = round(1.6*params.pixsPerDeg);                      % the length of label
-params.labelSize = [0 0 params.labelWidth params.labelHight];          % window for presenting target images  2012.12.25:图片大小根据现有图片进行了调整
-params.offset = round(params.distDeg*params.pixsPerDeg);               % the distance between stimuli window and middle poit of the screen
+params.shapeSize   = [0 0 params.shapeWidth params.shapeLength];       % size of shape
+params.labelWidth  = round(params.TargetDeg*params.pixsPerDeg);        % the width of label
+params.labelHight  = round(1.6*params.pixsPerDeg);                     % the length of label
+params.labelSize   = [0 0 params.labelWidth params.labelHight];        % window for presenting target images  2012.12.25:图片大小根据现有图片进行了调整
+params.offset      = round(params.distDeg*params.pixsPerDeg);          % the distance between stimuli window and middle poit of the screen
 
 % design related variable (not used in current experiment
 params.IV1 = 2;           % 自变量1，两个水平: 自我 vs. 他人
