@@ -260,7 +260,7 @@ try
                 response_record = response; % a temporary variable to record temporary.
 %               t0 = GetSecs;
 
-                % if the no response or time less than target duration
+                % if the no 
                 while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                     [keyIsDown, secs, keyCode] = KbCheck;
                     currentRT = secs - stimOnsetTime;
@@ -303,7 +303,7 @@ try
                 elseif response == 0 % if response is incorrect
                     Screen('DrawTexture', window, feedIncorrectTex,[]);
                 elseif response == -1 % no response detected
-                    Screen('DrawTexture', window, feedNoRespTex,[]); % DrawFormattedText(window,'Too Slow','center','center',[255 255 0]);
+                    DrawFormattedText(window,'Too Slow','center','center',[255 255 0]);
                 end  
             
                 Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);   
@@ -334,7 +334,7 @@ try
                 fprintf('duration of one trial is: %f \n', GetSecs() - startTrialT) ;
                 
             end
-            % test a break when 60 trials
+            % test a break when 60 triasl
             if blockBin == 3
                 DrawFormattedText(window,'Take a break!','center','center',[0 0 255]);
                 Screen('Flip',window);   
@@ -349,7 +349,7 @@ try
         end
                     % give feedback about the 
 
-       accFeedtext=sprintf('Your accuracy in this block = %1.2f %',accFeed/(binNum*trialNum)); % makes feedback string
+       accFeedtext=sprintf('Your accuracy in this block = %1.2f %',accFeed/(binNum*trialNum)); %makes feedback string
        DrawFormattedText(window,accFeedtext,'center'  ,'center',[0 0  255]); %shows RT
        vbl=Screen('Flip',window); %swaps backbuffer to frontbuffer
        Screen('Flip',window,vbl+ 3); %erases feedback after 5 second

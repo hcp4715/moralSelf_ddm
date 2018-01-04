@@ -23,12 +23,12 @@ params.dataDir = [params.rootDir '\data\'];
 % make counterbalance matrix
 % balance the relationship between shape and label 
 % 12 elements * 6 repetition = 72 conditions  
-balanceMatrix.moralSelf    = repmat({'C','S','P','Tra','H','D','C','S','P','Tra','H','D'},[1,6]);
-balanceMatrix.neutralSelf  = repmat({'S','P','Tra','H','D','C','S','P','Tra','H','D','C'},[1,6]);
-balanceMatrix.immoralSelf  = repmat({'P','Tra','H','D','C','S','P','Tra','H','D','C','S'},[1,6]);
-balanceMatrix.moralOther   = repmat({'Tra','H','D','C','S','P','Tra','H','D','C','S','P'},[1,6]);
-balanceMatrix.neutralOther = repmat({'H','D','C','S','P','Tra','H','D','C','S','P','Tra'},[1,6]);
-balanceMatrix.immoralOther = repmat({'D','C','S','P','Tra','H','D','C','S','P','Tra','H'},[1,6]);
+balanceMatrix.moralSelf    = repmat({'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D'  },[1,6]);
+balanceMatrix.neutralSelf  = repmat({'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C'  },[1,6]);
+balanceMatrix.immoralSelf  = repmat({'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S'  },[1,6]);
+balanceMatrix.moralOther   = repmat({'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P'  },[1,6]);
+balanceMatrix.neutralOther = repmat({'H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra'},[1,6]);
+balanceMatrix.immoralOther = repmat({'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H'  },[1,6]);
 
 % balance responding keys
 % 12 elements * 6 repetition = 72 conditions
@@ -89,19 +89,24 @@ params.taskMatrix = {balanceMatrix.block1(subIndex),balanceMatrix.block2(subInde
 
 % Load the images corresponding to each condition
 cd(params.stimDir);
-params.moralSelf  = imread([params.moralSelfPicName '.bmp']);
-params.immoralSelf   = imread([params.immoralSelfPicName '.bmp']);
-params.moralOther = imread([params.moralOtherPicName '.bmp']);
-params.immoralOther  = imread([params.immoralOtherPicName '.bmp']);
-params.labelmoralSelf  = imread(['moralSelf','.bmp']);
-params.labelmoralOther = imread(['moralOther','.bmp']);
-params.labelimmoralSelf   = imread(['immoralSelf','.bmp']);
-params.labelimmoralOther  = imread(['immoralOther','.bmp']);
+params.moralSelf    = imread([params.moralSelfPicName '.bmp']);
+params.neutralSelf  = imread([params.neutralSelfPicName '.bmp']);
+params.immoralSelf  = imread([params.immoralSelfPicName '.bmp']);
+params.moralOther   = imread([params.moralOtherPicName '.bmp']);
+params.neutralOther = imread([params.neutralOtherPicName '.bmp']);
+params.immoralOther = imread([params.immoralOtherPicName '.bmp']);
+% load images of labels
+params.labelmoralSelf    = imread(['moralSelf','.bmp']);
+params.labelneutralSelf  = imread(['neutralSelf','.bmp']);
+params.labelimmoralSelf  = imread(['immoralSelf','.bmp']);
+params.labelmoralOther   = imread(['moralOther','.bmp']);
+params.labelneutralOther = imread(['neutralOther','.bmp']);
+params.labelimmoralOther = imread(['immoralOther','.bmp']);
     
 % Load Intructions for each participant
-params.learnInstruc = imread(['Instruct_learn_',num2str(mod(subID,8)+1),'.jpg']);
-params.learnPracInstruc = imread(['Instruct_learn_prac_',num2str(mod(subID,8)+1),'.jpg']);
-params.learnRestInstruc = imread(['Instruct_rest_',num2str(mod(subID,8)+1),'.jpg']);
+params.learnInstruc = imread(['Instruct_learn_',num2str(mod(subID,6)+1),'.jpg']);
+params.learnPracInstruc = imread(['Instruct_learn_prac_',num2str(mod(subID,6)+1),'.jpg']);
+params.learnRestInstruc = imread(['Instruct_rest_',num2str(mod(subID,6)+1),'.jpg']);
 params.testInstrucSelf1 = imread('test_self_1.jpg');
 params.testInstrucSelf2 = imread('test_self_2.jpg');
 params.testInstrucMoral1 = imread('test_moral_1.jpg');
