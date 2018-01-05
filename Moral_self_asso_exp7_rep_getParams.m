@@ -43,15 +43,15 @@ balanceMatrix.notimmoralResp = repmat({'P','P','P','Q','Q','Q','P','P','P','Q','
 
 % balance categorization tasks
 % 9 elements * 8 repetition = 72 conditions
-balanceMatrix.block1 = repmat({'self','moral','immoral','moral','immoral','self','immoral','self','moral'},[1,8]);  % counterbalance the categorization task
-balanceMatrix.block2 = repmat({'moral','immoral','self','immoral','self','moral','self','moral','immoral'},[1,8]);
-balanceMatrix.block3 = repmat({'immoral','self','moral','self','moral','immoral','moral','immoral','self'},[1,8]);
-balanceMatrix.block4 = repmat({'moral','immoral','self','immoral','self','moral','self','moral','immoral'},[1,8]);
-balanceMatrix.block5 = repmat({'immoral','self','moral','self','moral','immoral','moral','immoral','self'},[1,8]);
-balanceMatrix.block6 = repmat({'self','moral','immoral','moral','immoral','self','immoral','self','moral'},[1,8]);
-balanceMatrix.block7 = repmat({'immoral','self','moral','self','moral','immoral','moral','immoral','self'},[1,8]);
-balanceMatrix.block8 = repmat({'self','moral','immoral','moral','immoral','self','immoral','self','moral'},[1,8]);
-balanceMatrix.block9 = repmat({'moral','immoral','self','immoral','self','moral','self','moral','immoral'},[1,8]);
+balanceMatrix.block1 = repmat({'self',    'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',   'moral'},[1,8]);  % counterbalance the categorization task
+balanceMatrix.block2 = repmat({'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'   'self'},[1,8]);
+balanceMatrix.block3 = repmat({'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral'},[1,8]);
+balanceMatrix.block4 = repmat({'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral'},[1,8]);
+balanceMatrix.block5 = repmat({'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'},[1,8]);
+balanceMatrix.block6 = repmat({'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'},[1,8]);
+balanceMatrix.block7 = repmat({'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'},[1,8]);
+balanceMatrix.block8 = repmat({'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'},[1,8]);
+balanceMatrix.block9 = repmat({'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'  'self'},[1,8]);
 
 % assign picture and response keys to current participants
 subIndex = mod(subID,72) + 1;
@@ -95,6 +95,7 @@ params.immoralSelf  = imread([params.immoralSelfPicName '.bmp']);
 params.moralOther   = imread([params.moralOtherPicName '.bmp']);
 params.neutralOther = imread([params.neutralOtherPicName '.bmp']);
 params.immoralOther = imread([params.immoralOtherPicName '.bmp']);
+
 % load images of labels
 params.labelmoralSelf    = imread(['moralSelf','.bmp']);
 params.labelneutralSelf  = imread(['neutralSelf','.bmp']);
@@ -104,26 +105,26 @@ params.labelneutralOther = imread(['neutralOther','.bmp']);
 params.labelimmoralOther = imread(['immoralOther','.bmp']);
     
 % Load Intructions for each participant
-params.learnInstruc = imread(['Instruct_learn_',num2str(mod(subID,6)+1),'.jpg']);
-params.learnPracInstruc = imread(['Instruct_learn_prac_',num2str(mod(subID,6)+1),'.jpg']);
-params.learnRestInstruc = imread(['Instruct_rest_',num2str(mod(subID,6)+1),'.jpg']);
-params.testInstrucSelf1 = imread('test_self_1.jpg');
-params.testInstrucSelf2 = imread('test_self_2.jpg');
-params.testInstrucMoral1 = imread('test_moral_1.jpg');
-params.testInstrucMoral2 = imread('test_moral_2.jpg');
-params.testInstrucimmoral1 = imread('test_immoral_1.jpg');
-params.testInstrucimmoral2 = imread('test_immoral_2.jpg');
-params.testRestInstrucSelf1 = imread('test_rest_self_1.jpg');
-params.testRestInstrucSelf2 = imread('test_rest_self_2.jpg');
-params.testRestInstrucMoral1 = imread('test_rest_moral_1.jpg');
-params.testRestInstrucMoral2 = imread('test_rest_moral_2.jpg');
+params.learnInstruc            = imread(['Instruct_learn_',num2str(mod(subID,6)+1),'.jpg']);
+params.learnPracInstruc        = imread(['Instruct_learn_prac_',num2str(mod(subID,6)+1),'.jpg']);
+params.learnRestInstruc        = imread(['Instruct_rest_',num2str(mod(subID,6)+1),'.jpg']);
+params.testInstrucSelf1        = imread('test_self_1.jpg');
+params.testInstrucSelf2        = imread('test_self_2.jpg');
+params.testInstrucMoral1       = imread('test_moral_1.jpg');
+params.testInstrucMoral2       = imread('test_moral_2.jpg');
+params.testInstrucimmoral1     = imread('test_immoral_1.jpg');
+params.testInstrucimmoral2     = imread('test_immoral_2.jpg');
+params.testRestInstrucSelf1    = imread('test_rest_self_1.jpg');
+params.testRestInstrucSelf2    = imread('test_rest_self_2.jpg');
+params.testRestInstrucMoral1   = imread('test_rest_moral_1.jpg');
+params.testRestInstrucMoral2   = imread('test_rest_moral_2.jpg');
 params.testRestInstrucimmoral1 = imread('test_rest_immoral_1.jpg');
 params.testRestInstrucimmoral2 = imread('test_rest_immoral_2.jpg');
 % pracInstruc = imread(['Instruct_condition_',num2str(mod(subID,8)+1),'.jpg']);
 % restInstruc = imread(['Instruct_condition_',num2str(mod(subID,8)+1),'.jpg']);
-params.feedbackCorrectImage = imread('feed_correct.jpg');
+params.feedbackCorrectImage   = imread('feed_correct.jpg');
 params.feedbackIncorrectImage = imread('feed_wrong.jpg');
-params.feedbackNoRespImage = imread('feed_tooSlow.jpg');
+params.feedbackNoRespImage    = imread('feed_tooSlow.jpg');
 cd(params.rootDir);
 
 %%  ******************************* 

@@ -36,6 +36,7 @@ function Moral_self_asso_exp7_rep_MainProc
 % Moral valence  three levels    two levels
 % Categ. task    two tasks       three tasks
 % feedback       words           schema faces
+% dur.for categ.  100ms          200ms 
 
 %% details about trials
 % trials for matching task
@@ -44,9 +45,9 @@ function Moral_self_asso_exp7_rep_MainProc
 % one trial: 2,200ms
 
 % trials for categorization task: 
-% Fixation: 500ms + target display: 200ms + blank: 800-1200ms, No feedback
+% Fixation: 500ms + target display: 100ms + blank: 800-1200ms, No feedback
 
-% One trial: 1500-2100ms
+% One trial: 1400-2000ms
 
 % Stimuli: 
 % 6 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive, neutral vs. negative);
@@ -55,7 +56,8 @@ function Moral_self_asso_exp7_rep_MainProc
 % Moral Other (MO), Neutral Other (NN), Immoral Other (IO);
 
 % Six labels in this Exp.;
-% "好我","常我","坏我";"好人","常人","坏人"
+% "好我","常我","坏我";
+% "好人","常人","坏人"
 
 % Task：Categorization, Whether the shape presented belongs to one categories?
 

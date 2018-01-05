@@ -12,9 +12,10 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % 3(tasks type: morality, self, or importance)
 
 % Input variables:
-% subjects' ID, age, sex, and condition;
+% subjects' ID, age, handness, sex, task type, number of blocks and number of bins;
 
-% Learning phase: matching task
+% This task will follow the matching task, and also be interweaved with small block of matching task
+
 % Categorization phase: categorization; 120 trials for each block,3 blocks
 % for each categorization task
 % One trials for task: 
@@ -29,7 +30,8 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % Moral Other (MO), Neutral Other (NO), Immoral Other (IO);
 
 % Six labels in this Exp.;
-% "好我", "常我", "坏我";"好人", "常人", "坏人"
+% "好我", "常我", "坏我";
+% "好人", "常人", "坏人"
 % Task：Categorization, Whether the shape presented belongs to one categories?
 
 % counterbalance between shape and label (matched with "Moral_self_asso_exp7_rep_getParams.m" ):
@@ -49,16 +51,19 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % expGroup12:dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     right        left
 % ============================================================================
 
-
 % Total block: 9, number of trials in each block: 120
 % number of practice trials: 12
 
 % counterbalance of block order
-% self moral importance importance moral self
-% moral self importance self moral importance
-% self moral importance  moral self importance
-% moral self importance moral self  importance
-
+% 'self',    'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',   'moral'
+% 'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'   'self'
+% 'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral'
+% 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral'
+% 'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'
+% 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'
+% 'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'
+% 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'
+% 'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'  'self'
 %result is collected in the file: Exp_behav_moral_asso_exp7_pilot_(subID).out
 %%
 %initialization
@@ -81,7 +86,7 @@ try
     HideCursor;
     %setup response record for the first block
     cd(params.dataDir);
-    responseRecord = fopen(['Moral_self_asso_exp7_pilot2_test_vf_' num2str(subID) '.out'],'a');
+    responseRecord = fopen(['Moral_self_asso_exp7_rep_categ_' num2str(subID) '.out'],'a');
     fprintf(responseRecord,'SubjectID Age Gender Handness moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape Block Bin Trial Task shapeName Identity Morality RT ResponseKey Accuracy trialType\n');
     fclose(responseRecord);
     cd(params.rootDir);
@@ -98,71 +103,71 @@ try
         elseif strcmp(task,'moral') && params.moralResponKey == 'U'
             instrucTex=Screen('MakeTexture',window, params.testInstrucMoral2);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucMoral2); 
-        elseif strcmp(task,'importance') && params.importResponKey == 'O'
+        elseif strcmp(task,'immoral') && params.importResponKey == 'O'
             instrucTex=Screen('MakeTexture',window, params.testInstrucImportance1);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance1); 
-        elseif strcmp(task,'importance') && params.importResponKey == 'P'
+        elseif strcmp(task,'immoral') && params.importResponKey == 'P'
             instrucTex=Screen('MakeTexture',window, params.testInstrucImportance2);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance2); 
         end       
 
      
-        % show the choice option for importance
-        if strcmp(task,'importance')
-            cd(params.stimDir)
-            importInstruc = imread('Instruction_test_importInstruc.jpg');
-            cd(params.rootDir)
-            importInstrucTex = Screen('MakeTexture',window,importInstruc);
-            Screen('DrawTexture', window, importInstrucTex);
-            Screen('Flip',window);
-            [secs, keyCode]=KbWait;
-            while keyCode(params.spaceKey)==0
-                [~,keyCode]=KbWait;
-            end
-            [keyIsDown, secs, keyCode] = KbCheck;
-            
-            importStrmoralSelf = GetEchoNumber(window,'Is "moral self" important for you,if yes, press "1", if no, press "2"  ',...
-                  params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-            Screen('Flip', window);
-            importStrimmoralSelf = GetEchoNumber(window,'Is "immoral self" important for you,if yes, press "1", if no, press "2"  ',...
-                params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-            Screen('Flip', window);
-            importStrmoralOther = GetEchoNumber(window,'Is "moral other" important for you,if yes, press "1", if no, press "2"  ',...
-                params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-            Screen('Flip', window);
-            importStrimmoralOther = GetEchoNumber(window,'Is "immoral other" important for you,if yes, press "1", if no, press "2"  ',...
-                params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-            Screen('Flip', window);
-            importMatrix =[importStrmoralSelf,importStrimmoralSelf,importStrmoralOther,importStrimmoralOther];
-            while length(importMatrix) < 4
-                cd(params.stimDir)
-                importInstruc = imread('Instruction_test_importInstruc2.jpg');
-                cd(params.rootDir)
-                importInstrucTex = Screen('MakeTexture',window,importInstruc);
-                Screen('DrawTexture', window, importInstrucTex);
-                Screen('Flip',window);
-                [secs, keyCode]=KbWait;
-                while keyCode(params.spaceKey)==0
-                    [~,keyCode]=KbWait;
-                end
-                [keyIsDown, secs, keyCode] = KbCheck;
-            
-                importStrmoralSelf = GetEchoNumber(window,'Is "moral self" important for you,if yes, press "1", if no, press "2"  ',...
-                    params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-                Screen('Flip', window);
-                importStrimmoralSelf = GetEchoNumber(window,'Is "immoral self" important for you,if yes, press "1", if no, press "2"  ',...
-                    params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-                Screen('Flip', window);
-                importStrmoralOther = GetEchoNumber(window,'Is "moral other" important for you,if yes, press "1", if no, press "2"  ',...
-                    params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-                Screen('Flip', window);
-                importStrimmoralOther = GetEchoNumber(window,'Is "immoral other" important for you,if yes, press "1", if no, press "2"  ',...
-                    params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-                Screen('Flip', window);
-                importMatrix =[importStrmoralSelf,importStrimmoralSelf,importStrmoralOther,importStrimmoralOther];
-            end
-                
-        end
+%         % show the choice option for importance
+%         if strcmp(task,'importance')
+%             cd(params.stimDir)
+%             importInstruc = imread('Instruction_test_importInstruc.jpg');
+%             cd(params.rootDir)
+%             importInstrucTex = Screen('MakeTexture',window,importInstruc);
+%             Screen('DrawTexture', window, importInstrucTex);
+%             Screen('Flip',window);
+%             [secs, keyCode]=KbWait;
+%             while keyCode(params.spaceKey)==0
+%                 [~,keyCode]=KbWait;
+%             end
+%             [keyIsDown, secs, keyCode] = KbCheck;
+%             
+%             importStrmoralSelf = GetEchoNumber(window,'Is "moral self" important for you,if yes, press "1", if no, press "2"  ',...
+%                   params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%             Screen('Flip', window);
+%             importStrimmoralSelf = GetEchoNumber(window,'Is "immoral self" important for you,if yes, press "1", if no, press "2"  ',...
+%                 params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%             Screen('Flip', window);
+%             importStrmoralOther = GetEchoNumber(window,'Is "moral other" important for you,if yes, press "1", if no, press "2"  ',...
+%                 params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%             Screen('Flip', window);
+%             importStrimmoralOther = GetEchoNumber(window,'Is "immoral other" important for you,if yes, press "1", if no, press "2"  ',...
+%                 params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%             Screen('Flip', window);
+%             importMatrix =[importStrmoralSelf,importStrimmoralSelf,importStrmoralOther,importStrimmoralOther];
+%             while length(importMatrix) < 4
+%                 cd(params.stimDir)
+%                 importInstruc = imread('Instruction_test_importInstruc2.jpg');
+%                 cd(params.rootDir)
+%                 importInstrucTex = Screen('MakeTexture',window,importInstruc);
+%                 Screen('DrawTexture', window, importInstrucTex);
+%                 Screen('Flip',window);
+%                 [secs, keyCode]=KbWait;
+%                 while keyCode(params.spaceKey)==0
+%                     [~,keyCode]=KbWait;
+%                 end
+%                 [keyIsDown, secs, keyCode] = KbCheck;
+%             
+%                 importStrmoralSelf = GetEchoNumber(window,'Is "moral self" important for you,if yes, press "1", if no, press "2"  ',...
+%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%                 Screen('Flip', window);
+%                 importStrimmoralSelf = GetEchoNumber(window,'Is "immoral self" important for you,if yes, press "1", if no, press "2"  ',...
+%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%                 Screen('Flip', window);
+%                 importStrmoralOther = GetEchoNumber(window,'Is "moral other" important for you,if yes, press "1", if no, press "2"  ',...
+%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%                 Screen('Flip', window);
+%                 importStrimmoralOther = GetEchoNumber(window,'Is "immoral other" important for you,if yes, press "1", if no, press "2"  ',...
+%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
+%                 Screen('Flip', window);
+%                 importMatrix =[importStrmoralSelf,importStrimmoralSelf,importStrmoralOther,importStrimmoralOther];
+%             end
+%                 
+%         end
      
          % show intruction
         Screen('DrawTexture', window, instrucTex);
@@ -173,9 +178,11 @@ try
         end
     
     % draw the shape image into memeory
-        moralSelfTex = Screen('MakeTexture', window, params.moralSelf);
-        immoralSelfTex = Screen('MakeTexture', window, params.immoralSelf);
-        moralOtherTex = Screen('MakeTexture', window, params.moralOther);
+        moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
+        neutralSelfTex   = Screen('MakeTexture', window, params.neutralSelf);
+        immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
+        moralOtherTex   = Screen('MakeTexture', window, params.moralOther);
+        neutralOtherTex = Screen('MakeTexture', window, params.neutralOther);
         immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
 %         for blockNum = 1:block 
     accFeed = 0; % set the accuracy feedback variable
@@ -197,11 +204,11 @@ try
                      trialType = 'self';
                  elseif strcmp(task,'moral')
                      trialType = 'moral';
-                 elseif strcmp(task,'importance')
+                 elseif strcmp(task,'immoral')
                      if importMatrix(targetCondition) == 1
-                         trialType = 'important';
+                         trialType = 'immoral';
                      else
-                         trialType = 'unimportant';
+                         trialType = 'Not_immoral';
                      end
                  end
              elseif targetCondition == 2
