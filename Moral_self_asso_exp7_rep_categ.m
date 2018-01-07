@@ -5,11 +5,12 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % Date         Author          Notes for change
 % =========================================================================
 % 04/Jan/2018   hcp4715         changed for replication study
+% 07/Jan/2018   hcp4715         changed code for response
 % =========================================================================
 
 % Experimental design: 
 % 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
-% 3(tasks type: morality, self, or importance)
+% 3 (tasks type: morality, self, or importance)
 
 % Input variables:
 % subjects' ID, age, handness, sex, task type, number of blocks and number of bins;
@@ -50,20 +51,14 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % expGroup11:hexagon   dimond,   circle,    square,     pentagon,  trapezoid,   right        left
 % expGroup12:dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     right        left
 % ============================================================================
-
+% 
+% Total trials: 60 * 18 = 1080 tr. (6 bl. * 5 bins * 36 trials)
+% One block: 5 bins * 36 trials
 % Total block: 9, number of trials in each block: 120
-% number of practice trials: 12
+% No practice trials.
 
-% counterbalance of block order
-% 'self',    'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',   'moral'
-% 'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'   'self'
-% 'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral'
-% 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral'
-% 'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'
-% 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'
-% 'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'
-% 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'
-% 'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'  'self'
+% counterbalance of block order, see getParam.m balanceMatrix.block1
+
 %result is collected in the file: Exp_behav_moral_asso_exp7_pilot_(subID).out
 %%
 %initialization
@@ -74,25 +69,27 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 
 global params    % get all parameters from in params
 
-%% set block and trials information
-
-
-
 %%
-%MainFlow
+% Start presenting trials (MainFlow)
 try
-    % open windows
+    % open a window
     [window,rect] = Screen('OpenWindow', params.whichscreen,params.gray,params.winSize);
+    % Hide the cursor
     HideCursor;
-    %setup response record for the first block
+    
+    % Setup response record for the first block
     cd(params.dataDir);
+    % Create a file for saving data
     responseRecord = fopen(['Moral_self_asso_exp7_rep_categ_' num2str(subID) '.out'],'a');
-    fprintf(responseRecord,'SubjectID Age Gender Handness moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape Block Bin Trial Task shapeName Identity Morality RT ResponseKey Accuracy trialType\n');
+    % write a column name for the data, this is helpful because then you
+    % will know that the However the data was created.
+    fprintf(responseRecord,...
+        'DateTime SubjectID Age Gender Handness moralSelfShape neutralselfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape Block Bin Trial Task shapeName condition corrKey ResponseKey Accuracy  RT\n');
     fclose(responseRecord);
     cd(params.rootDir);
         % makeTextrue of instruction corresponding to the response key
-        if strcmp(task,'self') && params.selfResponKey=='H'  % self task, half participants using on set of key
-            instrucTex=Screen('MakeTexture',window, params.testInstrucSelf1); % reverse the key.
+        if strcmp(task,'self') && params.selfResponKey=='H'                    % self task, half participants using on set of key
+            instrucTex=Screen('MakeTexture',window, params.testInstrucSelf1);  % reverse the key.
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucSelf1); 
         elseif strcmp(task,'self') && params.selfResponKey=='J' 
             instrucTex=Screen('MakeTexture',window, params.testInstrucSelf2);
@@ -109,67 +106,10 @@ try
         elseif strcmp(task,'immoral') && params.importResponKey == 'P'
             instrucTex=Screen('MakeTexture',window, params.testInstrucImportance2);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance2); 
-        end       
-
+        end          
+%         % show the choice option for importance % deleted in reivision
      
-%         % show the choice option for importance
-%         if strcmp(task,'importance')
-%             cd(params.stimDir)
-%             importInstruc = imread('Instruction_test_importInstruc.jpg');
-%             cd(params.rootDir)
-%             importInstrucTex = Screen('MakeTexture',window,importInstruc);
-%             Screen('DrawTexture', window, importInstrucTex);
-%             Screen('Flip',window);
-%             [secs, keyCode]=KbWait;
-%             while keyCode(params.spaceKey)==0
-%                 [~,keyCode]=KbWait;
-%             end
-%             [keyIsDown, secs, keyCode] = KbCheck;
-%             
-%             importStrmoralSelf = GetEchoNumber(window,'Is "moral self" important for you,if yes, press "1", if no, press "2"  ',...
-%                   params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%             Screen('Flip', window);
-%             importStrimmoralSelf = GetEchoNumber(window,'Is "immoral self" important for you,if yes, press "1", if no, press "2"  ',...
-%                 params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%             Screen('Flip', window);
-%             importStrmoralOther = GetEchoNumber(window,'Is "moral other" important for you,if yes, press "1", if no, press "2"  ',...
-%                 params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%             Screen('Flip', window);
-%             importStrimmoralOther = GetEchoNumber(window,'Is "immoral other" important for you,if yes, press "1", if no, press "2"  ',...
-%                 params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%             Screen('Flip', window);
-%             importMatrix =[importStrmoralSelf,importStrimmoralSelf,importStrmoralOther,importStrimmoralOther];
-%             while length(importMatrix) < 4
-%                 cd(params.stimDir)
-%                 importInstruc = imread('Instruction_test_importInstruc2.jpg');
-%                 cd(params.rootDir)
-%                 importInstrucTex = Screen('MakeTexture',window,importInstruc);
-%                 Screen('DrawTexture', window, importInstrucTex);
-%                 Screen('Flip',window);
-%                 [secs, keyCode]=KbWait;
-%                 while keyCode(params.spaceKey)==0
-%                     [~,keyCode]=KbWait;
-%                 end
-%                 [keyIsDown, secs, keyCode] = KbCheck;
-%             
-%                 importStrmoralSelf = GetEchoNumber(window,'Is "moral self" important for you,if yes, press "1", if no, press "2"  ',...
-%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%                 Screen('Flip', window);
-%                 importStrimmoralSelf = GetEchoNumber(window,'Is "immoral self" important for you,if yes, press "1", if no, press "2"  ',...
-%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%                 Screen('Flip', window);
-%                 importStrmoralOther = GetEchoNumber(window,'Is "moral other" important for you,if yes, press "1", if no, press "2"  ',...
-%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%                 Screen('Flip', window);
-%                 importStrimmoralOther = GetEchoNumber(window,'Is "immoral other" important for you,if yes, press "1", if no, press "2"  ',...
-%                     params.XCenter - params.offset*3,params.YCenter,params.white,params.gray);
-%                 Screen('Flip', window);
-%                 importMatrix =[importStrmoralSelf,importStrimmoralSelf,importStrmoralOther,importStrimmoralOther];
-%             end
-%                 
-%         end
-     
-         % show intruction
+        % show intruction
         Screen('DrawTexture', window, instrucTex);
         Screen('Flip',window);
         [secs, keyCode]=KbWait;
@@ -179,83 +119,39 @@ try
     
     % draw the shape image into memeory
         moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
-        neutralSelfTex   = Screen('MakeTexture', window, params.neutralSelf);
+        neutralSelfTex  = Screen('MakeTexture', window, params.neutralSelf);
         immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
         moralOtherTex   = Screen('MakeTexture', window, params.moralOther);
         neutralOtherTex = Screen('MakeTexture', window, params.neutralOther);
         immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
 %         for blockNum = 1:block 
-    accFeed = 0; % set the accuracy feedback variable
-    for bin = 1:binNum
-        trialOrder = randperm(4);
-        trialOrder = repmat(trialOrder',[6,1]);
-        trialNum = length(trialOrder);
-        tmpRand = randperm(trialNum);
-        tmpRand = tmpRand';
-        trialOrder = trialOrder(tmpRand);   
+    accFeed = 0;                                  % set the accuracy feedback variable
+    for bin = 1:binNum                            %  number of bin is 5
+        % trialOrder = randperm(6);                 % generate a sequence of 1:6 with random position
+        tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
+                'neutralOther','immoralOther','moralSelf','neutralSelf',...
+                'immoralSelf','moralOther','neutralOther','immoralOther'};
+        tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
+        randomOrder = Shuffle(1:36);
+        trialNum = length(randomOrder);
+        trialOrderSmallblock = {};
+        % generate randomized trial order by randomOrder
+        for ii = 1:trialNum
+            trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
+            %trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
+        end
+%         
+%         trialOrder = repmat(trialOrder',[3,1]);
+%         trialNum = length(trialOrder);
+%         tmpRand = randperm(trialNum);
+%         tmpRand = tmpRand';
+%         trialOrder = trialOrder(tmpRand);   
         for trial = 1:trialNum     
             startTrialT = GetSecs;
         % choosing the target shape based on pre-randomized order
-             targetCondition = trialOrder(trial);
-             if targetCondition == 1
-                 currentTarget = moralSelfTex;
-                 identity = 'self';morality = 'moral'; shapeName = params.moralSelfPicName;
-                 if strcmp(task,'self')
-                     trialType = 'self';
-                 elseif strcmp(task,'moral')
-                     trialType = 'moral';
-                 elseif strcmp(task,'immoral')
-                     if importMatrix(targetCondition) == 1
-                         trialType = 'immoral';
-                     else
-                         trialType = 'Not_immoral';
-                     end
-                 end
-             elseif targetCondition == 2
-                 currentTarget = immoralSelfTex;
-                 identity = 'self';morality = 'immoral'; shapeName = params.immoralSelfPicName;
-                 if strcmp(task,'self')
-                     trialType = 'self';
-                 elseif strcmp(task,'moral')
-                     trialType = 'immoral';
-                 elseif strcmp(task,'importance')
-                     if importMatrix(targetCondition) == 1
-                         trialType = 'important';
-                     else
-                         trialType = 'unimportant';
-                     end
-                 end
-             elseif targetCondition == 3
-                 currentTarget = moralOtherTex;
-                 identity = 'other';morality = 'moral'; shapeName = params.moralOtherPicName;
-                 if strcmp(task,'self')
-                     trialType = 'other';
-                 elseif strcmp(task,'moral')
-                     trialType = 'moral';
-                 elseif strcmp(task,'importance')
-                     if importMatrix(targetCondition) == 1
-                         trialType = 'important';
-                     else
-                         trialType = 'unimportant';
-                     end
-                 end
-             elseif targetCondition == 4
-                 currentTarget = immoralOtherTex;
-                 identity = 'other';morality = 'immoral'; shapeName = params.immoralOtherPicName;
-                 if strcmp(task,'self')
-                     trialType = 'other';
-                 elseif strcmp(task,'moral')
-                     trialType = 'immoral';
-                 elseif strcmp(task,'importance')
-                     if importMatrix(targetCondition) == 1
-                         trialType = 'important';
-                     else
-                         trialType = 'unimportant';
-                     end
-                 end
-             end
+             targetCondition = trialOrderSmallblock(trial);
             
-            % define the rect for shape image
+        % define the rect for shape image
             params.shapeRect2 = CenterRect(params.shapeSize, rect);   
 %         targetTime = GetSecs; 
 %         targetTime = targetTime + params.TrialDur; % 设定反应时收集范围TrialDur 更新targetTime功能。           
@@ -279,67 +175,41 @@ try
         % present target
             Screen('DrawTexture', window, currentTarget,[],params.shapeRect2);
 %             Screen('DrawTexture', window, currentLabel,[],params.labelRect2);
-            
-        
+                
             [~, stimOnsetTime] = Screen('Flip', window, fixOnsetTime + params.fixDur - 0.5*params.ifi);
 %         t0 = GetSecs;
             [~, stimOffsetTime] = Screen('Flip', window, stimOnsetTime + params.TargetDur - 0.5*params.ifi);
-        %record setup
+        % Record setup
             response = -1;
             response_record = response;
-            responseKey = 'NA';
+            respKey = 'NA';
             currentRT = -1;
             [keyIsDown, secs, keyCode] = KbCheck;
             while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi)&& response == -1
                 [keyIsDown, secs, keyCode] = KbCheck;
-                currentRT = secs - stimOnsetTime;
-                if keyCode(params.selfResponKey) || keyCode(params.moralResponKey) || keyCode(params.importResponKey) % if the key press is for moral/moral/importance
-         
-                    if strcmp(task,'self')  % if categorization for self
-                        responseKey = params.selfResponKey;
-                        if targetCondition == 1 || targetCondition ==2
-                            response_record = 1;
-                         elseif targetCondition == 3 || targetCondition ==4
-                            response_record = 0;
-                        end
-                    elseif strcmp(task,'moral') % if categorization for self
-                        responseKey = params.moralResponKey;
-                        if targetCondition == 1 || targetCondition ==3
-                            response_record = 1;
-                         elseif targetCondition == 2 || targetCondition ==4
-                              response_record = 0;
-                        end
-                    elseif strcmp(task,'importance') % if categorization for self
-                        responseKey = params.importResponKey;
-                        if importMatrix(targetCondition) ==1,
-                            response_record = 1;
-                        else
-                            response_record = 0;
-                        end
+                currentRT = secs - stimOnsetTime;  % record the reaction time
+                respKey = KbName(keyCode);         % record the response key
+                if strcmp(task,'self')             % if categorization for self
+                    if strcmp(targetCondition,'moralSelf') || strcmp(targetCondition,'neutralSelf') ||strcmp(targetCondition,'immoralSelf')
+                        corrKey = params.selfResponKey;
+%                         response_record = 1;
+                    else
+                        corrKey = params.otherResponKey;
+%                         response_record = 0;
                     end
-                elseif keyCode(params.otherResponKey)|| keyCode(params.immoralResponKey) || keyCode(params.unimportResponKey)
-                       if strcmp(task,'self')
-                           responseKey = params.otherResponKey;
-                           if targetCondition == 1 || targetCondition ==2
-                                response_record = 0;
-                           elseif targetCondition == 3 || targetCondition ==4
-                                  response_record = 1;
-                           end
-                        elseif strcmp(task,'moral')
-                            responseKey = params.immoralResponKey;
-                            if targetCondition == 1 || targetCondition ==3
-                                response_record = 0;
-                             elseif targetCondition == 2 || targetCondition ==4
-                                  response_record = 1;
-                            end
-                        elseif strcmp(task,'importance')
-                            responseKey = params.unimportResponKey;
-                            if importMatrix(targetCondition) ==2,
-                                response_record = 1;
-                            else
-                                response_record = 0;
-                            end
-                       end                   
+                elseif strcmp(task,'moral')        % if categorization for self
+                    if strcmp(targetCondition,'moralSelf') || strcmp(targetCondition,'moralOther')
+                        corrKey = params.moralResponKey;
+                    else
+                         corrKey = params.notmoralResponKey;
+                    end
+                elseif strcmp(task,'immoral') % if categorization for self
+                    respKey = params.importResponKey;
+                    if strcmp(targetCondition,'immoralSelf') || strcmp(targetCondition,'immoralOther')
+                        corrKey = params.immoralResponKey;
+                    else
+                        corrKey = params.notimmoralResponKey;
+                    end
                 elseif keyCode(params.escapeKey)
                             Screen('CloseAll')
                             ShowCursor
@@ -347,42 +217,51 @@ try
                             rethrow(lasterror) ;
                             break
                 end
-%             currentRT = secs - stimOnsetTime;
-                response = response_record;
-            
+                
+                % judge whether the response is correct
+                if corrKey == respKey
+                    response_record = 1;
+                else
+                    response_record = 0;
+                end
+                
             end
+            
             Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);   
             random_delay = 0.5*rand+ 0.5;%900-2400ms random blank
             WaitSecs(random_delay-0.5*params.ifi);
-%             trialNum = trialNum + 1;
-            %response record
+%           trialNum = trialNum + 1;
+            % response record
             cd(params.dataDir)
+            t = datetime('now');
+            DateString = datestr(t)
             responseRecord = fopen(['Moral_self_asso_exp7_pilot2_test_vf_' num2str(subID) '.out'],'a');
-            fprintf(responseRecord,'%d %d %s %s %s %s %s %s %d %d %d %s %s %s %s %.4f %s %d %s\n',...
-                subID, age, gender,handness,  params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
-                block,bin, trial, task, shapeName, identity,... 
-                morality, currentRT, responseKey, response,trialType);
+            fprintf(responseRecord,'%s %d %d %s %s %s %s %s %s %d %d %d %s %s %s %s %.4f %s %d %s\n',...
+                DataString, subID, age, gender,handness,  params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
+                block,bin, trial, task, shapeName, targetCondition,... 
+                corrKey, respKey, response_record,taskType);
             fclose(responseRecord);
             cd(params.rootDir)
-               
-            % test a break when 60 triasl
-                
-            if response == 1;
+            % feed back    
+            if response_record == 1;
                accFeed = accFeed + 1; % accumulate acc
             end
             
             %setup again
-                response = -1;
-                responseKey = 'NA';
+                response_record = -1;
+                respKey = 'NA';
                 currentRT = -1;
                 
                 % print the trial time
                 fprintf('duration of one trial is: %f \n', GetSecs() - startTrialT) ;
+        %end of a bin        
         end
-        if bin == 3
-            DrawFormattedText(window,'Take a break!','center','center',[0 0 255]);
+        
+        % test a break ever 2 bins (72 trials)
+        if rem(bin,2) == 0
+            DrawFormattedText(window,'Take a break and press space if you are ready!','center','center',[0 0 255]);
             Screen('Flip',window);   
-            WaitSecs(1-0.5*params.ifi);
+            WaitSecs(1-0.5 * params.ifi);
             Screen('DrawTexture', window, instrucRestTex);
             Screen('Flip',window);
             [secs, keyCode]=KbWait;
@@ -390,11 +269,9 @@ try
                      [secs,keyCode]=KbWait;
             end
         end
-
-
-        %end of a bin
     end
-     
+    
+    % give feed back every block
     accFeedtext=sprintf('Your accuracy in this block = %1.2f %',accFeed/(binNum*trialNum)); %makes feedback string
     DrawFormattedText(window,accFeedtext,'center'  ,'center',[0 0 255]); %shows RT
     vbl=Screen('Flip',window); %swaps backbuffer to frontbuffer

@@ -32,26 +32,26 @@ balanceMatrix.immoralOther = repmat({'D',  'C',  'S',  'P',  'Tra','H',  'D',  '
 
 % balance responding keys
 % 12 elements * 6 repetition = 72 conditions
-balanceMatrix.matchResp      = repmat({'N','N','N','N','N','N','M','M','M','M','M','M'},[1,6]);  % response for "match" trials in match tasks
-balanceMatrix.mismatchResp   = repmat({'M','M','M','M','M','M','N','N','N','N','N','N'},[1,6]);  % response for "mismatch" trials in match tasks
-balanceMatrix.selfResp       = repmat({'F','F','F','J','J','J','F','F','F','J','J','J'},[1,6]);  % response for "self" trials in self-other categorization tasks
-balanceMatrix.otherResp      = repmat({'J','J','J','F','F','F','J','J','J','F','F','F'},[1,6]);  % response for "other" trials in self-other categorization  in match tasks
-balanceMatrix.moralResp      = repmat({'U','U','U','R','R','R','U','U','U','R','R','R'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
-balanceMatrix.notmoralResp   = repmat({'R','R','R','U','U','U','R','R','R','U','U','U'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
-balanceMatrix.immoralResp    = repmat({'Q','Q','Q','P','P','P','Q','Q','Q','P','P','P'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
-balanceMatrix.notimmoralResp = repmat({'P','P','P','Q','Q','Q','P','P','P','Q','Q','Q'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
+balanceMatrix.matchResp      = repmat({'N','M','N','M','N','M','M','N','M','N','M','N'},[1,6]);  % response for "match" trials in match tasks
+balanceMatrix.mismatchResp   = repmat({'M','N','M','N','M','N','N','M','N','M','N','M'},[1,6]);  % response for "mismatch" trials in match tasks
+balanceMatrix.selfResp       = repmat({'H','J','H','J','H','J','J','H','J','H','J','H'},[1,6]);  % response for "self" trials in self-other categorization tasks
+balanceMatrix.otherResp      = repmat({'J','H','J','H','J','H','H','J','H','J','H','J'},[1,6]);  % response for "other" trials in self-other categorization  in match tasks
+balanceMatrix.moralResp      = repmat({'U','Y','U','Y','U','Y','Y','U','Y','U','Y','U'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
+balanceMatrix.notmoralResp   = repmat({'Y','U','Y','U','Y','U','U','Y','U','Y','U','Y'},[1,6]);  % response for "moral" trials in moral-otherwise categorization 
+balanceMatrix.immoralResp    = repmat({'O','P','O','P','O','P','P','O','P','O','P','O'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
+balanceMatrix.notimmoralResp = repmat({'P','O','P','O','P','O','O','P','O','P','O','P'},[1,6]);  % response for "immoral" trials in immoral-otherwise categorization 
 
 % balance categorization tasks
-% 9 elements * 8 repetition = 72 conditions
-balanceMatrix.block1 = repmat({'self',    'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',   'moral'},[1,8]);  % counterbalance the categorization task
-balanceMatrix.block2 = repmat({'moral',   'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'   'self'},[1,8]);
-balanceMatrix.block3 = repmat({'immoral', 'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral'},[1,8]);
-balanceMatrix.block4 = repmat({'moral',   'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral'},[1,8]);
-balanceMatrix.block5 = repmat({'immoral', 'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'},[1,8]);
-balanceMatrix.block6 = repmat({'self',    'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'},[1,8]);
-balanceMatrix.block7 = repmat({'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'},[1,8]);
-balanceMatrix.block8 = repmat({'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'},[1,8]);
-balanceMatrix.block9 = repmat({'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'  'self'},[1,8]);
+% 6 elements * 12 repetition = 72 conditions
+balanceMatrix.block1 = repmat({'self',    'moral',   'immoral', 'moral',   'immoral', 'self',  },[1,12]);  % counterbalance the categorization task
+balanceMatrix.block2 = repmat({'moral',   'immoral', 'self',    'self',    'moral',   'immoral'},[1,12]);
+balanceMatrix.block3 = repmat({'immoral', 'self',    'moral',   'immoral', 'self',    'moral'  },[1,12]);
+balanceMatrix.block4 = repmat({'moral',   'immoral', 'self',    'immoral', 'moral',   'self'   },[1,12]);
+balanceMatrix.block5 = repmat({'immoral', 'self',    'moral',   'self',    'immoral'  'moral'  },[1,12]);
+balanceMatrix.block6 = repmat({'self',    'moral',   'immoral', 'moral'    'self',    'immoral'},[1,12]);
+% balanceMatrix.block7 = repmat({'immoral', 'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'},[1,8]);
+% balanceMatrix.block8 = repmat({'self',    'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'},[1,8]);
+% balanceMatrix.block9 = repmat({'moral'    'self',   'moral',   'immoral',  'moral'    'immoral'  'self'     'immoral'  'self'},[1,8]);
 
 % assign picture and response keys to current participants
 subIndex = mod(subID,72) + 1;
@@ -71,7 +71,7 @@ params.immoralOtherPicName = params.immoralOtherPicName{1};
 
 KbName('UnifyKeyNames');
 params.matchResponKey      = KbName(balanceMatrix.matchResp(subIndex));      % match
-params.mismatchResponKey   = KbName(balanceMatrix.mismatchResp(subIndex));   % non-match,other
+params.mismatchResponKey   = KbName(balanceMatrix.mismatchResp(subIndex));   % non-match
 params.selfResponKey       = KbName(balanceMatrix.selfResp(subIndex));       % self
 params.otherResponKey      = KbName(balanceMatrix.otherResp(subIndex));      % other
 params.moralResponKey      = KbName(balanceMatrix.moralResp(subIndex));      % moral
@@ -84,8 +84,7 @@ params.spaceKey = KbName('SPACE');
 
 % assign block to current paricipants 
 params.taskMatrix = {balanceMatrix.block1(subIndex),balanceMatrix.block2(subIndex),balanceMatrix.block3(subIndex),...
-         balanceMatrix.block4(subIndex),balanceMatrix.block5(subIndex),balanceMatrix.block6(subIndex),...
-         balanceMatrix.block7(subIndex),balanceMatrix.block8(subIndex),balanceMatrix.block9(subIndex)};
+         balanceMatrix.block4(subIndex),balanceMatrix.block5(subIndex),balanceMatrix.block6(subIndex)};
 
 % Load the images corresponding to each condition
 cd(params.stimDir);

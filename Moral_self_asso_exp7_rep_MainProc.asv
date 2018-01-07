@@ -12,7 +12,7 @@ function Moral_self_asso_exp7_rep_MainProc
 %
 % This is the main m file for the experiment, which refer to the following
 % scripts:
-% 1. Moral_self_asso_exp7_rep_subinfo.m
+% 1. Moral_self_asso_exp7_rep_subinfo_vf.m
 % 2. Moral_self_asso_exp7_rep_getParams.m
 % 3. Moral_self_asso_exp7_rep_match
 % 4. Moral_self_asso_exp7_rep_categ
@@ -90,28 +90,28 @@ AssertOpenGL;
 HideCursor;
 
 %% 定义实验参数
-params = Moral_self_asso_exp7_rep_getParams(subID); % mind the trials per condition in params file!
+params = Moral_self_asso_exp7_getParams(subID); % mind the trials per condition in params file!
 
 %% ******** Practicing for matching task **********
 initNumBlock = 1;  % !!!! change to 1 before real experiment
-initNumBin   = 1;  % !!!! change to 2 before real experiment
-Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+initNumBin   = 2;  % !!!! change to 2 before real experiment
+Moral_self_asso_exp7_match(subID,gender,age,handness,initNumBlock,initNumBin);
 
 %% ********* Matching task **************
 % study two blocks at the beginning
-initNumBlock = 1;  % !!! change to 3 before real experiment
-initNumBin   = 1;  % !!! change to 5 before real experiment
-Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+initNumBlock = 3;  % !!! change to 3 before real experiment
+initNumBin   = 5;  % !!! change to 5 before real experiment
+Moral_self_asso_exp7_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
 %% ******** Categrozation task *************
-for block = 1:6       %  6 blocks
+for block = 1:9       %  9 blocks
     task = cell2mat(params.taskMatrix{block});
-    numBinLearn = 1;  % !!!!change to 2 before real experiment
-    numBinTest  = 1;  % !!!!change to 4 before real experiment (i.e. 5 bind of 24 trials, each condition has 4)   
-    Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,numBinTest);
+    numBinLearn = 2;  % !!!!change to 2 before real experiment
+    numBinTest = 6;   % !!!!change to 5 before real experiment (i.e. 5 bind of 24 trials, each condition has 4)   
+    Moral_self_asso_exp7_categ(subID,gender,age,handness,task,block,numBinTest);
 %     if block == 3  % re-study the association task per 3 blocks of categorization
     if block < 6
-        Moral_self_asso_exp7_rep_match(subID,gender,age,handness,1,numBinLearn) 
+        Moral_self_asso_exp7_match(subID,gender,age,handness,1,numBinLearn) 
     end
 
 end

@@ -82,7 +82,7 @@ try
     cd(params.dataDir);
     % Create a data file for this task
     % save data of practice and formal data differently
-    if initNumBlock < 1
+    if initNumBlock <= 1
         responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
     else
         responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
