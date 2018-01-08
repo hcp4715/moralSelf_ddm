@@ -24,7 +24,9 @@ params.dataDir = [params.rootDir '\data\'];
 % make counterbalance matrix
 % balance the relationship between shape and label and response keys
 % 12 elements for 6 condition * 2 response keys  
-% subject ID (1-12)            12    1     2     3     4     5     6     7     8    9     10     11        
+% subject ID (1-12)            12    1     2     3     4     5     6     7     8    9     10     11 
+
+
 balanceMatrix.moralSelf    = {'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D'  };
 balanceMatrix.neutralSelf  = {'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C'  };
 balanceMatrix.immoralSelf  = {'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S'  };
