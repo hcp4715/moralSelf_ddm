@@ -24,6 +24,7 @@ params.dataDir = [params.rootDir '\data\'];
 % make counterbalance matrix
 % balance the relationship between shape and label and response keys
 % 12 elements for 6 condition * 2 response keys  
+% subject ID (1-12)            12    1     2     3     4     5     6     7     8    9     10     11        
 balanceMatrix.moralSelf    = {'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D'  };
 balanceMatrix.neutralSelf  = {'S',  'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C'  };
 balanceMatrix.immoralSelf  = {'P',  'Tra','H',  'D',  'C',  'S',  'P',  'Tra','H',  'D',  'C',  'S'  };
@@ -101,14 +102,14 @@ params.labelimmoralOther = imread(['immoralOther','.bmp']);
     
 % Load Intructions for each participant
 params.learnInstruc            = imread(['Instruct_learn_',num2str(mod(subID,12)+1),'.jpg']);
-params.learnPracInstruc        = imread(['Instruct_learn_prac_',num2str(mod(subID,12)+1),'.jpg']);
+%params.learnPracInstruc        = imread(['Instruct_learn_prac_',num2str(mod(subID,12)+1),'.jpg']);
 params.learnRestInstruc        = imread(['Instruct_rest_',num2str(mod(subID,12)+1),'.jpg']);
-params.testInstrucSelf1        = imread('test_self_1.jpg');
-params.testInstrucSelf2        = imread('test_self_2.jpg');
-params.testInstrucMoral1       = imread('test_moral_1.jpg');
-params.testInstrucMoral2       = imread('test_moral_2.jpg');
-params.testInstrucimmoral1     = imread('test_immoral_1.jpg');
-params.testInstrucimmoral2     = imread('test_immoral_2.jpg');
+params.testInstrucSelf1        = imread('Instruction_test_self_1.jpg'); 
+params.testInstrucSelf2        = imread('Instruction_test_self_2.jpg');
+params.testInstrucMoral1       = imread('Instruction_test_moral_1.jpg');
+params.testInstrucMoral2       = imread('Instruction_test_moral_2.jpg');
+params.testInstrucimmoral1     = imread('Instruction_test_immoral_1.jpg');
+params.testInstrucimmoral2     = imread('Instruction_test_immoral_2.jpg');
 params.testRestInstrucSelf1    = imread('test_rest_self_1.jpg');
 params.testRestInstrucSelf2    = imread('test_rest_self_2.jpg');
 params.testRestInstrucMoral1   = imread('test_rest_moral_1.jpg');

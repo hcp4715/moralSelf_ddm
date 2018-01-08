@@ -95,7 +95,7 @@ try
     % MakeTexture of the shape and label, for presenting
     instrucTex      = Screen('MakeTexture', window, params.learnInstruc);
     restInstrucTex  = Screen('MakeTexture', window, params.learnRestInstruc);
-    pracInstrucTex  = Screen('MakeTexture', window, params.learnPracInstruc);
+    %pracInstrucTex  = Screen('MakeTexture', window, params.learnPracInstruc);
     moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
     neutralSelfTex  = Screen('MakeTexture', window, params.neutralSelf);
     immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
