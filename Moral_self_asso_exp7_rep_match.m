@@ -82,13 +82,13 @@ try
     cd(params.dataDir);
     % Create a data file for this task
     % save data of practice and formal data differently
-    if initNumBlock <= 1
+    if numOfBlock <= 1
         responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
     else
         responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
     end
     fprintf(responseRecord,...
-        'SubjectID Age Gender Handness moralSelfShape neutralSelfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape matchKey mismatchKey Block Bin Trial Shape Label Match RT ResponseKey Accuracy\n');
+        'DateTime SubjectID Age Gender Handness moralSelfShape neutralSelfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape matchKey mismatchKey Block Bin Trial Shape Label Match RT ResponseKey Accuracy\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
@@ -113,6 +113,7 @@ try
     feedCorrectTex   = Screen('MakeTexture',window,params.feedbackCorrectImage);
     feedNoRespTex    = Screen('MakeTexture',window,params.feedbackNoRespImage);
     feedIncorrectTex = Screen('MakeTexture',window,params.feedbackIncorrectImage);
+    feedWrongKey     = Screen('MakeTexture',window,params.feedbackWrongKey);
     
     % Put all labels in a cell, to randomly chose the mismatch trials
     labelCell = {labelmoralSelfTex,labelneutralSelfTex,labelimmoralSelfTex,labelmoralOtherTex,labelneutralOtherTex, labelimmoralOtherTex};
@@ -150,65 +151,7 @@ try
                 startTrialT = GetSecs;
                 currentShape = trialOrderSmallblock{1,trial};  % current shape condition
                 currentMatch = trialOrderSmallblock{2,trial};  % current match condition
-%                 
-%                 % determine the shape time
-%                 if strcmp(currentShape,'moralSelf') == 1
-%                     targetCondition = 1;
-%                 elseif strcmp(currentShape,'neutralSelf') == 1
-%                     targetCondition = 2;
-%                 elseif strcmp(currentShape,'immoralSelf') == 1
-%                     targetCondition = 3;
-%                 elseif strcmp(currentShape,'moralOther') == 1
-%                     targetCondition = 4;
-%                 elseif strcmp(currentShape,'neutralOther') == 1
-%                     targetCondition = 5;    
-%                 elseif strcmp(currentShape,'immoralOther') == 1
-%                     targetCondition = 6;
-%                 end
-                
-%                 % get the shape for presenting
-%                 if targetCondition == 1 && currentMatch == 1
-%                     currentTarget = moralSelfTex;
-%                     currentLabel = labelmoralSelfTex;
-%                     identity = 'self';morality = 'moral'; matchness = 'match';
-%                 elseif targetCondition == 1 && currentMatch == 2
-%                     currentTarget = moralSelfTex;
-%                     currentLabelIndex = Shuffle([2,3,4]);
-%                     currentLabelIndex = currentLabelIndex(1,1);
-%                     currentLabel = labelCell{currentLabelIndex};
-%                     identity = 'self';morality = 'moral'; matchness = 'nonmatch';
-%                 elseif targetCondition == 2 && currentMatch == 1
-%                     currentTarget = immoralSelfTex;
-%                     currentLabel = labelimmoralSelfTex;
-%                     identity = 'self';morality = 'immoral';matchness = 'match';
-%                 elseif targetCondition == 2 && currentMatch == 2
-%                     currentTarget = immoralSelfTex;
-%                     currentLabelIndex = Shuffle([1,3,4]);
-%                     currentLabelIndex = currentLabelIndex(1,1);
-%                     currentLabel = labelCell{currentLabelIndex};
-%                     identity = 'self';morality = 'immoral';matchness = 'nonmatch';
-%                 elseif targetCondition == 3 && currentMatch == 1
-%                     currentTarget = moralOtherTex;
-%                     currentLabel = labelmoralOtherTex;
-%                     identity = 'other';morality = 'moral';matchness = 'match';
-%                 elseif targetCondition == 3 && currentMatch == 2
-%                     currentTarget = moralOtherTex;
-%                     currentLabelIndex = Shuffle([1,2,4]);
-%                     currentLabelIndex = currentLabelIndex(1,1);
-%                     currentLabel = labelCell{currentLabelIndex};
-%                     identity = 'other';morality = 'moral';matchness = 'nonmatch';    
-%                 elseif targetCondition == 4 && currentMatch == 1
-%                     currentTarget = immoralOtherTex;
-%                     currentLabel = labelimmoralOtherTex;
-%                     identity = 'other';morality = 'immoral';matchness = 'match';
-%                 elseif targetCondition == 4 && currentMatch == 2
-%                     currentTarget = immoralOtherTex;
-%                     currentLabelIndex = Shuffle([1,2,3]);
-%                     currentLabelIndex = currentLabelIndex(1,1);
-%                     currentLabel = labelCell{currentLabelIndex};
-%                     identity = 'other';morality = 'immoral';matchness = 'nonmatch';
-%                 end
-                
+%                                 
                 params.shapeRect = OffsetRect (rect, 0,-params.offset);   % the rect for shape is below the fixation
                 params.labelRect = OffsetRect (rect, 0,params.offset);    % the rect for label upon the fixation
                 params.shapeRect2 = CenterRect(params.shapeSize, params.shapeRect);   % define the upper window for shape image
@@ -233,8 +176,8 @@ try
 %               Screen('DrawLine', window, [255,255,255], params.XCenter+fixationLength/2, params.YCenter, ...
 %                       params.XCenter-fixationLength/2, params.YCenter,2);
                 % present 
-                Screen('DrawTexture', window, currentTarget,[],params.shapeRect2);
-                Screen('DrawTexture', window, currentLabel,[],params.labelRect2);
+                Screen('DrawTexture', window, params.shapeRect,[],params.shapeRect2);
+                Screen('DrawTexture', window, params.labelRect,[],params.labelRect2);
 %               random_delay = 0.5*rand+0.9;%900-1400ms random blank
 %               [~,stimOnsetTime] = Screen('Flip', window, targetTime - params.BlankDur - params.TargetDur - params.FeedbackDur-0.5*params.ifi);
                 [~,stimOnsetTime] = Screen('Flip', window, fixOnsetTime + params.fixDur - 0.5*params.ifi);
@@ -288,6 +231,8 @@ try
                         Priority(0);
                         rethrow(lasterror) ;
                         break
+                    else
+                        response_record = 2;
                     end
                     if response_record ~= -1;
                         response = response_record;
@@ -304,6 +249,8 @@ try
                     Screen('DrawTexture', window, feedIncorrectTex,[]);
                 elseif response == -1 % no response detected
                     Screen('DrawTexture', window, feedNoRespTex,[]); % DrawFormattedText(window,'Too Slow','center','center',[255 255 0]);
+                elseif response == 2 % wrong key
+                    Screen('DrawTexture', window, feedWrongKey,[]);  % tell participant that they have a wrong key
                 end  
             
                 Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);   
@@ -311,9 +258,11 @@ try
                 WaitSecs(params.ISI-0.5*params.ifi);         % time for ISI
                 %response record
                 cd(params.dataDir)
+                t = datetime('now');
+                DateString = datestr(t);
                 responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
-                fprintf(responseRecord,'%d %d %s %s %s %s %s %s %s %s %d %d %d %s %s %s %.4f %s %d\n',...
-                    subID, age, gender,handness, params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
+                fprintf(responseRecord,'%s %d %d %s %s %s %s %s %s %s %s %d %d %d %s %s %s %.4f %s %d\n',...
+                    DateString, subID, age, gender,handness, params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
                     params.matchResponKey,params.mismatchResponKey,blockNum,blockBin,trial, currentShape,... 
                     label, currentMatch, currentRT, responseKey, response);
 %               moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey 

@@ -108,7 +108,9 @@ try
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance2); 
         end          
 %         % show the choice option for importance % deleted in reivision
-     
+
+        feedWrongKey     = Screen('MakeTexture',window,params.feedbackWrongKey);
+
         % show intruction
         Screen('DrawTexture', window, instrucTex);
         Screen('Flip',window);
@@ -189,7 +191,7 @@ try
                 [keyIsDown, secs, keyCode] = KbCheck;
                 currentRT = secs - stimOnsetTime;  % record the reaction time
                 respKey = KbName(keyCode);         % record the response key
-                if strcmp(task,'self')             % if categorization for self
+                if strcmp(task,'self') && (respKey == 'J' || respKey == 'H' )          % if categorization for self
                     if strcmp(targetCondition,'moralSelf') || strcmp(targetCondition,'neutralSelf') ||strcmp(targetCondition,'immoralSelf')
                         corrKey = params.selfResponKey;
 %                         response_record = 1;
@@ -197,13 +199,13 @@ try
                         corrKey = params.otherResponKey;
 %                         response_record = 0;
                     end
-                elseif strcmp(task,'moral')        % if categorization for self
+                elseif strcmp(task,'moral') && (respKey == 'U' || respKey == 'Y' )        % if categorization for self
                     if strcmp(targetCondition,'moralSelf') || strcmp(targetCondition,'moralOther')
                         corrKey = params.moralResponKey;
                     else
                          corrKey = params.notmoralResponKey;
                     end
-                elseif strcmp(task,'immoral') % if categorization for self
+                elseif strcmp(task,'immoral') && (respKey == 'O' || respKey == 'P' )  % if categorization for self
                     respKey = params.importResponKey;
                     if strcmp(targetCondition,'immoralSelf') || strcmp(targetCondition,'immoralOther')
                         corrKey = params.immoralResponKey;
@@ -216,6 +218,8 @@ try
                             Priority(0);
                             rethrow(lasterror) ;
                             break
+                else
+                    response_record = 2;
                 end
                 
                 % judge whether the response is correct
@@ -227,14 +231,22 @@ try
                 
             end
             
-            Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);   
+            % if participant pressed an wrong key, then remind him or her
+            % to press the right keys.
+            if response_record == 2
+                Screen('DrawTexture', window, feedWrongKey,[]);
+                Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi); 
+            else
+                Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);
+            end
+            
             random_delay = 0.5*rand+ 0.5;%900-2400ms random blank
             WaitSecs(random_delay-0.5*params.ifi);
 %           trialNum = trialNum + 1;
             % response record
             cd(params.dataDir)
             t = datetime('now');
-            DateString = datestr(t)
+            DateString = datestr(t);
             responseRecord = fopen(['Moral_self_asso_exp7_pilot2_test_vf_' num2str(subID) '.out'],'a');
             fprintf(responseRecord,'%s %d %d %s %s %s %s %s %s %d %d %d %s %s %s %s %.4f %s %d %s\n',...
                 DataString, subID, age, gender,handness,  params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...

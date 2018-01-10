@@ -106,12 +106,12 @@ params.labelimmoralOther = imread(['immoralOther','.bmp']);
 params.learnInstruc            = imread(['Instruct_learn_',num2str(mod(subID,12)+1),'.jpg']);
 %params.learnPracInstruc        = imread(['Instruct_learn_prac_',num2str(mod(subID,12)+1),'.jpg']);
 params.learnRestInstruc        = imread(['Instruct_rest_',num2str(mod(subID,12)+1),'.jpg']);
-params.testInstrucSelf1        = imread('Instruction_test_self_1.jpg'); 
-params.testInstrucSelf2        = imread('Instruction_test_self_2.jpg');
-params.testInstrucMoral1       = imread('Instruction_test_moral_1.jpg');
-params.testInstrucMoral2       = imread('Instruction_test_moral_2.jpg');
-params.testInstrucimmoral1     = imread('Instruction_test_immoral_1.jpg');
-params.testInstrucimmoral2     = imread('Instruction_test_immoral_2.jpg');
+params.testInstrucSelf1        = imread('test_self_1.jpg'); 
+params.testInstrucSelf2        = imread('test_self_2.jpg');
+params.testInstrucMoral1       = imread('test_moral_1.jpg');
+params.testInstrucMoral2       = imread('test_moral_2.jpg');
+params.testInstrucimmoral1     = imread('test_immoral_1.jpg');
+params.testInstrucimmoral2     = imread('test_immoral_2.jpg');
 params.testRestInstrucSelf1    = imread('test_rest_self_1.jpg');
 params.testRestInstrucSelf2    = imread('test_rest_self_2.jpg');
 params.testRestInstrucMoral1   = imread('test_rest_moral_1.jpg');
@@ -123,6 +123,7 @@ params.testRestInstrucimmoral2 = imread('test_rest_immoral_2.jpg');
 params.feedbackCorrectImage   = imread('feed_correct.jpg');
 params.feedbackIncorrectImage = imread('feed_wrong.jpg');
 params.feedbackNoRespImage    = imread('feed_tooSlow.jpg');
+params.feedbackWrongKey       = imread('feed_wrongKey.jpg');
 cd(params.rootDir);
 
 %%  ******************************* 
