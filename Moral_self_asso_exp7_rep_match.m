@@ -76,6 +76,7 @@ global params    % get all parameters from in params
 % MainFlow
 try
     % Open a window and setup display location
+    % rect = (800, 600); % small window to debug
     [window,rect] = Screen('OpenWindow', params.whichscreen,params.gray,params.winSize);
     HideCursor;
     % Setup response record
@@ -88,7 +89,7 @@ try
         responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
     end
     fprintf(responseRecord,...
-        'DateTime SubjectID Age Gender Handness moralSelfShape neutralSelfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape matchKey mismatchKey Block Bin Trial Shape Label Match RT ResponseKey Accuracy\n');
+        'DateString subID age gender handness blockNum blockBin trial currentShape currentLabel currentMatch currentRT responseKey response\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
@@ -117,7 +118,7 @@ try
     
     % Put all labels in a cell, to randomly chose the mismatch trials
     labelCell = {labelmoralSelfTex,labelneutralSelfTex,labelimmoralSelfTex,labelmoralOtherTex,labelneutralOtherTex, labelimmoralOtherTex};
-    
+    labels = {'moralSelf','neutralSelf','immoralSelf','moralOther','neutralOther','immoralOther'};
     % Show Instruction
     Screen('DrawTexture', window, instrucTex);
     Screen('Flip',window);
@@ -151,9 +152,11 @@ try
                 startTrialT = GetSecs;
                 currentShape = trialOrderSmallblock{1,trial};  % current shape condition
                 currentMatch = trialOrderSmallblock{2,trial};  % current match condition
-%                                 
-                params.shapeRect = OffsetRect (rect, 0,-params.offset);   % the rect for shape is below the fixation
-                params.labelRect = OffsetRect (rect, 0,params.offset);    % the rect for label upon the fixation
+                                
+                params.shapeRect = OffsetRect (rect, 0,-params.offset);   % move the rect to vectically below fixation
+                params.labelRect = OffsetRect (rect, 0,params.offset);    % move the rect to vectically  upon the fixation
+                % center a rect in the place define above, i.e. the center
+                % of shape and label.
                 params.shapeRect2 = CenterRect(params.shapeSize, params.shapeRect);   % define the upper window for shape image
                 params.labelRect2 = CenterRect(params.labelSize, params.labelRect);   % define the lower window for label image
 
@@ -176,8 +179,65 @@ try
 %               Screen('DrawLine', window, [255,255,255], params.XCenter+fixationLength/2, params.YCenter, ...
 %                       params.XCenter-fixationLength/2, params.YCenter,2);
                 % present 
-                Screen('DrawTexture', window, params.shapeRect,[],params.shapeRect2);
-                Screen('DrawTexture', window, params.labelRect,[],params.labelRect2);
+               
+                % chose the texture made above
+                if strcmp(currentMatch,'match')
+                    currentLabel = currentShape;
+                    if strcmp(currentShape,'moralSelf')
+                        currentShapeTex = moralSelfTex;
+                        currentLabelTex = labelmoralSelfTex;
+                    elseif strcmp(currentShape,'neutralSelf')
+                        currentShapeTex = neutralSelfTex;
+                        currentLabelTex = labelneutralSelfTex;
+                    elseif strcmp(currentShape,'immoralSelf')
+                        currentShapeTex = immoralSelfTex;
+                        currentLabelTex = labelimmoralSelfTex;
+                    elseif strcmp(currentShape,'moralOther')
+                        currentShapeTex = moralOtherTex;
+                        currentLabelTex = labelmoralOtherTex;
+                    elseif strcmp(currentShape,'neutralOther')
+                        currentShapeTex = neutralOtherTex;
+                        currentLabelTex = labelneutralOtherTex;
+                    elseif strcmp(currentShape,'immoralOther')
+                        currentShapeTex = immoralOtherTex;
+                        currentLabelTex = labelimmoralOtherTex;
+                    end
+                else
+                    if strcmp(currentShape,'moralSelf') 
+                        currentShapeTex = moralSelfTex;
+                        currentLabelIndx = randsample(2:6,1);
+                        currentLabel = labels{currentLabelIndx};
+                        currentLabelTex = labelCell{currentLabelIndx};
+                    elseif strcmp(currentShape,'neutralSelf') 
+                        currentShapeTex = neutralSelfTex;
+                        currentLabelIndx = randsample([1,3:6],1);
+                        currentLabel = labels{currentLabelIndx};
+                        currentLabelTex = labelCell{currentLabelIndx};
+                    elseif strcmp(currentShape,'immoralSelf')  
+                        currentShapeTex = immoralSelfTex;
+                        currentLabelIndx = randsample([1,2,4:6],1);
+                        currentLabel = labels{currentLabelIndx};
+                        currentLabelTex = labelCell{currentLabelIndx};
+                    elseif strcmp(currentShape,'moralOther')
+                        currentShapeTex = moralOtherTex;
+                        currentLabelIndx = randsample([1:3,5,6],1);
+                        currentLabel = labels{currentLabelIndx};
+                        currentLabelTex = labelCell{currentLabelIndx};
+                    elseif strcmp(currentShape,'neutralOther')
+                        currentShapeTex = neutralOtherTex;
+                        currentLabelIndx = randsample([1:4,6],1);
+                        currentLabel = labels{currentLabelIndx};
+                        currentLabelTex = labelCell{currentLabelIndx};
+                    elseif strcmp(currentShape,'immoralOther')
+                        currentShapeTex = immoralOtherTex;
+                        currentLabelIndx = randsample(1:5,1);
+                        currentLabel = labels{currentLabelIndx};
+                        currentLabelTex = labelCell{currentLabelIndx};
+                    end
+                end
+                Screen('DrawTexture', window, currentShapeTex,[],params.shapeRect2);
+                %Screen('DrawTexture', window, [255 255 255],[],params.shapeRect2);
+                Screen('DrawTexture', window, currentLabelTex,[],params.labelRect2);
 %               random_delay = 0.5*rand+0.9;%900-1400ms random blank
 %               [~,stimOnsetTime] = Screen('Flip', window, targetTime - params.BlankDur - params.TargetDur - params.FeedbackDur-0.5*params.ifi);
                 [~,stimOnsetTime] = Screen('Flip', window, fixOnsetTime + params.fixDur - 0.5*params.ifi);
@@ -261,10 +321,9 @@ try
                 t = datetime('now');
                 DateString = datestr(t);
                 responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
-                fprintf(responseRecord,'%s %d %d %s %s %s %s %s %s %s %s %d %d %d %s %s %s %.4f %s %d\n',...
-                    DateString, subID, age, gender,handness, params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
-                    params.matchResponKey,params.mismatchResponKey,blockNum,blockBin,trial, currentShape,... 
-                    label, currentMatch, currentRT, responseKey, response);
+                fprintf(responseRecord,'%s %d %d %s %s %d %d %d %d %s %s %.4f %s %s\n',...
+                    DateString, subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
+                    currentMatch, currentRT, responseKey, response);
 %               moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey 
                 fclose(responseRecord);
                 cd(params.rootDir);

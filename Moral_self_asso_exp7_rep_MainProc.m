@@ -1,3 +1,4 @@
+
 function Moral_self_asso_exp7_rep_MainProc
 %%
 % History: Based on my previous stuy; 
@@ -16,14 +17,14 @@ function Moral_self_asso_exp7_rep_MainProc
 % 2. Moral_self_asso_exp7_rep_getParams.m
 % 3. Moral_self_asso_exp7_rep_match
 % 4. Moral_self_asso_exp7_rep_categ
-
+%
 % Experimental design for the categorization task: 
 % 2 (id: self vs. other) * 3 (moral valence: postive, neutral, vs. negative) *
 % 2 categorization task(tasks type: morality, self)
-
+%
 % Input variables:
 % subjects' ID, age, sex, and condition;
-
+%
 % This experiment was aimed to replicate my previous studies, so that 
 % we can confirm our resulting patter. In this exp., we also have two phases:
 % First, Learning phase, in which participant making match judgmnet;
@@ -37,34 +38,34 @@ function Moral_self_asso_exp7_rep_MainProc
 % Categ. task    two tasks       three tasks
 % feedback       words           schema faces
 % dur.for categ.  100ms          200ms 
-
+%
 %% details about trials
 % trials for matching task
 % 500ms(fixation) + 100ms(target display) + blank(800-1100ms) +
 % 500ms(feedabkc)
 % one trial: 2,200ms
-
+%
 % trials for categorization task: 
 % Fixation: 500ms + target display: 100ms + blank: 800-1200ms, No feedback
-
+%
 % One trial: 1400-2000ms
-
+%
 % Stimuli: 
 % 6 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive, neutral vs. negative);
-
+%
 % Moral Self(MS),   Neutral Self (NS),  Immoral Self (IS); 
 % Moral Other (MO), Neutral Other (NN), Immoral Other (IO);
-
+%
 % Six labels in this Exp.;
 % "好我","常我","坏我";
 % "好人","常人","坏人"
-
+%
 % Task：Categorization, Whether the shape presented belongs to one categories?
-
+%
 % Total block: 8, number of trials in each block: 24*6
-
+%
 % Data is collected in the file: Exp_behav_moral_asso_exp7_rep_(subID).out
- 
+%
 % vairables:
 % params    --  globale variable, get parameters from getParams.m
 %
@@ -103,7 +104,7 @@ initNumBlock = 1;  % !!! change to 3 before real experiment
 initNumBin   = 1;  % !!! change to 5 before real experiment
 Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
-%% ******** Categrozation task *************
+%% ******** Categrozation task *************n
 for block = 1:6       %  6 blocks
     task = cell2mat(params.taskMatrix{block});
     numBinLearn = 1;  % !!!!change to 2 before real experiment

@@ -134,7 +134,8 @@ params.whichscreen = min(Screen('Screens'));     % 有的是用max，作用差不多
 params.black = BlackIndex(params.whichscreen);
 params.white = WhiteIndex(params.whichscreen);
 params.gray = round((params.black + params.white)/2);
-params.winSize = [];
+params.winSize = [0,0,800,600];                      % changed the window's size when debugging, 
+                                                     % it will be as the input of 'openWindow' function
 
 % using parameters from screen
 [w,rect] = Screen('OpenWindow',params.whichscreen, params.gray,params.winSize);
@@ -161,7 +162,7 @@ params.IV1 = 2;           % 自变量1，两个水平: 自我 vs. 他人
 params.IV2 = 3 ;          % Independent variable 2，three levels: moral, netural, vs. immoral
 params.trials4EachCond = 2;       % trials for each condition, need to get back to 60 when
 
-% 视觉刺激位置相关参数：
+% 视觉刺激位置相关参数 (defined in the experiment script, instead here)
 % params.shapeRect = CenterRect(params.shapeSize,rect);  % define the size of the rect used for presenting stimulus
 % params.shapeRect = OffsetRect (rect, 0,params.offset);   % the rect for shapee
 % params.labelRect = OffsetRect (rect, 0,params.offset);   % the rect for label
