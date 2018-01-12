@@ -71,12 +71,12 @@ function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,bin
 %initialization
 % Screen('Preference', 'SkipSyncTests', 1)
 global params    % get all parameters from in params 
+% DisableKeysForKbCheck(13)   % don't use return
 
 %%
 % MainFlow
 try
     % Open a window and setup display location
-    % rect = (800, 600); % small window to debug
     [window,rect] = Screen('OpenWindow', params.whichscreen,params.gray,params.winSize);
     HideCursor;
     % Setup response record
@@ -127,39 +127,39 @@ try
          [secs,keyCode]=KbWait;
     end
     
+    % create a cell for all conditions
+    tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
+                'neutralOther','immoralOther','moralSelf','neutralSelf',...
+                'immoralSelf','moralOther','neutralOther','immoralOther';...
+                'match','match','match','match','match','match',...
+                'mistmatch','mistmatch','mistmatch','mistmatch','mistmatch','mistmatch'};
+    tmpConditionSmallblock = repmat(tmpCondition,[1,3]);  % a small block of trials.
+    
+    % define the location of the picture
+    params.shapeRect = OffsetRect (rect, 0,-params.offset);   % move the rect to vectically below fixation
+    params.labelRect = OffsetRect (rect, 0,params.offset);    % move the rect to vectically  upon the fixation
+    
+    % center a rect in the place define above, i.e. the center of shape and label.
+    params.shapeRect2 = CenterRect(params.shapeSize, params.shapeRect);   % define the upper window for shape image
+    params.labelRect2 = CenterRect(params.labelSize, params.labelRect);   % define the lower window for label image
+
     for blockNum = 1:numOfBlock
         accFeed = 0; % init Accuracy of the block Feedback;
         for blockBin = 1:binNum
             % Important!! Generate the random order for trials in each bin
             % and for each bin, the order is randomize once.
-            tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
-                'neutralOther','immoralOther','moralSelf','neutralSelf',...
-                'immoralSelf','moralOther','neutralOther','immoralOther';...
-                'match','match','match','match','match','match',...
-                'mistmatch','mistmatch','mistmatch','mistmatch','mistmatch','mistmatch'};
-            tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
-            randomOrder = Shuffle(1:36);
+            randomOrder = Shuffle(1:36);    % create a random index
             trialNum = length(randomOrder);
             trialOrderSmallblock = {};
-            
-            % generate randomized trial order by randomOrder
-            for ii = 1:36
+            for trial = 1:trialNum  % binNum trials for one small circle.
+                % get the order of a small block based on the rando index created above
                 trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
                 trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
-            end
-            
-            for trial = 1:trialNum  % binNum trials for one small circle.
+                
                 startTrialT = GetSecs;
                 currentShape = trialOrderSmallblock{1,trial};  % current shape condition
                 currentMatch = trialOrderSmallblock{2,trial};  % current match condition
                                 
-                params.shapeRect = OffsetRect (rect, 0,-params.offset);   % move the rect to vectically below fixation
-                params.labelRect = OffsetRect (rect, 0,params.offset);    % move the rect to vectically  upon the fixation
-                % center a rect in the place define above, i.e. the center
-                % of shape and label.
-                params.shapeRect2 = CenterRect(params.shapeSize, params.shapeRect);   % define the upper window for shape image
-                params.labelRect2 = CenterRect(params.labelSize, params.labelRect);   % define the lower window for label image
-
                 %Run Trial
             
                 % presenet fixation
@@ -174,18 +174,14 @@ try
                 [~,fixOnsetTime] = Screen('Flip', window);
                 %target and label
                 % draw the fixation first
-%               Screen('DrawLine', window, [255,255,255], params.XCenter, params.YCenter+fixationLength/2, ...
-%                       params.XCenter, params.YCenter-fixationLength/2,2);     
-%               Screen('DrawLine', window, [255,255,255], params.XCenter+fixationLength/2, params.YCenter, ...
-%                       params.XCenter-fixationLength/2, params.YCenter,2);
+                
                 % present 
-               
-                % chose the texture made above
-                if strcmp(currentMatch,'match')
-                    currentLabel = currentShape;
-                    if strcmp(currentShape,'moralSelf')
-                        currentShapeTex = moralSelfTex;
-                        currentLabelTex = labelmoralSelfTex;
+                % chose image to present based on the condition (currentShape, currentMatch)
+                if strcmp(currentMatch,'match')               % if it is matched trial
+                    currentLabel = currentShape;              % Labe has the same name as shape;
+                    if strcmp(currentShape,'moralSelf')       % if it is the moralSelf trial
+                        currentShapeTex = moralSelfTex;       % make the current Tex the moral selfTex
+                        currentLabelTex = labelmoralSelfTex;  % make the current label the moral self Tex
                     elseif strcmp(currentShape,'neutralSelf')
                         currentShapeTex = neutralSelfTex;
                         currentLabelTex = labelneutralSelfTex;
@@ -202,12 +198,12 @@ try
                         currentShapeTex = immoralOtherTex;
                         currentLabelTex = labelimmoralOtherTex;
                     end
-                else
+                else                                                   % if the trials is not matched
                     if strcmp(currentShape,'moralSelf') 
-                        currentShapeTex = moralSelfTex;
-                        currentLabelIndx = randsample(2:6,1);
-                        currentLabel = labels{currentLabelIndx};
-                        currentLabelTex = labelCell{currentLabelIndx};
+                        currentShapeTex = moralSelfTex;                % the current Shape Tex is moral self
+                        currentLabelIndx = randsample(2:6,1);          % generate a random index that differ from moralself
+                        currentLabel = labels{currentLabelIndx};       % get the label name
+                        currentLabelTex = labelCell{currentLabelIndx}; % get the label Tex
                     elseif strcmp(currentShape,'neutralSelf') 
                         currentShapeTex = neutralSelfTex;
                         currentLabelIndx = randsample([1,3:6],1);
@@ -236,7 +232,6 @@ try
                     end
                 end
                 Screen('DrawTexture', window, currentShapeTex,[],params.shapeRect2);
-                %Screen('DrawTexture', window, [255 255 255],[],params.shapeRect2);
                 Screen('DrawTexture', window, currentLabelTex,[],params.labelRect2);
 %               random_delay = 0.5*rand+0.9;%900-1400ms random blank
 %               [~,stimOnsetTime] = Screen('Flip', window, targetTime - params.BlankDur - params.TargetDur - params.FeedbackDur-0.5*params.ifi);
@@ -267,16 +262,15 @@ try
                 while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                     [keyIsDown, secs, keyCode] = KbCheck;
                     currentRT = secs - stimOnsetTime;
-                    if keyCode(params.matchResponKey)           % if the key is for match
-                    
+                    if KbName(keyCode) == params.matchResponKey          % if the key is for match                   
 %                     currentRT2 = secs - t0;
                         if strcmp(currentMatch,'match') == 1
                             response_record = 1;
                         elseif currentMatch == 2
                             response_record = 0;
                         end
-                        responseKey = params.matchResponKey;
-                    elseif keyCode(params.mismatchResponKey)   % if the key is for mismatch
+                        
+                    elseif KbName(keyCode) == params.mismatchResponKey   % if the key is for mismatch
 %                       currentRT = secs - stimOnsetTime;
 %                       currentRT2 = secs - t0;
                         if strcmp(currentMatch,'mismatch') == 1
@@ -284,20 +278,21 @@ try
                         else
                             response_record = 0;
                         end
-                        responseKey = params.mismatchResponKey;
-                    elseif keyCode(params.escapeKey)
+%                         responseKey = params.mismatchResponKey;
+                    elseif KbName(keyCode) == params.escapeKey
                         Screen('CloseAll')
                         ShowCursor
                         Priority(0);
                         rethrow(lasterror) ;
                         break
-                    else
-                        response_record = 2;
+                    %else
+                    %    response_record = 2;
                     end
                     if response_record ~= -1;
                         response = response_record;
+                        responseKey = KbName(params.matchResponKey);
                     end
-                    
+                    fprintf('the pressed key is : %s \n', responseKey) ;
                 end
             
 %             fprintf('currentRT: %f \n',currentRT); 
