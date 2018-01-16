@@ -117,7 +117,8 @@ try
     feedWrongKey     = Screen('MakeTexture',window,params.feedbackWrongKey);
     
     % Put all labels in a cell, to randomly chose the mismatch trials
-    labelCell = {labelmoralSelfTex,labelneutralSelfTex,labelimmoralSelfTex,labelmoralOtherTex,labelneutralOtherTex, labelimmoralOtherTex};
+    labelCell = {labelmoralSelfTex,labelneutralSelfTex,labelimmoralSelfTex,labelmoralOtherTex,...
+                 labelneutralOtherTex, labelimmoralOtherTex};
     labels = {'moralSelf','neutralSelf','immoralSelf','moralOther','neutralOther','immoralOther'};
     % Show Instruction
     Screen('DrawTexture', window, instrucTex);
@@ -146,6 +147,7 @@ try
     for blockNum = 1:numOfBlock
         accFeed = 0; % init Accuracy of the block Feedback;
         for blockBin = 1:binNum
+            fprintf('the current bin is: %f \n', blockBin); %  print the bin number for debugging
             % Important!! Generate the random order for trials in each bin
             % and for each bin, the order is randomize once.
             randomOrder = Shuffle(1:36);    % create a random index
@@ -153,8 +155,10 @@ try
             trialOrderSmallblock = {};
             for trial = 1:trialNum  % binNum trials for one small circle.
                 % get the order of a small block based on the rando index created above
-                trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
-                trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
+                trialOrderSmallblock(1,trial) = tmpConditionSmallblock(1,randomOrder(trial));
+                trialOrderSmallblock(2,trial) = tmpConditionSmallblock(2,randomOrder(trial));
+                
+                fprintf('the current trial is: %f \n', trial); %  print the trial number for debugging
                 
                 startTrialT = GetSecs;
                 currentShape = trialOrderSmallblock{1,trial};  % current shape condition
@@ -262,24 +266,25 @@ try
                 while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                     [keyIsDown, secs, keyCode] = KbCheck;
                     currentRT = secs - stimOnsetTime;
-                    if KbName(keyCode) == params.matchResponKey          % if the key is for match                   
+                    responseKey = KbName(keyCode);
+                    if responseKey == params.matchResponKey          % if the key is for match                   
 %                     currentRT2 = secs - t0;
                         if strcmp(currentMatch,'match') == 1
-                            response_record = 1;
+                            response = 1;
                         elseif currentMatch == 2
-                            response_record = 0;
+                            response = 0;
                         end
                         
-                    elseif KbName(keyCode) == params.mismatchResponKey   % if the key is for mismatch
+                    elseif responseKey == params.mismatchResponKey   % if the key is for mismatch
 %                       currentRT = secs - stimOnsetTime;
 %                       currentRT2 = secs - t0;
                         if strcmp(currentMatch,'mismatch') == 1
-                            response_record = 1;
+                            response = 1;
                         else
-                            response_record = 0;
+                            response = 0;
                         end
 %                         responseKey = params.mismatchResponKey;
-                    elseif KbName(keyCode) == params.escapeKey
+                    elseif responseKey == params.escapeKey
                         Screen('CloseAll')
                         ShowCursor
                         Priority(0);
@@ -287,15 +292,11 @@ try
                         break
                     %else
                     %    response_record = 2;
-                    end
-                    if response_record ~= -1;
-                        response = response_record;
-                        responseKey = KbName(params.matchResponKey);
-                    end
-                    fprintf('the pressed key is : %s \n', responseKey) ;
+                    end  
                 end
-            
-%             fprintf('currentRT: %f \n',currentRT); 
+               fprintf('currentRT: %f \n',currentRT);
+               fprintf('the pressed key is : %s \n', responseKey) ;
+                     
             %  Feedback
                 if response == 1 % if response is correct
                     Screen('DrawTexture', window, feedCorrectTex,[]); % using smile face to represent correct
