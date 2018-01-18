@@ -175,7 +175,7 @@ params.ISI         = (0.5+randsample(0:400,1)/1000);    %ISI, in seconds
 params.fixDur      = 0.5 - randsample(0:100,1)/1000;    % duration of fixation for each trial
 params.TargetDur   = 0.1;                               % 刺激呈现时间
 params.FeedbackDur = 0.5;                               % duration for feedback in practice
-params.BlankDur    = (0.8+randsample(0:300,1)/1000);    %800-1100ms随机
+params.BlankDur    = (1 + randsample(0:300,1)/1000);    %800-1100ms随机
 % params.TrialDur    = params.fixDur + params.TargetDur + params.BlankDur + params.FeedbackDur;     %trialDur也是随机数
 
 % define parameters for the duration of each stimuli

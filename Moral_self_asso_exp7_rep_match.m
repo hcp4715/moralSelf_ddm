@@ -89,7 +89,7 @@ try
         responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
     end
     fprintf(responseRecord,...
-        'DateString subID age gender handness blockNum blockBin trial currentShape currentLabel currentMatch currentRT responseKey response\n');
+        'Date sub age sex hand blockId Bin trial Shape Label Match response acc RT\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
@@ -129,9 +129,9 @@ try
     end
     
     % create a cell for all conditions
-    tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
-                'neutralOther','immoralOther','moralSelf','neutralSelf',...
-                'immoralSelf','moralOther','neutralOther','immoralOther';...
+    tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther', ...
+                'neutralOther','immoralOther','moralSelf','neutralSelf', ...
+                'immoralSelf','moralOther','neutralOther','immoralOther'; ...
                 'match','match','match','match','match','match',...
                 'mistmatch','mistmatch','mistmatch','mistmatch','mistmatch','mistmatch'};
     tmpConditionSmallblock = repmat(tmpCondition,[1,3]);  % a small block of trials.
@@ -153,16 +153,27 @@ try
             randomOrder = Shuffle(1:36);    % create a random index
             trialNum = length(randomOrder);
             trialOrderSmallblock = {};
+            
+            % get shape and label order based on randomOrder.
+            [~, randomOrder_order] = sort(randomOrder);
+            randShapeOrder = tmpConditionSmallblock(1,:);
+            randLabelOrder = tmpConditionSmallblock(2,:);
+            randShapeOrder = randShapeOrder(randomOrder_order);
+            randLabelOrder = randLabelOrder(randomOrder_order);
+%             trialOrderSmallblock(1,:) = randShapeOrder;
+%             trialOrderSmallblock(2,:) = randLabelOrder;
+%             for ii = 1:trialNum
+%                 % get the order of a small block based on the rando index created above
+%                 trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
+%                 trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
+%             end
+%             
             for trial = 1:trialNum  % binNum trials for one small circle.
-                % get the order of a small block based on the rando index created above
-                trialOrderSmallblock(1,trial) = tmpConditionSmallblock(1,randomOrder(trial));
-                trialOrderSmallblock(2,trial) = tmpConditionSmallblock(2,randomOrder(trial));
-                
                 fprintf('the current trial is: %f \n', trial); %  print the trial number for debugging
                 
                 startTrialT = GetSecs;
-                currentShape = trialOrderSmallblock{1,trial};  % current shape condition
-                currentMatch = trialOrderSmallblock{2,trial};  % current match condition
+                currentShape = randShapeOrder{trial};  % current shape condition
+                currentMatch = randLabelOrder{trial};  % current match condition
                                 
                 %Run Trial
             
@@ -266,8 +277,8 @@ try
                 while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                     [keyIsDown, secs, keyCode] = KbCheck;
                     currentRT = secs - stimOnsetTime;
-                    responseKey = KbName(keyCode);
-                    if responseKey == params.matchResponKey          % if the key is for match                   
+                    responseKey = KbName(find(keyCode,1));    % the name of the pressed key
+                    if keyCode(params.matchResponKey)          % if the key is for match                   
 %                     currentRT2 = secs - t0;
                         if strcmp(currentMatch,'match') == 1
                             response = 1;
@@ -275,7 +286,7 @@ try
                             response = 0;
                         end
                         
-                    elseif responseKey == params.mismatchResponKey   % if the key is for mismatch
+                    elseif keyCode(params.mismatchResponKey)   % if the key is for mismatch
 %                       currentRT = secs - stimOnsetTime;
 %                       currentRT2 = secs - t0;
                         if strcmp(currentMatch,'mismatch') == 1
@@ -284,7 +295,7 @@ try
                             response = 0;
                         end
 %                         responseKey = params.mismatchResponKey;
-                    elseif responseKey == params.escapeKey
+                    elseif keyCode(params.escapeKey)
                         Screen('CloseAll')
                         ShowCursor
                         Priority(0);
@@ -315,11 +326,16 @@ try
                 %response record
                 cd(params.dataDir)
                 t = datetime('now');
-                DateString = datestr(t);
-                responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
-                fprintf(responseRecord,'%s %d %d %s %s %d %d %d %d %s %s %.4f %s %s\n',...
+                DateString = datestr(t); % get the data collecting time
+                
+                if numOfBlock <= 1
+                    responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
+                else
+                    responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
+                end
+                fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %d %.4f \n',...
                     DateString, subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
-                    currentMatch, currentRT, responseKey, response);
+                    currentMatch,responseKey, response,currentRT);
 %               moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey 
                 fclose(responseRecord);
                 cd(params.rootDir);
