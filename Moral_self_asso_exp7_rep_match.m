@@ -89,7 +89,7 @@ try
         responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
     end
     fprintf(responseRecord,...
-        'Date sub age sex hand blockId Bin trial Shape Label Match response acc RT\n');
+        'Date Sub Age Sex Hand BlockId Bin Trial Shape Label Match CorrResp Resp ACC RT\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
@@ -194,6 +194,7 @@ try
                 % chose image to present based on the condition (currentShape, currentMatch)
                 if strcmp(currentMatch,'match')               % if it is matched trial
                     currentLabel = currentShape;              % Labe has the same name as shape;
+                    corrResp = KbName(params.matchResponKey);  % the correct response key
                     if strcmp(currentShape,'moralSelf')       % if it is the moralSelf trial
                         currentShapeTex = moralSelfTex;       % make the current Tex the moral selfTex
                         currentLabelTex = labelmoralSelfTex;  % make the current label the moral self Tex
@@ -214,6 +215,7 @@ try
                         currentLabelTex = labelimmoralOtherTex;
                     end
                 else                                                   % if the trials is not matched
+                    corrResp = KbName(params.mismatchResponKey);       % the correct response key
                     if strcmp(currentShape,'moralSelf') 
                         currentShapeTex = moralSelfTex;                % the current Shape Tex is moral self
                         currentLabelIndx = randsample(2:6,1);          % generate a random index that differ from moralself
@@ -270,40 +272,45 @@ try
                 response = -1;
                 responseKey = 'NA';
                 currentRT = -1;
-                response_record = response; % a temporary variable to record temporary.
+%                 response_record = response; % a temporary variable to record temporary.
 %               t0 = GetSecs;
 
                 % if the no response or time less than target duration
                 while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                     [keyIsDown, secs, keyCode] = KbCheck;
                     currentRT = secs - stimOnsetTime;
-                    responseKey = KbName(find(keyCode,1));    % the name of the pressed key
-                    if keyCode(params.matchResponKey)          % if the key is for match                   
-%                     currentRT2 = secs - t0;
-                        if strcmp(currentMatch,'match') == 1
-                            response = 1;
-                        elseif currentMatch == 2
-                            response = 0;
-                        end
-                        
-                    elseif keyCode(params.mismatchResponKey)   % if the key is for mismatch
-%                       currentRT = secs - stimOnsetTime;
-%                       currentRT2 = secs - t0;
-                        if strcmp(currentMatch,'mismatch') == 1
-                            response = 1;
+                    if keyIsDown
+                        responseKey = KbName(find(keyCode,1));     % the name of the pressed key
+                        if (keyCode(params.matchResponKey) || keyCode(params.mismatchResponKey)) % if the key is for match or mismatch                  
+                            if responseKey == corrResp
+                                response = 1;
+                            else
+                                response = 0;
+                            end
+%                             if strcmp(currentMatch,'match') == 1   % if the current trial is match trial
+%                                 response = 1;                      % then accuracy is true
+%                             else
+%                                 response = 0;                      % other wise is wrong
+%                             end     
+%                         elseif keyCode(params.mismatchResponKey)    % if the key is for mismatch
+%                             if strcmp(currentMatch,'mismatch') == 1
+%                                 response = 1;
+%                             else
+%                                 response = 0;
+%                             end
+                        elseif keyCode(params.escapeKey)
+                            Screen('CloseAll')
+                            ShowCursor
+                            Priority(0);
+                            rethrow(lasterror) ;
+                            break
                         else
-                            response = 0;
+                            response = 2;
                         end
-%                         responseKey = params.mismatchResponKey;
-                    elseif keyCode(params.escapeKey)
-                        Screen('CloseAll')
-                        ShowCursor
-                        Priority(0);
-                        rethrow(lasterror) ;
-                        break
-                    %else
-                    %    response_record = 2;
-                    end  
+                    else
+                        response = -1;
+                        responseKey = 'NA';
+                    end
                 end
                fprintf('currentRT: %f \n',currentRT);
                fprintf('the pressed key is : %s \n', responseKey) ;
@@ -326,16 +333,16 @@ try
                 %response record
                 cd(params.dataDir)
                 t = datetime('now');
-                DateString = datestr(t); % get the data collecting time
-                
+                DateString = datestr(t);                   % get the data collecting time
+                DateString = strrep(DateString,' ','_');   % replace the space of the timedate
                 if numOfBlock <= 1
                     responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
                 else
                     responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
                 end
-                fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %d %.4f \n',...
+                fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %s %d %.4f \n',...
                     DateString, subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
-                    currentMatch,responseKey, response,currentRT);
+                    currentMatch,corrResp,responseKey, response,currentRT);
 %               moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey 
                 fclose(responseRecord);
                 cd(params.rootDir);
