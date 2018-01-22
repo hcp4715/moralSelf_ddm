@@ -74,7 +74,6 @@ function Moral_self_asso_exp7_rep_MainProc
 clear; close all;
 startT = GetSecs;
 %% 输入被试信息
-
 [subID, age, gender, handness] = Moral_self_asso_exp7_rep_subinfo;
 addpath(pwd);
 
@@ -85,24 +84,21 @@ global params    % get all parameters from in params
 % Chose skip ScreenTest or not
 Screen('Preference','SkipSyncTests',2);
 AssertOpenGL;
- 
-% [windowPtr,rect] = Screen('OpenWindow',params.whichscreen,params.gray);
-% Screen('BlendFunction',windowPtr,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA); % part of Alpha function, would be used for ramp up the contrast
 HideCursor;
-
+ 
 %% 定义实验参数
 params = Moral_self_asso_exp7_rep_getParams(subID); % mind the trials per condition in params file!
 
 %% ******** Practicing for matching task **********
-initNumBlock = 1;  % !!!! change to 1 before real experiment
-initNumBin   = 1;  % !!!! change to 2 before real experiment
-Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+% initNumBlock = 1;  % !!!! change to 1 before real experiment
+% initNumBin   = 2;  % !!!! change to 2 before real experiment
+% Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
 
 %% ********* Matching task **************
 % study two blocks at the beginning
-initNumBlock = 1;  % !!! change to 3 before real experiment
-initNumBin   = 1;  % !!! change to 5 before real experiment
-Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+% initNumBlock = 3;  % !!! change to 3 before real experiment
+% initNumBin   = 5;  % !!! change to 5 before real experiment
+% Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
 %% ******** Categrozation task *************n
 for block = 1:6       %  6 blocks

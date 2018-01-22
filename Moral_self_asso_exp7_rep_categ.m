@@ -59,11 +59,8 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 
 % counterbalance of block order, see getParam.m balanceMatrix.block1
 
-%result is collected in the file: Exp_behav_moral_asso_exp7_pilot_(subID).out
+% result is collected in the file: Exp_behav_moral_asso_exp7_pilot_(subID).out
 %%
-%initialization
-% clear all;close all;clc;
-
 % skip the sync test
 % Screen('Preference', 'SkipSyncTests', 1)
 
@@ -79,12 +76,16 @@ try
     
     % Setup response record for the first block
     cd(params.dataDir);
+    % save the shape-label association information and the corresponding
+    % button information for the current participants.
+    % moralSelfShape neutralselfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape 
+    
     % Create a file for saving data
     responseRecord = fopen(['Moral_self_asso_exp7_rep_categ_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(responseRecord,...
-        'DateTime SubjectID Age Gender Handness moralSelfShape neutralselfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape Block Bin Trial Task shapeName condition corrKey ResponseKey Accuracy  RT\n');
+        'Date Sub Age Sex Hand Block Bin Trial Task Shape corrResp Resp ACC RT\n');
     fclose(responseRecord);
     cd(params.rootDir);
         % makeTextrue of instruction corresponding to the response key
@@ -106,9 +107,9 @@ try
         elseif strcmp(task,'immoral') && params.importResponKey == 'P'
             instrucTex=Screen('MakeTexture',window, params.testInstrucImportance2);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance2); 
-        end          
-%         % show the choice option for importance % deleted in reivision
-
+        end
+        
+        % make texture when participant pressed an wrong key
         feedWrongKey     = Screen('MakeTexture',window,params.feedbackWrongKey);
 
         % show intruction
@@ -127,22 +128,26 @@ try
         neutralOtherTex = Screen('MakeTexture', window, params.neutralOther);
         immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
 %         for blockNum = 1:block 
-    accFeed = 0;                                  % set the accuracy feedback variable
-    for bin = 1:binNum                            %  number of bin is 5
-        % trialOrder = randperm(6);                 % generate a sequence of 1:6 with random position
-        tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
+
+    tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
                 'neutralOther','immoralOther','moralSelf','neutralSelf',...
                 'immoralSelf','moralOther','neutralOther','immoralOther'};
-        tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
+    tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
+
+    accFeed = 0;                                    % set the accuracy feedback variable
+    for bin = 1:binNum                              % number of bin is 5
+        % trialOrder = randperm(6);                 % generate a sequence of 1:6 with random position
         randomOrder = Shuffle(1:36);
         trialNum = length(randomOrder);
-        trialOrderSmallblock = {};
-        % generate randomized trial order by randomOrder
-        for ii = 1:trialNum
-            trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
-            %trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
-        end
-%         
+        [~, randomOrder_order] = sort(randomOrder);
+        trialOrderSmallblock = tmpConditionSmallblock(randomOrder_order);
+%         trialOrderSmallblock = {};
+%         % generate randomized trial order by randomOrder
+%         for ii = 1:trialNum
+%             trialOrderSmallblock(1,ii) = tmpConditionSmallblock(1,randomOrder(ii));
+%             %trialOrderSmallblock(2,ii) = tmpConditionSmallblock(2,randomOrder(ii));
+%         end
+% %         
 %         trialOrder = repmat(trialOrder',[3,1]);
 %         trialNum = length(trialOrder);
 %         tmpRand = randperm(trialNum);
@@ -151,8 +156,80 @@ try
         for trial = 1:trialNum     
             startTrialT = GetSecs;
         % choosing the target shape based on pre-randomized order
-             targetCondition = trialOrderSmallblock(trial);
-            
+            targetCondition = trialOrderSmallblock(trial);
+            if strcmp(targetCondition,'moralSelf')       % if it is the moralSelf trial
+                currentTarget = moralSelfTex;         % make the current Tex the moral selfTex
+                if strcmp(task,'self')
+                    corrResp = params.selfResponKey;
+                    incorrResp = params.otherResponKey;
+                elseif strcmp(task,'moral')
+                    corrResp = params.moralResponKey;
+                    incorrResp = params.notmoralResponKey;
+                elseif strcmp(task,'immoral')
+                    corrResp = params.notimmoralResponKey;
+                    incorrResp = params.immoralResponKey;
+                end
+            elseif strcmp(targetCondition,'neutralSelf')
+                currentTarget = neutralSelfTex; 
+                if strcmp(task,'self')
+                    corrResp = params.selfResponKey;
+                    incorrResp = params.otherResponKey;
+                elseif strcmp(task,'moral')
+                    corrResp = params.notmoralResponKey;
+                    incorrResp = params.moralResponKey;
+                elseif strcmp(task,'immoral')
+                    corrResp = params.notimmoralResponKey;
+                    incorrResp = params.immoralResponKey;
+                end
+            elseif strcmp(targetCondition,'immoralSelf')
+                currentTarget = immoralSelfTex;
+                if strcmp(task,'self')
+                    corrResp = params.selfResponKey;
+                    incorrResp = params.otherResponKey;
+                elseif strcmp(task,'moral')
+                    corrResp = params.notmoralResponKey;
+                    incorrResp = params.moralResponKey;
+                elseif strcmp(task,'immoral')
+                    corrResp = params.immoralResponKey;
+                    incorrResp = params.notimmoralResponKey;
+                end
+            elseif strcmp(targetCondition,'moralOther')       
+                currentTarget = moralOtherTex;   
+                if strcmp(task,'self')
+                    corrResp = params.otherResponKey;
+                    incorrResp = params.selfResponKey;
+                elseif strcmp(task,'moral')
+                    corrResp = params.moralResponKey;
+                    incorrResp = params.notmoralResponKey;
+                elseif strcmp(task,'immoral')
+                    corrResp = params.notimmoralResponKey;
+                    incorrResp = params.immoralResponKey;
+                end
+            elseif strcmp(targetCondition,'neutralOther')
+                currentTarget = neutralOtherTex; 
+                if strcmp(task,'self')
+                    corrResp = params.otherResponKey;
+                    incorrResp = params.selfResponKey;
+                elseif strcmp(task,'moral')
+                    corrResp = params.notmoralResponKey;
+                    incorrResp = params.moralResponKey;
+                elseif strcmp(task,'immoral')
+                    corrResp = params.notimmoralResponKey;
+                    incorrResp = params.immoralResponKey;
+                end
+            elseif strcmp(targetCondition,'immoralOther')
+                currentTarget = immoralOtherTex;
+                if strcmp(task,'self')
+                    corrResp = params.otherResponKey;
+                    incorrResp = params.selfResponKey;
+                elseif strcmp(task,'moral')
+                    corrResp = params.notmoralResponKey;
+                    incorrResp = params.moralResponKey;
+                elseif strcmp(task,'immoral')
+                    corrResp = params.immoralResponKey;
+                    incorrResp = params.notimmoralResponKey;
+                end
+            end
         % define the rect for shape image
             params.shapeRect2 = CenterRect(params.shapeSize, rect);   
 %         targetTime = GetSecs; 
@@ -190,44 +267,27 @@ try
             while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi)&& response == -1
                 [keyIsDown, secs, keyCode] = KbCheck;
                 currentRT = secs - stimOnsetTime;  % record the reaction time
-                respKey = KbName(keyCode);         % record the response key
-                if strcmp(task,'self') && (respKey == 'J' || respKey == 'H' )          % if categorization for self
-                    if strcmp(targetCondition,'moralSelf') || strcmp(targetCondition,'neutralSelf') ||strcmp(targetCondition,'immoralSelf')
-                        corrKey = params.selfResponKey;
-%                         response_record = 1;
-                    else
-                        corrKey = params.otherResponKey;
-%                         response_record = 0;
-                    end
-                elseif strcmp(task,'moral') && (respKey == 'U' || respKey == 'Y' )        % if categorization for self
-                    if strcmp(targetCondition,'moralSelf') || strcmp(targetCondition,'moralOther')
-                        corrKey = params.moralResponKey;
-                    else
-                         corrKey = params.notmoralResponKey;
-                    end
-                elseif strcmp(task,'immoral') && (respKey == 'O' || respKey == 'P' )  % if categorization for self
-                    respKey = params.importResponKey;
-                    if strcmp(targetCondition,'immoralSelf') || strcmp(targetCondition,'immoralOther')
-                        corrKey = params.immoralResponKey;
-                    else
-                        corrKey = params.notimmoralResponKey;
-                    end
-                elseif keyCode(params.escapeKey)
+                respKey = KbName(find(keyCode,1));         % record the response key
+                if keyCode(corrResp)               % if the key is the correct response key
+                    response_record = 1;
+                elseif keyCode(incorrResp)         % if the key is not the correct response key
+                    response_record = 0;
+                elseif keyCode(params.escapeKey)   % if ESC, exit the current procedure
                             Screen('CloseAll')
                             ShowCursor
                             Priority(0);
                             rethrow(lasterror) ;
                             break
-                else
+                else                              % if any other keys, 
                     response_record = 2;
                 end
                 
-                % judge whether the response is correct
-                if corrKey == respKey
-                    response_record = 1;
-                else
-                    response_record = 0;
-                end
+%                 % judge whether the response is correct
+%                 if corrKey == respKey
+%                     response_record = 1;
+%                 else
+%                     response_record = 0;
+%                 end
                 
             end
             
@@ -247,11 +307,12 @@ try
             cd(params.dataDir)
             t = datetime('now');
             DateString = datestr(t);
-            responseRecord = fopen(['Moral_self_asso_exp7_pilot2_test_vf_' num2str(subID) '.out'],'a');
-            fprintf(responseRecord,'%s %d %d %s %s %s %s %s %s %d %d %d %s %s %s %s %.4f %s %d %s\n',...
-                DataString, subID, age, gender,handness,  params.moralSelfPicName,params.immoralSelfPicName,params.moralOtherPicName,params.immoralOtherPicName,...
-                block,bin, trial, task, shapeName, targetCondition,... 
-                corrKey, respKey, response_record,taskType);
+            DateString = strrep(DateString,' ','_');   % replace the space of the timedate
+            responseRecord = fopen(['Moral_self_asso_exp7_rep_categ_' num2str(subID) '.out'],'a');
+            % 'Date Sub Age Sex Hand Block Bin Trial Task Shape corrResp Resp ACC RT\n'
+            fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %d %.4f \n',...
+                DateString, subID, age, gender,handness,block,bin,trial,task,targetCondition,... 
+                corrResp, respKey, response_record,currentRT);
             fclose(responseRecord);
             cd(params.rootDir)
             % feed back    
