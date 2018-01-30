@@ -87,6 +87,22 @@ try
     fprintf(responseRecord,...
         'Date Sub Age Sex Hand Block Bin Trial Task Shape corrResp Resp ACC RT\n');
     fclose(responseRecord);
+    
+    % Create a file for saving the shape-label relationship and other
+    % information
+    subBalanceRecord = fopen(['Moral_self_asso_exp7_rep_subBalance_' num2str(subID) '.out'],'a');
+    % write a column name for the data, this is helpful because then you
+    % will know that the However the data was created.
+    fprintf(subBalanceRecord,...
+        'MoSelf NSelf ImSelf MOther NOther ImOther Match Mismatch Self Other Moral Non-mrl Immoral Non-immrl\n');
+    fprintf(subBalanceRecord,'%s %s %s %s %s %s %s %s %s %s %s %s %s %s\n',...
+            params.moralSelfPicName,params.neutralSelfPicName, params.immoralSelfPicName,...
+            params.moralOtherPicName,params.neutralOtherPicName,params.immoralOtherPicName,...
+            params.matchResponKey,params.mismatchResponKey,params.selfResponKey,params.otherResponKey,...
+            params.moralResponKey,params.notmoralResponKey,params.immoralResponKey, params.notimmoralResponKey);
+    fclose(subBalanceRecord);
+    
+    
     cd(params.rootDir);
         % makeTextrue of instruction corresponding to the response key
         if strcmp(task,'self') && params.selfResponKey=='H'                    % self task, half participants using on set of key
@@ -156,8 +172,8 @@ try
         for trial = 1:trialNum     
             startTrialT = GetSecs;
         % choosing the target shape based on pre-randomized order
-            targetCondition = trialOrderSmallblock(trial);
-            if strcmp(targetCondition,'moralSelf')       % if it is the moralSelf trial
+            targetCondition = char(trialOrderSmallblock(trial));
+             if strcmp(targetCondition,'moralSelf')       % if it is the moralSelf trial
                 currentTarget = moralSelfTex;         % make the current Tex the moral selfTex
                 if strcmp(task,'self')
                     corrResp = params.selfResponKey;
@@ -266,29 +282,31 @@ try
             [keyIsDown, secs, keyCode] = KbCheck;
             while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi)&& response == -1
                 [keyIsDown, secs, keyCode] = KbCheck;
-                currentRT = secs - stimOnsetTime;  % record the reaction time
-                respKey = KbName(find(keyCode,1));         % record the response key
-                if keyCode(corrResp)               % if the key is the correct response key
-                    response_record = 1;
-                elseif keyCode(incorrResp)         % if the key is not the correct response key
-                    response_record = 0;
-                elseif keyCode(params.escapeKey)   % if ESC, exit the current procedure
+                currentRT = secs - stimOnsetTime;
+                if keyIsDown
+                    respKey = KbName(find(keyCode,1));         % record the response key
+                    if (keyCode(corrResp) || keyCode(incorrResp)) % if the key is for correct or incorrect response
+                        if respKey == KbName(corrResp) 
+                            response_record = 1;
+                        else                                    % if the key is not the correct response key
+                            response_record = 0;
+                        end
+                    elseif keyCode(params.escapeKey)   % if ESC, exit the current procedure
                             Screen('CloseAll')
                             ShowCursor
                             Priority(0);
                             rethrow(lasterror) ;
                             break
-                else                              % if any other keys, 
-                    response_record = 2;
+                    else                              % if any other keys, 
+                        response_record = 2;
+                    end
+                else
+                    response = -1;
+                    responseKey = 'NA';
                 end
-                
-%                 % judge whether the response is correct
-%                 if corrKey == respKey
-%                     response_record = 1;
-%                 else
-%                     response_record = 0;
-%                 end
-                
+                fprintf('currentRT: %f \n',currentRT);
+                fprintf('the pressed key is : %s \n', responseKey) ;
+
             end
             
             % if participant pressed an wrong key, then remind him or her
