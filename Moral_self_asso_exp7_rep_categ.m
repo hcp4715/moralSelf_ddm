@@ -117,15 +117,18 @@ try
         elseif strcmp(task,'moral') && params.moralResponKey == 'U'
             instrucTex=Screen('MakeTexture',window, params.testInstrucMoral2);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucMoral2); 
-        elseif strcmp(task,'immoral') && params.importResponKey == 'O'
-            instrucTex=Screen('MakeTexture',window, params.testInstrucImportance1);
-            instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance1); 
-        elseif strcmp(task,'immoral') && params.importResponKey == 'P'
-            instrucTex=Screen('MakeTexture',window, params.testInstrucImportance2);
-            instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucImportance2); 
+        elseif strcmp(task,'immoral') && params.immoralResponKey == 'O'
+            instrucTex=Screen('MakeTexture',window, params.testInstrucimmoral1);
+            instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucimmoral1); 
+        elseif strcmp(task,'immoral') && params.immoralResponKey == 'P'
+            instrucTex=Screen('MakeTexture',window, params.testInstrucimmoral2);
+            instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucimmoral2); 
         end
         
         % make texture when participant pressed an wrong key
+%         feedCorrectTex   = Screen('MakeTexture',window,params.feedbackCorrectImage);
+%         feedNoRespTex    = Screen('MakeTexture',window,params.feedbackNoRespImage);
+%         feedIncorrectTex = Screen('MakeTexture',window,params.feedbackIncorrectImage);
         feedWrongKey     = Screen('MakeTexture',window,params.feedbackWrongKey);
 
         % show intruction
@@ -276,20 +279,20 @@ try
             [~, stimOffsetTime] = Screen('Flip', window, stimOnsetTime + params.TargetDur - 0.5*params.ifi);
         % Record setup
             response = -1;
-            response_record = response;
+            %response_record = response;
             respKey = 'NA';
             currentRT = -1;
             [keyIsDown, secs, keyCode] = KbCheck;
-            while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi)&& response == -1
+            while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                 [keyIsDown, secs, keyCode] = KbCheck;
                 currentRT = secs - stimOnsetTime;
                 if keyIsDown
                     respKey = KbName(find(keyCode,1));         % record the response key
                     if (keyCode(corrResp) || keyCode(incorrResp)) % if the key is for correct or incorrect response
                         if respKey == KbName(corrResp) 
-                            response_record = 1;
+                            response = 1;
                         else                                    % if the key is not the correct response key
-                            response_record = 0;
+                            response = 0;
                         end
                     elseif keyCode(params.escapeKey)   % if ESC, exit the current procedure
                             Screen('CloseAll')
@@ -298,20 +301,30 @@ try
                             rethrow(lasterror) ;
                             break
                     else                              % if any other keys, 
-                        response_record = 2;
+                        response = 2;
                     end
                 else
                     response = -1;
-                    responseKey = 'NA';
+                    respKey = 'NA';
                 end
-                fprintf('currentRT: %f \n',currentRT);
-                fprintf('the pressed key is : %s \n', responseKey) ;
-
             end
-            
+            fprintf('currentRT: %f \n',currentRT);
+            fprintf('the pressed key is : %s \n', respKey) ;
             % if participant pressed an wrong key, then remind him or her
             % to press the right keys.
-            if response_record == 2
+            
+%             if response == 1 % if response is correct
+%                     Screen('DrawTexture', window, feedCorrectTex,[]); % using smile face to represent correct
+% %                     DrawFormattedText(window,'CORRECT','center','center',[0 255 0]);
+%             elseif response == 0 % if response is incorrect
+%                     Screen('DrawTexture', window, feedIncorrectTex,[]);
+%             elseif response == -1 % no response detected
+%                     Screen('DrawTexture', window, feedNoRespTex,[]); % DrawFormattedText(window,'Too Slow','center','center',[255 255 0]);
+%             elseif response == 2 % wrong key
+%                     Screen('DrawTexture', window, feedWrongKey,[]);  % tell participant that they have a wrong key
+%             end
+            
+            if response == 2
                 Screen('DrawTexture', window, feedWrongKey,[]);
                 Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi); 
             else
@@ -330,16 +343,16 @@ try
             % 'Date Sub Age Sex Hand Block Bin Trial Task Shape corrResp Resp ACC RT\n'
             fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %d %.4f \n',...
                 DateString, subID, age, gender,handness,block,bin,trial,task,targetCondition,... 
-                corrResp, respKey, response_record,currentRT);
+                corrResp, respKey, response,currentRT);
             fclose(responseRecord);
             cd(params.rootDir)
             % feed back    
-            if response_record == 1;
+            if response == 1;
                accFeed = accFeed + 1; % accumulate acc
             end
             
             %setup again
-                response_record = -1;
+                response = -1;
                 respKey = 'NA';
                 currentRT = -1;
                 
