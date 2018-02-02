@@ -81,7 +81,7 @@ try
     % moralSelfShape neutralselfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape 
     
     % Create a file for saving data
-    responseRecord = fopen(['Moral_self_asso_exp7_rep_categ_' num2str(subID) '.out'],'a');
+    responseRecord = fopen(['data_exp7_rep_categ_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(responseRecord,...
@@ -90,13 +90,13 @@ try
     
     % Create a file for saving the shape-label relationship and other
     % information
-    subBalanceRecord = fopen(['Moral_self_asso_exp7_rep_subBalance_' num2str(subID) '.out'],'a');
+    subBalanceRecord = fopen(['data_exp7_rep__subBalance_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(subBalanceRecord,...
-        'MoSelf NSelf ImSelf MOther NOther ImOther Match Mismatch Self Other Moral Non-mrl Immoral Non-immrl\n');
-    fprintf(subBalanceRecord,'%s %s %s %s %s %s %s %s %s %s %s %s %s %s\n',...
-            params.moralSelfPicName,params.neutralSelfPicName, params.immoralSelfPicName,...
+        'sub MoSelf NSelf ImSelf MOther NOther ImOther Match Mismatch Self Other Moral Non-mrl Immoral Non-immrl\n');
+    fprintf(subBalanceRecord,'%d %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n',...
+            subID,params.moralSelfPicName,params.neutralSelfPicName, params.immoralSelfPicName,...
             params.moralOtherPicName,params.neutralOtherPicName,params.immoralOtherPicName,...
             params.matchResponKey,params.mismatchResponKey,params.selfResponKey,params.otherResponKey,...
             params.moralResponKey,params.notmoralResponKey,params.immoralResponKey, params.notimmoralResponKey);
