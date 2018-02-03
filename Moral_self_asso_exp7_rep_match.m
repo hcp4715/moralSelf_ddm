@@ -84,12 +84,12 @@ try
     % Create a data file for this task
     % save data of practice and formal data differently
     if numOfBlock <= 1
-        responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
+        responseRecord = fopen(['data_moral_Categ_rep_match_prac_' num2str(subID) '.out'],'a');
     else
-        responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
+        responseRecord = fopen(['data_moral_Categ_rep_match_' num2str(subID) '.out'],'a');
     end
     fprintf(responseRecord,...
-        'Date Sub Age Sex Hand BlockId Bin Trial Shape Label Match CorrResp Resp ACC RT\n');
+        'Date Prac Sub Age Sex Hand Block Bin Trial Shape Label Match CorrResp Resp ACC RT\n');
     fclose(responseRecord);
     cd(params.rootDir); 
     
@@ -337,18 +337,19 @@ try
                 DateString = strrep(DateString,' ','_');   % replace the space of the timedate
                 if numOfBlock <= 1
                     responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
+                    fprintf(responseRecord,'%s %S %d %d %s %s %d %d %d %s %s %s %s %s %d %.4f \n',...
+                    DateString, 'Prac', subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
+                    currentMatch,corrResp,responseKey, response,currentRT);
                 else
                     responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
-                end
-                fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %s %d %.4f \n',...
-                    DateString, subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
+                    fprintf(responseRecord,'%s %S %d %d %s %s %d %d %d %s %s %s %s %s %d %.4f \n',...
+                    DateString, 'Exp', subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
                     currentMatch,corrResp,responseKey, response,currentRT);
-%               moralSelfShape immoralSelfShape moralOtherShape immoralOtherShape matchKey mismatchKey 
+                end
                 fclose(responseRecord);
                 cd(params.rootDir);
                 %end of mainflow in a trial
-            
-                
+
                 if response == 1;
                     accFeed = accFeed + 1; % accumulate acc
                 end
@@ -359,7 +360,6 @@ try
                 
                 % print the trial time
                 fprintf('duration of one trial is: %f \n', GetSecs() - startTrialT) ;
-                
             end
             % test a break when 60 trials
             if blockBin == 3

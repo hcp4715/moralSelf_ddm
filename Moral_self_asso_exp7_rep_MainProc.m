@@ -103,8 +103,8 @@ Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin
 %% ******** Categrozation task *************n
 for block = 1:6       %  6 blocks
     task = cell2mat(params.taskMatrix{block});
-    numBinLearn = 1;  % !!!!change to 2 before real experiment
-    numBinTest  = 1;  % !!!!change to 4 before real experiment (i.e. 5 bind of 24 trials, each condition has 4)   
+    numBinLearn = 2;  % !!!!change to 2 before real experiment
+    numBinTest  = 4;  % !!!!change to 4 before real experiment (i.e. 5 bind of 24 trials, each condition has 4)   
     Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,numBinTest);
 %     if block == 3  % re-study the association task per 3 blocks of categorization
     if block < 6

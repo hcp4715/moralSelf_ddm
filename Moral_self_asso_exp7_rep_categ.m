@@ -7,34 +7,34 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % 04/Jan/2018   hcp4715         changed for replication study
 % 07/Jan/2018   hcp4715         changed code for response
 % =========================================================================
-
+%
 % Experimental design: 
 % 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
 % 3 (tasks type: morality, self, or importance)
-
+%
 % Input variables:
 % subjects' ID, age, handness, sex, task type, number of blocks and number of bins;
-
+%
 % This task will follow the matching task, and also be interweaved with small block of matching task
-
+%
 % Categorization phase: categorization; 120 trials for each block,3 blocks
 % for each categorization task
 % One trials for task: 
 % Fixation: 500ms + target display: 100ms + blank: 800-1200ms, No feedback
-
+%
 % One trial: 1500 - 2100ms
-
+%
 % Stimuli: 
 % 6 shapes in this Exp: 2( identity: self vs. other) * 3( moral valence: positive, neutral vs. negative);
-
+%
 % Moral Self (MS),  Neutral Self (NS),  Immoral Self (IS); 
 % Moral Other (MO), Neutral Other (NO), Immoral Other (IO);
-
+%
 % Six labels in this Exp.;
 % "好我", "常我", "坏我";
 % "好人", "常人", "坏人"
 % Task：Categorization, Whether the shape presented belongs to one categories?
-
+%
 % counterbalance between shape and label (matched with "Moral_self_asso_exp7_rep_getParams.m" ):
 %           "好我"     "常我"      "坏我"   "好人"      "常人"      "坏人"      self/m/im   otherwise
 % ============================================================================＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
@@ -56,14 +56,14 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % One block: 5 bins * 36 trials
 % Total block: 9, number of trials in each block: 120
 % No practice trials.
-
+%
 % counterbalance of block order, see getParam.m balanceMatrix.block1
-
+%
 % result is collected in the file: Exp_behav_moral_asso_exp7_pilot_(subID).out
 %%
 % skip the sync test
 % Screen('Preference', 'SkipSyncTests', 1)
-
+%
 global params    % get all parameters from in params
 
 %%
@@ -81,7 +81,7 @@ try
     % moralSelfShape neutralselfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape 
     
     % Create a file for saving data
-    responseRecord = fopen(['data_exp7_rep_categ_' num2str(subID) '.out'],'a');
+    responseRecord = fopen(['data_moral_Categ_rep_categ_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(responseRecord,...
@@ -90,7 +90,7 @@ try
     
     % Create a file for saving the shape-label relationship and other
     % information
-    subBalanceRecord = fopen(['data_exp7_rep__subBalance_' num2str(subID) '.out'],'a');
+    subBalanceRecord = fopen(['data_moral_Categ_subBalance_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(subBalanceRecord,...
