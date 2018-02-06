@@ -276,6 +276,8 @@ try
                 
             [~, stimOnsetTime] = Screen('Flip', window, fixOnsetTime + params.fixDur - 0.5*params.ifi);
 %         t0 = GetSecs;
+            % presenting for 100 ms
+            
             [~, stimOffsetTime] = Screen('Flip', window, stimOnsetTime + params.TargetDur - 0.5*params.ifi);
         % Record setup
             response = -1;
@@ -283,6 +285,7 @@ try
             respKey = 'NA';
             currentRT = -1;
             [keyIsDown, secs, keyCode] = KbCheck;
+            % make the blank around 600 ms
             while (GetSecs < stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi) && response == -1
                 [keyIsDown, secs, keyCode] = KbCheck;
                 currentRT = secs - stimOnsetTime;
@@ -339,7 +342,7 @@ try
             t = datetime('now');
             DateString = datestr(t);
             DateString = strrep(DateString,' ','_');   % replace the space of the timedate
-            responseRecord = fopen(['Moral_self_asso_exp7_rep_categ_' num2str(subID) '.out'],'a');
+            responseRecord = fopen(['data_moral_Categ_rep_categ_' num2str(subID) '.out'],'a');
             % 'Date Sub Age Sex Hand Block Bin Trial Task Shape corrResp Resp ACC RT\n'
             fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %d %.4f \n',...
                 DateString, subID, age, gender,handness,block,bin,trial,task,targetCondition,... 

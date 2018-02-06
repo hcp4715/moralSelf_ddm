@@ -134,8 +134,8 @@ params.whichscreen = min(Screen('Screens'));     % 有的是用max，作用差不多
 params.black = BlackIndex(params.whichscreen);
 params.white = WhiteIndex(params.whichscreen);
 params.gray = round((params.black + params.white)/2);
-params.winSize = [];
-%params.winSize = [0,0,800,600];                      % changed the window's size when debugging, 
+% params.winSize = [];
+params.winSize = [0,0,800,600];                      % changed the window's size when debugging, 
                                                      % it will be as the input of 'openWindow' function
 
 % using parameters from screen
@@ -172,12 +172,12 @@ params.trials4EachCond = 2;       % trials for each condition, need to get back 
 
 % params.RampDur = 1;  % ramp up的时间
 
-params.ISI         = (0.5+randsample(0:400,1)/1000);    %ISI, in seconds
+params.ISI         = 0.5 + randsample(0:400,1)/1000;    %ISI, in seconds
 params.fixDur      = 0.5 - randsample(0:100,1)/1000;    % duration of fixation for each trial
 params.TargetDur   = 0.1;                               % duration of the target stimuli,it should be 100 ms.
-params.FeedbackDur = 0.5;                               % duration for feedback in practice
-params.BlankDur    = (1 + randsample(0:300,1)/1000);    % 800-1100ms随机
-% params.TrialDur    = params.fixDur + params.TargetDur + params.BlankDur + params.FeedbackDur;     %trialDur也是随机数
+params.FeedbackDur = 0.3;                               % duration for feedback in practice
+%params.BlankDur    = 0.8 + randsample(0:300,1)/1000;    % 800-1100ms随机
+params.TrialDur    = params.fixDur + params.TargetDur + params.BlankDur + params.FeedbackDur;     %trialDur也是随机数
 
 % define parameters for the duration of each stimuli
 % params.CycleFrames = 10;     % 10 帖图，后面将用在目标图片的对比在1分钟之内ramp up使用

@@ -1,11 +1,11 @@
- 
-function Moral_self_asso_exp7_rep_MainProc
+ function Moral_self_asso_exp7_rep_MainProc
 %%
 % History: Based on my previous stuy; 
 % 
 % Date         Author          Notes for change
 % =========================================================================
 % 17/12/2017   hcp4715         Start to modifying the code
+% 06/02/2018   hcp4715         finished revision
 %
 % =========================================================================
 % Aim: Replicate my Experiment 7 of moral association, which dedicated for
@@ -22,8 +22,14 @@ function Moral_self_asso_exp7_rep_MainProc
 % 2 (id: self vs. other) * 3 (moral valence: postive, neutral, vs. negative) *
 % 2 categorization task(tasks type: morality, self)
 %
-% Input variables:
+%  %%%%% Input variables %%%%%%%%
 % subjects' ID, age, sex, and condition;
+%
+%  %%%%% output file %%%%%%
+%  data_moral_Categ_rep_match_prac_(subNo.).out  % this record the practice data
+%  data_moral_Categ_rep_match_(subNo.).out % record the matching task data
+%  data_moral_Categ_subBalance_(subNo.).out % record the counterbalance info
+%  data_moral_Categ_rep_categ_(subNo.).out  % record the categ. task data
 %
 % This experiment was aimed to replicate my previous studies, so that 
 % we can confirm our resulting patter. In this exp., we also have two phases:
