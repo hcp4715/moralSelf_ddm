@@ -9,7 +9,7 @@ To replicate the my previous study.
 
 ### file structure
 	
-- 0. Moral_self_asso_exp7_rep_MainProc.m; this is the **file** to run, and it will use the other m files. 
+- 0. Moral_self_asso_exp7_rep_MainProc.m; this is the **script to run**, and it will use the other m files. 
 - 1. Moral_self_asso_exp7_rep_subinfo.m; this file is used by the MainProc file to collect participants' infomration
 - 2. Moral_self_asso_exp7_rep_getParams.m; This script defines the variables needed for running the procedure.
 - 3. Moral_self_asso_exp7_rep_match; this script is the core part of the matching task
