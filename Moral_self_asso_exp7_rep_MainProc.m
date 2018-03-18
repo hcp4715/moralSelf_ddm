@@ -6,6 +6,7 @@
 % =========================================================================
 % 17/12/2017   hcp4715         Start to modifying the code
 % 06/02/2018   hcp4715         finished revision
+% 18/03/2018   hcp4715         fixed small bug for recording data
 %
 % =========================================================================
 % Aim: Replicate my Experiment 7 of moral association, which dedicated for
@@ -26,10 +27,11 @@
 % subjects' ID, age, sex, and condition;
 %
 %  %%%%% output file %%%%%%
-%  data_moral_Categ_rep_match_prac_(subNo.).out  % this record the practice data
-%  data_moral_Categ_rep_match_(subNo.).out % record the matching task data
-%  data_moral_Categ_subBalance_(subNo.).out % record the counterbalance info
-%  data_moral_Categ_rep_categ_(subNo.).out  % record the categ. task data
+%  data_exp7_rep_subBalance_(subNo.).out  % this record counterbalance info
+%  data_exp7_rep_match_(subNo.).out       % record the matching task data
+%  data_exp7_rep_categ_(subNo.).out       % record the categorization
+%                                           results
+%  data_exp7_rep_match_prac_(subNo.).out   % record the data for practicing
 %
 % This experiment was aimed to replicate my previous studies, so that 
 % we can confirm our resulting patter. In this exp., we also have two phases:

@@ -59,7 +59,10 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 %
 % counterbalance of block order, see getParam.m balanceMatrix.block1
 %
-% result is collected in the file: Exp_behav_moral_asso_exp7_pilot_(subID).out
+% result is collected in the file: 
+% data_exp7_rep_categ_(subID).out -- record results
+% data_exp7_rep_subBalance.out    -- record the shape-label pairs and the
+%                                    response keys for each participant
 %%
 % skip the sync test
 % Screen('Preference', 'SkipSyncTests', 1)
@@ -81,7 +84,7 @@ try
     % moralSelfShape neutralselfShape immoralSelfShape moralOtherShape neutralOtherShape immoralOtherShape 
     
     % Create a file for saving data
-    responseRecord = fopen(['data_moral_Categ_rep_categ_' num2str(subID) '.out'],'a');
+    responseRecord = fopen(['data_exp7_rep_categ_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(responseRecord,...
@@ -90,7 +93,7 @@ try
     
     % Create a file for saving the shape-label relationship and other
     % information
-    subBalanceRecord = fopen(['data_moral_Categ_subBalance_' num2str(subID) '.out'],'a');
+    subBalanceRecord = fopen(['data_exp7_rep_subBalance_' num2str(subID) '.out'],'a');
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(subBalanceRecord,...
@@ -342,7 +345,7 @@ try
             t = datetime('now');
             DateString = datestr(t);
             DateString = strrep(DateString,' ','_');   % replace the space of the timedate
-            responseRecord = fopen(['data_moral_Categ_rep_categ_' num2str(subID) '.out'],'a');
+            responseRecord = fopen(['data_exp7_rep_categ_' num2str(subID) '.out'],'a');
             % 'Date Sub Age Sex Hand Block Bin Trial Task Shape corrResp Resp ACC RT\n'
             fprintf(responseRecord,'%s %d %d %s %s %d %d %d %s %s %s %s %d %.4f \n',...
                 DateString, subID, age, gender,handness,block,bin,trial,task,targetCondition,... 

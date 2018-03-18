@@ -84,9 +84,9 @@ try
     % Create a data file for this task
     % save data of practice and formal data differently
     if numOfBlock <= 1
-        responseRecord = fopen(['data_moral_Categ_rep_match_prac_' num2str(subID) '.out'],'a');
+        responseRecord = fopen(['data_exp7_rep_match_prac_' num2str(subID) '.out'],'a');
     else
-        responseRecord = fopen(['data_moral_Categ_rep_match_' num2str(subID) '.out'],'a');
+        responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
     end
     fprintf(responseRecord,...
         'Date Prac Sub Age Sex Hand Block Bin Trial Shape Label Match CorrResp Resp ACC RT\n');

@@ -135,7 +135,7 @@ params.black = BlackIndex(params.whichscreen);
 params.white = WhiteIndex(params.whichscreen);
 params.gray = round((params.black + params.white)/2);
 params.winSize = [];
-% params.winSize = [0,0,800,600];                    % changed the window's size when debugging, 
+% params.winSize = [0,0,800,600];                      % changed the window's size when debugging, 
                                                      % it will be as the input of 'openWindow' function
 
 % using parameters from screen
