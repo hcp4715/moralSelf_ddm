@@ -40,6 +40,7 @@ History: Based on my previous stuy;
  18/03/2018   hcp4715         fixed small bug for recording data
 
  =========================================================================
+
  Aim: Replicate my Experiment 7 of moral association, which dedicated for
  categorization task.
 
@@ -71,9 +72,15 @@ Experimental design for the categorization task:
  criteria.
  
  Differences from exp7:
+
  Items          replication    original
+
  =============  =============  ==========
+
  Moral valence  three levels    two levels
+
  Categ. task    two tasks       three tasks
+
  feedback       words           schema faces
+
  dur.for categ.  100ms          200ms 
