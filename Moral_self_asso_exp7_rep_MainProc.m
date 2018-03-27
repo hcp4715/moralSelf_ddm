@@ -7,6 +7,7 @@
 % 17/12/2017   hcp4715         Start to modifying the code
 % 06/02/2018   hcp4715         finished revision
 % 18/03/2018   hcp4715         fixed small bug for recording data
+% 27/03/2018   hcp4715         changed back to 2 * 2 design.
 %
 % =========================================================================
 % Aim: Replicate my Experiment 7 of moral association, which dedicated for
@@ -20,16 +21,16 @@
 % 4. Moral_self_asso_exp7_rep_categ
 %
 % Experimental design for the categorization task: 
-% 2 (id: self vs. other) * 3 (moral valence: postive, neutral, vs. negative) *
+% 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
 % 2 categorization task(tasks type: morality, self)
 %
 %  %%%%% Input variables %%%%%%%%
 % subjects' ID, age, sex, and condition;
 %
 %  %%%%% output file %%%%%%
-%  data_exp7_rep_subBalance_(subNo.).out  % this record counterbalance info
-%  data_exp7_rep_match_(subNo.).out       % record the matching task data
-%  data_exp7_rep_categ_(subNo.).out       % record the categorization
+%  data_exp7_rep_subBalance_(subNo.).out   % this record counterbalance info
+%  data_exp7_rep_match_(subNo.).out        % record the matching task data
+%  data_exp7_rep_categ_(subNo.).out        % record the categorization
 %                                           results
 %  data_exp7_rep_match_prac_(subNo.).out   % record the data for practicing
 %
@@ -54,23 +55,23 @@
 % one trial: 2,200ms
 %
 % trials for categorization task: 
-% Fixation: 500ms + target display: 100ms + blank: 800-1200ms, No feedback
+% Fixation: 500ms + 100ms(target display) + blank: 800-1100ms, No feedback
 %
-% One trial: 1400-2000ms
+% One trial: 1400- 1700ms
 %
 % Stimuli: 
-% 6 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive, neutral vs. negative);
+% 4 shapes in this Exp: 2( identity: self vs. other)*2( moral valence: positive vs. negative);
 %
-% Moral Self(MS),   Neutral Self (NS),  Immoral Self (IS); 
-% Moral Other (MO), Neutral Other (NN), Immoral Other (IO);
+% Moral Self(MS),   Immoral Self (IS); 
+% Moral Other (MO), Immoral Other (IO);
 %
 % Six labels in this Exp.;
-% "好我","常我","坏我";
-% "好人","常人","坏人"
+% "好我","坏我";
+% "好人","坏人"
 %
 % Task：Categorization, Whether the shape presented belongs to one categories?
 %
-% Total block: 8, number of trials in each block: 24*6
+% Total block: 4, number of trials in each block: 24*6
 %
 % Data is collected in the file: Exp_behav_moral_asso_exp7_rep_(subID).out
 %
@@ -81,6 +82,7 @@
 %% 清屏 清空内存
 clear; close all;
 startT = GetSecs;
+
 %% 输入被试信息
 [subID, age, gender, handness] = Moral_self_asso_exp7_rep_subinfo;
 addpath(pwd);
@@ -99,10 +101,10 @@ params = Moral_self_asso_exp7_rep_getParams(subID); % mind the trials per condit
 
 %% ******** Practicing for matching task **********
 initNumBlock = 1;  % !!!! change to 1 before real experiment
-initNumBin   = 2;  % !!!! change to 2 before real experiment
+initNumBin   = 1;  % !!!! change to 2 before real experiment
 Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
 
-% keep practice?
+% More practice?
 while 1
     prompt   = {'Need More Practice? [1－Yes; 0－ N0]'};
     dlgTitle = 'Please chose';
@@ -119,8 +121,8 @@ end
 
 %% ********* Matching task **************
 % study two blocks at the beginning
-initNumBlock = 3;  % !!! change to 3 before real experiment
-initNumBin   = 5;  % !!! change to 5 before real experiment
+initNumBlock = 2;  % !!! change to 3 before real experiment,2 when debugging
+initNumBin   = 1;  % !!! change to 5 before real experiment
 Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
 %% ******** Categrozation task *************n

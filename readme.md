@@ -52,7 +52,7 @@ History: Based on my previous stuy;
  4. Moral_self_asso_exp7_rep_categ
 
 Experimental design for the categorization task: 
- 2 (id: self vs. other) * 3 (moral valence: postive, neutral, vs. negative) *
+ 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
  2 categorization task(tasks type: morality, self)
 
 #### Input variables
@@ -60,6 +60,7 @@ Experimental design for the categorization task:
 
 #### output file
   data_exp7_rep_subBalance_(subNo.).out  % this record counterbalance info
+  data_exp7_rep_prac_(subNo.).out        % record the data during practice
   data_exp7_rep_match_(subNo.).out       % record the matching task data
   data_exp7_rep_categ_(subNo.).out       % record the categorization
                                            results
@@ -71,16 +72,16 @@ Experimental design for the categorization task:
  Second,Categorization phase, judge the category of stimuli according to
  criteria.
  
- Differences from exp7:
+### Differences from exp7:
 
  Items          replication    original
 
  =============  =============  ==========
 
- Moral valence  three levels    two levels
+ Moral valence  two levels     two levels
 
- Categ. task    two tasks       three tasks
+ Categ. task    two tasks      three tasks
 
- feedback       words           schema faces
+ feedback       words          schema faces
 
- dur.for categ.  100ms          200ms 
+ dur.for categ.  100ms         200ms 
