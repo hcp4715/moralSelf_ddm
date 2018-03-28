@@ -96,9 +96,7 @@ try
     restInstrucTex  = Screen('MakeTexture', window, params.learnRestInstruc);
     %pracInstrucTex  = Screen('MakeTexture', window, params.learnPracInstruc);
     moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
-    neutralSelfTex  = Screen('MakeTexture', window, params.neutralSelf);
     immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
-    neutralOtherTex = Screen('MakeTexture', window, params.neutralOther);
     moralOtherTex   = Screen('MakeTexture', window, params.moralOther);
     immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
     
@@ -145,6 +143,7 @@ try
             fprintf('the current bin is: %f \n', blockBin);    %  print the bin number for debugging
             % Important!! Generate the random order for trials in each bin
             % and for each bin, the order is randomize once.
+            
             randomOrder = Shuffle(1:24);                       % create a random index
             trialNum = length(randomOrder);
             trialOrderSmallblock = {};
@@ -199,22 +198,22 @@ try
                     corrResp = KbName(params.mismatchResponKey);       % the correct response key
                     if strcmp(currentShape,'moralSelf') 
                         currentShapeTex = moralSelfTex;                % the current Shape Tex is moral self
-                        currentLabelIndx = randsample(2:6,1);          % generate a random index that differ from moralself
+                        currentLabelIndx = randsample([2,3,4],1);          % generate a random index that differ from moralself
                         currentLabel = labels{currentLabelIndx};       % get the label name
                         currentLabelTex = labelCell{currentLabelIndx}; % get the label Tex
                     elseif strcmp(currentShape,'immoralSelf')  
                         currentShapeTex = immoralSelfTex;
-                        currentLabelIndx = randsample([1,2,4:6],1);
+                        currentLabelIndx = randsample([1,3,4],1);
                         currentLabel = labels{currentLabelIndx};
                         currentLabelTex = labelCell{currentLabelIndx};
                     elseif strcmp(currentShape,'moralOther')
                         currentShapeTex = moralOtherTex;
-                        currentLabelIndx = randsample([1:3,5,6],1);
+                        currentLabelIndx = randsample([1,2,4],1);
                         currentLabel = labels{currentLabelIndx};
                         currentLabelTex = labelCell{currentLabelIndx};
                     elseif strcmp(currentShape,'immoralOther')
                         currentShapeTex = immoralOtherTex;
-                        currentLabelIndx = randsample(1:5,1);
+                        currentLabelIndx = randsample([1,2,3],1);
                         currentLabel = labels{currentLabelIndx};
                         currentLabelTex = labelCell{currentLabelIndx};
                     end
