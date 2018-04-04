@@ -6,11 +6,12 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % =========================================================================
 % 04/Jan/2018   hcp4715         changed for replication study
 % 07/Jan/2018   hcp4715         changed code for response
+% 04/Apr/2018   hcp4715         change back to 2 * 2 design
 % =========================================================================
 %
 % Experimental design: 
 % 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
-% 3 (tasks type: morality, self, or importance)
+% 2 (tasks type: morality, self)
 %
 % Input variables:
 % subjects' ID, age, handness, sex, task type, number of blocks and number of bins;
@@ -25,36 +26,32 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % One trial: 1500 - 2100ms
 %
 % Stimuli: 
-% 6 shapes in this Exp: 2( identity: self vs. other) * 3( moral valence: positive, neutral vs. negative);
+% 6 shapes in this Exp: 2( identity: self vs. other) * 2( moral valence: positive vs. negative);
 %
-% Moral Self (MS),  Neutral Self (NS),  Immoral Self (IS); 
-% Moral Other (MO), Neutral Other (NO), Immoral Other (IO);
+% Moral Self (MS),   Immoral Self (IS); 
+% Moral Other (MO),  Immoral Other (IO);
 %
 % Six labels in this Exp.;
-% "好我", "常我", "坏我";
-% "好人", "常人", "坏人"
+% "好我", "坏我";
+% "好人", "坏人"
 % Task：Categorization, Whether the shape presented belongs to one categories?
 %
-% counterbalance between shape and label (matched with "Moral_self_asso_exp7_rep_getParams.m" ):
-%           "好我"     "常我"      "坏我"   "好人"      "常人"      "坏人"      self/m/im   otherwise
-% ============================================================================＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
-% expGroup1: circle,   square,   pentagon,  trapezoid,  hexagon    dimond       left         right
-% expGroup2: square,   pentagon, trapezoid, hexagon     dimond,    circle,      left         right
-% expGroup3: pentagon, trapezoid,hexagon    dimond,     circle,    square,      left         right
-% expGroup4: trapezoid,hexagon   dimond,    circle,     square,    pentagon,    left         right
-% expGroup5: hexagon   dimond,   circle,    square,     pentagon,  trapezoid,   left         right
-% expGroup6: dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     left         right
-% expGroup7: circle,   square,   pentagon,  trapezoid,  hexagon    dimond       right        left
-% expGroup8: square,   pentagon, trapezoid, hexagon     dimond,    circle,      right        left
-% expGroup9: pentagon, trapezoid,hexagon    dimond,     circle,    square,      right        left
-% expGroup10:trapezoid,hexagon   dimond,    circle,     square,    pentagon,    right        left
-% expGroup11:hexagon   dimond,   circle,    square,     pentagon,  trapezoid,   right        left
-% expGroup12:dimond,   circle,   square,    pentagon,   trapezoid, hexagon,     right        left
+% counterbalance between shape and label:
+%           "好我"     "坏我"    "好人"     "坏人"     M/S/moral  Mism/Oth/imm
+% ============================================================================
+% expGroup1: circle,   square,   pentagon,  trapezoid,  left        right
+% expGroup2: square,   pentagon, trapezoid, circle,     left        right
+% expGroup3: pentagon, trapezoid, circle,   square,     left        right
+% expGroup4: trapezoid, circle,   square,   pentagon,   left        right
+% expGroup5: circle,   square,   pentagon,  trapezoid,  right       left
+% expGroup6: square,   pentagon, trapezoid, circle,     right       left
+% expGroup7: pentagon, trapezoid, circle,   square,     right       left
+% expGroup8: trapezoid, circle,   square,   pentagon,   right       left
 % ============================================================================
 % 
-% Total trials: 60 * 18 = 1080 tr. (6 bl. * 5 bins * 36 trials)
-% One block: 5 bins * 36 trials
-% Total block: 9, number of trials in each block: 120
+% Total trials: 6 * 5 * 24 = 720 tr. (6 bl. * 5 bins * 24 trials)
+% One block: 5 bins * 24 trials
+% Total block: 6, number of trials in each block: 120
 % No practice trials.
 %
 % counterbalance of block order, see getParam.m balanceMatrix.block1
@@ -97,12 +94,12 @@ try
     % write a column name for the data, this is helpful because then you
     % will know that the However the data was created.
     fprintf(subBalanceRecord,...
-        'sub MoSelf NSelf ImSelf MOther NOther ImOther Match Mismatch Self Other Moral Non-mrl Immoral Non-immrl\n');
-    fprintf(subBalanceRecord,'%d %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n',...
-            subID,params.moralSelfPicName,params.neutralSelfPicName, params.immoralSelfPicName,...
-            params.moralOtherPicName,params.neutralOtherPicName,params.immoralOtherPicName,...
+        'sub MoSelf ImSelf MOther ImOther Match Mismatch Self Other Moral Immrl\n');
+    fprintf(subBalanceRecord,'%d %s %s %s %s %s %s %s %s %s %s\n',...
+            subID,params.moralSelfPicName,params.immoralSelfPicName,...
+            params.moralOtherPicName,params.immoralOtherPicName,...
             params.matchResponKey,params.mismatchResponKey,params.selfResponKey,params.otherResponKey,...
-            params.moralResponKey,params.notmoralResponKey,params.immoralResponKey, params.notimmoralResponKey);
+            params.moralResponKey,params.immoralResponKey);
     fclose(subBalanceRecord);
     
     
@@ -120,12 +117,6 @@ try
         elseif strcmp(task,'moral') && params.moralResponKey == 'U'
             instrucTex=Screen('MakeTexture',window, params.testInstrucMoral2);
             instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucMoral2); 
-        elseif strcmp(task,'immoral') && params.immoralResponKey == 'O'
-            instrucTex=Screen('MakeTexture',window, params.testInstrucimmoral1);
-            instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucimmoral1); 
-        elseif strcmp(task,'immoral') && params.immoralResponKey == 'P'
-            instrucTex=Screen('MakeTexture',window, params.testInstrucimmoral2);
-            instrucRestTex = Screen('MakeTexture',window, params.testRestInstrucimmoral2); 
         end
         
         % make texture when participant pressed an wrong key
@@ -144,22 +135,19 @@ try
     
     % draw the shape image into memeory
         moralSelfTex    = Screen('MakeTexture', window, params.moralSelf);
-        neutralSelfTex  = Screen('MakeTexture', window, params.neutralSelf);
         immoralSelfTex  = Screen('MakeTexture', window, params.immoralSelf);
         moralOtherTex   = Screen('MakeTexture', window, params.moralOther);
-        neutralOtherTex = Screen('MakeTexture', window, params.neutralOther);
         immoralOtherTex = Screen('MakeTexture', window, params.immoralOther);
 %         for blockNum = 1:block 
 
-    tmpCondition = {'moralSelf','neutralSelf','immoralSelf','moralOther',...
-                'neutralOther','immoralOther','moralSelf','neutralSelf',...
-                'immoralSelf','moralOther','neutralOther','immoralOther'};
+    tmpCondition = {'moralSelf','immoralSelf','moralOther','immoralOther',...
+                    'moralSelf','immoralSelf','moralOther','immoralOther'};
     tmpConditionSmallblock = repmat(tmpCondition,[1,3]);
 
     accFeed = 0;                                    % set the accuracy feedback variable
     for bin = 1:binNum                              % number of bin is 5
         % trialOrder = randperm(6);                 % generate a sequence of 1:6 with random position
-        randomOrder = Shuffle(1:36);
+        randomOrder = Shuffle(1:24);
         trialNum = length(randomOrder);
         [~, randomOrder_order] = sort(randomOrder);
         trialOrderSmallblock = tmpConditionSmallblock(randomOrder_order);
@@ -186,21 +174,6 @@ try
                     incorrResp = params.otherResponKey;
                 elseif strcmp(task,'moral')
                     corrResp = params.moralResponKey;
-                    incorrResp = params.notmoralResponKey;
-                elseif strcmp(task,'immoral')
-                    corrResp = params.notimmoralResponKey;
-                    incorrResp = params.immoralResponKey;
-                end
-            elseif strcmp(targetCondition,'neutralSelf')
-                currentTarget = neutralSelfTex; 
-                if strcmp(task,'self')
-                    corrResp = params.selfResponKey;
-                    incorrResp = params.otherResponKey;
-                elseif strcmp(task,'moral')
-                    corrResp = params.notmoralResponKey;
-                    incorrResp = params.moralResponKey;
-                elseif strcmp(task,'immoral')
-                    corrResp = params.notimmoralResponKey;
                     incorrResp = params.immoralResponKey;
                 end
             elseif strcmp(targetCondition,'immoralSelf')
@@ -209,11 +182,8 @@ try
                     corrResp = params.selfResponKey;
                     incorrResp = params.otherResponKey;
                 elseif strcmp(task,'moral')
-                    corrResp = params.notmoralResponKey;
-                    incorrResp = params.moralResponKey;
-                elseif strcmp(task,'immoral')
                     corrResp = params.immoralResponKey;
-                    incorrResp = params.notimmoralResponKey;
+                    incorrResp = params.moralResponKey;
                 end
             elseif strcmp(targetCondition,'moralOther')       
                 currentTarget = moralOtherTex;   
@@ -222,21 +192,6 @@ try
                     incorrResp = params.selfResponKey;
                 elseif strcmp(task,'moral')
                     corrResp = params.moralResponKey;
-                    incorrResp = params.notmoralResponKey;
-                elseif strcmp(task,'immoral')
-                    corrResp = params.notimmoralResponKey;
-                    incorrResp = params.immoralResponKey;
-                end
-            elseif strcmp(targetCondition,'neutralOther')
-                currentTarget = neutralOtherTex; 
-                if strcmp(task,'self')
-                    corrResp = params.otherResponKey;
-                    incorrResp = params.selfResponKey;
-                elseif strcmp(task,'moral')
-                    corrResp = params.notmoralResponKey;
-                    incorrResp = params.moralResponKey;
-                elseif strcmp(task,'immoral')
-                    corrResp = params.notimmoralResponKey;
                     incorrResp = params.immoralResponKey;
                 end
             elseif strcmp(targetCondition,'immoralOther')
@@ -245,11 +200,8 @@ try
                     corrResp = params.otherResponKey;
                     incorrResp = params.selfResponKey;
                 elseif strcmp(task,'moral')
-                    corrResp = params.notmoralResponKey;
-                    incorrResp = params.moralResponKey;
-                elseif strcmp(task,'immoral')
                     corrResp = params.immoralResponKey;
-                    incorrResp = params.notimmoralResponKey;
+                    incorrResp = params.moralResponKey;
                 end
             end
         % define the rect for shape image

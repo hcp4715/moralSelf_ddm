@@ -101,7 +101,7 @@ params = Moral_self_asso_exp7_rep_getParams(subID); % mind the trials per condit
 
 %% ******** Practicing for matching task **********
 initNumBlock = 1;  % !!!! change to 1 before real experiment
-initNumBin   = 1;  % !!!! change to 2 before real experiment
+initNumBin   = 2;  % !!!! change to 2 before real experiment
 Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
 
 % More practice?
@@ -120,13 +120,13 @@ while 1
 end
 
 %% ********* Matching task **************
-% study two blocks at the beginning
-initNumBlock = 2;  % !!! change to 3 before real experiment,2 when debugging
-initNumBin   = 1;  % !!! change to 5 before real experiment
+study two blocks at the beginning
+initNumBlock = 3;  % !!! change to 3 before real experiment,2 when debugging
+initNumBin   = 5;  % !!! change to 5 before real experiment
 Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
 %% ******** Categrozation task *************n
-for block = 1:6       %  6 blocks
+for block = 1:6       % !!!! change to 6 blocks before real experiment
     task = cell2mat(params.taskMatrix{block});
     numBinLearn = 2;  % !!!!change to 2 before real experiment
     numBinTest  = 4;  % !!!!change to 4 before real experiment (i.e. 5 bind of 24 trials, each condition has 4)   
