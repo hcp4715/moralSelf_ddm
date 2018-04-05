@@ -279,8 +279,8 @@ try
                 elseif response == 2  % wrong key
                     Screen('DrawTexture', window, feedWrongKey,[]);  % tell participant that they pressed a wrong key
                 end  
-            
-                Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);   
+                Screen('Flip',window, stimOnsetTime + params.TargetDur - 0.5*params.ifi);            
+%                 Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);   
                 WaitSecs(params.FeedbackDur-0.5*params.ifi); % time for feedback
                 WaitSecs(params.ISI-0.5*params.ifi);         % time for ISI
                 % response record

@@ -7,6 +7,8 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % 04/Jan/2018   hcp4715         changed for replication study
 % 07/Jan/2018   hcp4715         changed code for response
 % 04/Apr/2018   hcp4715         change back to 2 * 2 design
+% 05/Apr/2018   hcp4715         delete the unneccessary blank delay ITI
+%
 % =========================================================================
 %
 % Experimental design: 
@@ -284,12 +286,13 @@ try
             
             if response == 2
                 Screen('DrawTexture', window, feedWrongKey,[]);
-                Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi); 
+                Screen('Flip',window, stimOnsetTime + params.TargetDur - 0.5*params.ifi); 
+%                 Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi); 
             else
-                Screen('Flip',window, stimOnsetTime + params.TargetDur + params.BlankDur - 0.5*params.ifi);
+                Screen('Flip',window, stimOnsetTime + params.TargetDur - 0.5*params.ifi);
             end
             
-            random_delay = 0.5*rand+ 0.5;%900-2400ms random blank
+            random_delay = 0.5*rand+ 0.5; %900-2400ms random blank
             WaitSecs(random_delay-0.5*params.ifi);
 %           trialNum = trialNum + 1;
             % response record
