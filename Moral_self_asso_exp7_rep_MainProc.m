@@ -100,30 +100,30 @@ HideCursor;
 params = Moral_self_asso_exp7_rep_getParams(subID); % mind the trials per condition in params file!
 
 %% ******** Practicing for matching task **********
-% initNumBlock = 1;  % !!!! change to 1 before real experiment
-% initNumBin   = 1;  % !!!! change to 2 before real experiment
-% Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
-% 
-% % More practice?
-% while 1
-%     prompt   = {'Need More Practice? [1£­Yes; 0£­ N0]'};
-%     dlgTitle = 'Please chose';
-%     lineNo   = 1;
-%     defaultanswer={'0'};
-%     conPrac   = inputdlg(prompt,dlgTitle,lineNo,defaultanswer);
-%     choice    = str2double(conPrac{1});
-%     if choice == 1
-%        Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
-%     else
-%         break
-%     end
-% end
+initNumBlock = 1;  % !!!! change to 1 before real experiment
+initNumBin   = 2;  % !!!! change to 2 before real experiment
+Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+
+% More practice?
+while 1
+    prompt   = {'Need More Practice? [1£­Yes; 0£­ N0]'};
+    dlgTitle = 'Please chose';
+    lineNo   = 1;
+    defaultanswer={'0'};
+    conPrac   = inputdlg(prompt,dlgTitle,lineNo,defaultanswer);
+    choice    = str2double(conPrac{1});
+    if choice == 1
+       Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+    else
+        break
+    end
+end
 
 %% ********* Matching task **************
-% % study two blocks at the beginning
-% initNumBlock = 2;  % !!! change to 3 before real experiment,2 when debugging
-% initNumBin   = 1;  % !!! change to 5 before real experiment
-% Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
+% study two blocks at the beginning
+initNumBlock = 3;  % !!! change to 3 before real experiment,2 when debugging
+initNumBin   = 5;  % !!! change to 5 before real experiment
+Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
 %% ******** Categrozation task *************n
 for block = 1:6       % !!!! change to 6 blocks before real experiment
