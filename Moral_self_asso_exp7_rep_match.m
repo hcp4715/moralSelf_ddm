@@ -306,10 +306,6 @@ try
                 if response == 1;
                     accFeed = accFeed + 1; % accumulate acc
                 end
-                %setup again
-                response = -1;
-                responseKey = 'NA';
-                currentRT = -1;
                 
                 % print the trial time for debugging
 %                 fprintf('duration of one trial is: %f \n', GetSecs() - startTrialT) ;

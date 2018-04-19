@@ -167,6 +167,7 @@ try
 %         trialOrder = trialOrder(tmpRand);   
         for trial = 1:trialNum     
             startTrialT = GetSecs;
+
         % choosing the target shape based on pre-randomized order
             targetCondition = char(trialOrderSmallblock(trial));
              if strcmp(targetCondition,'moralSelf')       % if it is the moralSelf trial
@@ -236,9 +237,9 @@ try
             % presenting for 100 ms
             
             [~, stimOffsetTime] = Screen('Flip', window, stimOnsetTime + params.TargetDur - 0.5*params.ifi);
-        % Record setup
+        
+            % Record setup
             response = -1;
-            %response_record = response;
             respKey = 'NA';
             currentRT = -1;
             [keyIsDown, secs, keyCode] = KbCheck;
@@ -270,20 +271,7 @@ try
             end
             fprintf('currentRT: %f \n',currentRT);
             fprintf('the pressed key is : %s \n', respKey) ;
-            % if participant pressed an wrong key, then remind him or her
-            % to press the right keys.
-            
-%             if response == 1 % if response is correct
-%                     Screen('DrawTexture', window, feedCorrectTex,[]); % using smile face to represent correct
-% %                     DrawFormattedText(window,'CORRECT','center','center',[0 255 0]);
-%             elseif response == 0 % if response is incorrect
-%                     Screen('DrawTexture', window, feedIncorrectTex,[]);
-%             elseif response == -1 % no response detected
-%                     Screen('DrawTexture', window, feedNoRespTex,[]); % DrawFormattedText(window,'Too Slow','center','center',[255 255 0]);
-%             elseif response == 2 % wrong key
-%                     Screen('DrawTexture', window, feedWrongKey,[]);  % tell participant that they have a wrong key
-%             end
-            
+             
             if response == 2
                 Screen('DrawTexture', window, feedWrongKey,[]);
                 Screen('Flip',window, stimOnsetTime + params.TargetDur - 0.5*params.ifi); 
@@ -312,26 +300,21 @@ try
                accFeed = accFeed + 1; % accumulate acc
             end
             
-            %setup again
-                response = -1;
-                respKey = 'NA';
-                currentRT = -1;
-                
-                % print the trial time
-                fprintf('duration of one trial is: %f \n', GetSecs() - startTrialT) ;
+            % print the trial time
+            fprintf('duration of one trial is: %f \n', GetSecs() - startTrialT) ;
         %end of a bin        
         end
         
         % test a break ever 2 bins (72 trials)
-        if rem(bin,2) == 0
+        if rem(bin,2) == 0 && bin ~= 6
             DrawFormattedText(window,'Take a break and press space if you are ready!','center','center',[0 0 255]);
             Screen('Flip',window);   
             WaitSecs(1-0.5 * params.ifi);
             Screen('DrawTexture', window, instrucRestTex);
             Screen('Flip',window);
-            [secs, keyCode]=KbWait;
-            while keyCode(params.spaceKey)==0
-                     [secs,keyCode]=KbWait;
+            [secs, keyCode] = KbWait;
+            while keyCode(params.spaceKey) == 0
+                     [secs,keyCode] = KbWait;
             end
         end
     end

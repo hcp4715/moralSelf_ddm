@@ -116,8 +116,8 @@ cd(params.rootDir);
 
 %%  ******************************* 
 AssertOpenGL;
-params.whichscreen = min(Screen('Screens'));     % 有的是用max，作用差不多
-% ifi=Screen('GetFlipInterval',window);          % 获得刷新的时间 
+params.whichscreen = min(Screen('Screens'));     % get the screen that will be used,min or max
+% ifi=Screen('GetFlipInterval',window);          % get time for refresh
 % % define colors 
 params.black = BlackIndex(params.whichscreen);
 params.white = WhiteIndex(params.whichscreen);
@@ -128,8 +128,8 @@ params.winSize = [];
 
 % using parameters from screen
 [w,rect] = Screen('OpenWindow',params.whichscreen, params.gray,params.winSize);
-params.XCenter = rect(3)/2;                           %获得水平方向中心的坐标
-params.YCenter = rect(4)/2;                           %获得水平方向中心的坐标
+params.XCenter = rect(3)/2;                           % central point of the vertical axis
+params.YCenter = rect(4)/2;                           % central point of the vertical axis
 
 HideCursor
 
