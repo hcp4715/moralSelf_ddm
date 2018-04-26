@@ -331,7 +331,7 @@ try
        Screen('Flip',window,vbl+ 3); %erases feedback after 5 second
         %end of a block
     end
-%     Screen('CloseAll')
+    Screen('CloseAll')
     ShowCursor
     Priority(0);
 %     rethrow(lasterror) ;

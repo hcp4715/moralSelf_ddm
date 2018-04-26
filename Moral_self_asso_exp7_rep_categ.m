@@ -324,7 +324,7 @@ try
     DrawFormattedText(window,accFeedtext,'center'  ,'center',[0 0 255]); %shows RT
     vbl=Screen('Flip',window); %swaps backbuffer to frontbuffer
     Screen('Flip',window,vbl+3); %erases feedback after 1 second
-%     Screen('CloseAll')
+    Screen('CloseAll')
     ShowCursor
     Priority(0);
 %     rethrow(lasterror) ;
