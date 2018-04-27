@@ -55,15 +55,17 @@ function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,bin
 % expGroup8: trapezoid, circle,   square,   pentagon,   right       left
 % ============================================================================
 %
-% In this experiment, we added 24 trials for practices for matching task (3 matched trial with 3 mismatched trials).
-% Number of practice trials: 24
-
-% Total block for matching task: 8;
-% The first three blocks contains 120 trials for each (360 trials)
-% The rest 5 blocks interweaved with categorization task, each has 72 trials 
-
+% In this experiment, we used mini-block design, each mini-block is one bin,which has 24 trials;
+% The practice part include 2 bins, i.e., 48 trials
+%
+% The matching task include 3 large blocks, each include 5 bins, i.e., 360 trials;
+% there are 5 blockes interweaved with Categorization task, each has 2
+% bins, i.e., 96 trials for each block, and 240 trials for all these 5
+% small blocks.
+% Therefore, there are 600 trials in total, 75 trials for each condition
+%
 % counterbalance of block order: see getParams.m
-
+%
 % Output:data_exp7_rep_match_(subID).out
 %%
 %initialization
@@ -126,7 +128,7 @@ try
     tmpCondition = {'moralSelf', 'immoralSelf', 'moralOther', 'immoralOther', ...
                     'moralSelf', 'immoralSelf', 'moralOther', 'immoralOther'; ...
                     'match',     'match',       'match',      'match',...
-                    'mistmatch', 'mistmatch',   'mistmatch',  'mistmatch'};
+                    'mismatch', 'mismatch',   'mismatch',  'mismatch'};
     tmpConditionSmallblock = repmat(tmpCondition,[1,3]);  % a small block of trials: 24 in total
   
     % define the location of the picture

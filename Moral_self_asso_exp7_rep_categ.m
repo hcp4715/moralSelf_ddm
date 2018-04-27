@@ -50,10 +50,10 @@ function Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,bin
 % expGroup7: pentagon, trapezoid, circle,   square,     right       left
 % expGroup8: trapezoid, circle,   square,   pentagon,   right       left
 % ============================================================================
-% 
-% Total trials: 6 * 5 * 24 = 720 tr. (6 bl. * 5 bins * 24 trials)
-% One block: 5 bins * 24 trials
-% Total block: 6, number of trials in each block: 120
+% One bin: 24 trials;
+% One block: 120 trials
+% whole task: 6 blocks (i.e., 6 * 5 * 24 = 720 tr. (6 bl. * 5 bins * 24 trials)
+% i.e., 90 trials per condition
 % No practice trials.
 %
 % counterbalance of block order, see getParam.m balanceMatrix.block1

@@ -121,15 +121,15 @@ end
 
 %% ********* Matching task **************
 % study two blocks at the beginning
-initNumBlock = 2;  % !!! change to 3 before real experiment,2 when debugging
-initNumBin   = 1;  % !!! change to 5 before real experiment,1 when debugging
+initNumBlock = 3;  % !!! change to 3 before real experiment,2 when debugging
+initNumBin   = 5;  % !!! change to 5 before real experiment,1 when debugging
 Moral_self_asso_exp7_rep_match(subID,gender,age,handness,initNumBlock,initNumBin);
  
 %% ******** Categrozation task *************n
 for block = 1:1       % !!!! change to 6 blocks before real experiment
     task = cell2mat(params.taskMatrix{block});
-    numBinLearn = 1;  % !!!!change to 2 before real experiment
-    numBinTest  = 1;  % !!!!change to 4 before real experiment (i.e. 5 block of 24 trials, each condition has 60 trials)   
+    numBinLearn = 2;  % !!!!change to 2 before real experiment
+    numBinTest  = 5;  % !!!!change to 5 before real experiment (i.e. 5 block of 24 trials, each condition has 60 trials)   
     Moral_self_asso_exp7_rep_categ(subID,gender,age,handness,task,block,numBinTest);
 %     if block == 3  % re-study the association task per 3 blocks of categorization
     if block < 6
