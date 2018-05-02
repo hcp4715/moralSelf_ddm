@@ -41,12 +41,12 @@ balanceMatrix.moralResp    = repmat({'U','U','Y','Y','Y','U','U','U'},[1,6]);  %
 balanceMatrix.immoralResp  = repmat({'Y','Y','U','U','U','Y','Y','Y'},[1,6]);  % response for "immoral" trials in self-other categorization 
 
 % balance categorization tasks
-balanceMatrix.block1 = repmat({'self','moral','moral','self','self','moral'},[1,8]);  % counterbalance the categorization task
-balanceMatrix.block2 = repmat({'moral','self','self','moral','self','moral'},[1,8]);
-balanceMatrix.block3 = repmat({'self','moral','self','moral','moral','self'},[1,8]);
-balanceMatrix.block4 = repmat({'moral','self','self','moral','self','moral'},[1,8]);
-balanceMatrix.block5 = repmat({'self','moral','self','moral','moral','self'},[1,8]);
-balanceMatrix.block6 = repmat({'self','moral','moral','self','self','moral'},[1,8]);
+balanceMatrix.block1 = repmat({'self', 'moral','self', 'moral','self', 'self' },[1,8]);  % counterbalance the categorization task
+balanceMatrix.block2 = repmat({'moral','self', 'moral','self', 'moral','moral'},[1,8]);
+balanceMatrix.block3 = repmat({'moral','self', 'self', 'self', 'self', 'moral'},[1,8]);
+balanceMatrix.block4 = repmat({'self', 'moral','moral','moral','moral','self' },[1,8]);
+balanceMatrix.block5 = repmat({'self', 'self', 'moral','self', 'moral','self' },[1,8]);
+balanceMatrix.block6 = repmat({'moral','moral','self', 'moral','self', 'moral'},[1,8]);
 % balanceMatrix.block7 = repmat({'self','moral','self','moral','moral','self'},[1,8]);
 % balanceMatrix.block8 = repmat({'self','moral','moral','self','self','moral'},[1,8]);
 % balanceMatrix.block9 = repmat({'moral','self','self','moral','self','moral'},[1,8]);

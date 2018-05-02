@@ -1,4 +1,4 @@
-function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,binNum)
+function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,binNum,flag)
 %% Information about this script
 % History: Based on :LiuMinghui 2013, SelfLabelMatching; Guo Jichengsi 2013;
 % 
@@ -60,9 +60,9 @@ function Moral_self_asso_exp7_rep_match(subID,gender,age,handness,numOfBlock,bin
 %
 % The matching task include 3 large blocks, each include 5 bins, i.e., 360 trials;
 % there are 5 blockes interweaved with Categorization task, each has 2
-% bins, i.e., 96 trials for each block, and 240 trials for all these 5
+% bins, i.e., 48 trials for each block, and 240 trials for all these 5
 % small blocks.
-% Therefore, there are 600 trials in total, 75 trials for each condition
+% Therefore, there are 360 + 240 = 600 trials in total, 75 trials for each condition
 %
 % counterbalance of block order: see getParams.m
 %
@@ -83,7 +83,7 @@ try
     cd(params.dataDir);
     % Create a data file for this task
     % save data of practice and formal data differently
-    if numOfBlock <= 1
+    if strcmp(flag,'prac')
         responseRecord = fopen(['data_exp7_rep_prac_' num2str(subID) '.out'],'a');
     else
         responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
@@ -290,15 +290,15 @@ try
                 t = datetime('now');
                 DateString = datestr(t);                   % get the data collecting time
                 DateString = strrep(DateString,' ','_');   % replace the space of the timedate
-                if numOfBlock <= 1                         % if the block number is less than 2
+                if strcmp(flag,'prac')                     % if the block number is practice
                     responseRecord = fopen(['data_exp7_rep_prac_' num2str(subID) '.out'],'a');
                     fprintf(responseRecord,'%s %s %d %d %s %s %d %d %d %s %s %s %s %s %d %.4f \n',...
-                    DateString, 'Prac', subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
+                    DateString, flag, subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
                     currentMatch,corrResp,responseKey, response,currentRT);
                 else
                     responseRecord = fopen(['data_exp7_rep_match_' num2str(subID) '.out'],'a');
                     fprintf(responseRecord,'%s %s %d %d %s %s %d %d %d %s %s %s %s %s %d %.4f \n',...
-                    DateString, 'Exp', subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
+                    DateString, flag, subID, age, gender,handness,blockNum,blockBin,trial,currentShape,currentLabel,... 
                     currentMatch,corrResp,responseKey, response,currentRT);
                 end
                 fclose(responseRecord);
