@@ -32,14 +32,13 @@ to:
                                                      % it will be as the input of 'openWindow' function`
 
 ### revision history
- 
+
  Date         Author          Notes for change
- =========================================================================
  17/12/2017   hcp4715         Start to modifying the code
  06/02/2018   hcp4715         finished revision
  18/03/2018   hcp4715         fixed small bug for recording data
  04/05/2018   hcp4715         revised the readme file
- =========================================================================
+
 
 
 
