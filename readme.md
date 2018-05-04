@@ -20,7 +20,8 @@ To replicate the my previous study.
 1. press "Esc" to interrupt the script when it is running;
 2. Note: "Esc" only interrupt this specific script. Generally, you can use ctrl + c to stop a matalab script;
 3. Note2: For PTB, you need `Screen('CloseAll')` to close the window created by `Screen` function of PTB
-4. Using small-window model to debug. The `screen` function of PTB will open a window that occupies the whole screen by default, this makes debugging really annoying. You can change the following code in the Moral_self_asso_exp7_rep_getParams.m
+4. It's alway better to debug without fullscreen, because the `screen` function of PTB will open a window that occupies the whole screen by default, this makes the debug process much harder. 
+To debug with a small widonw (so that you can see what happens in matlab), you can change the following codes in the 'Moral_self_asso_exp7_rep_getParams.m'
 from:
 `params.winSize = [];
 % params.winSize = [0,0,800,600];                    % changed the window's size when debugging, 
@@ -30,29 +31,25 @@ to:
  params.winSize = [0,0,800,600];                    % changed the window's size when debugging, 
                                                      % it will be as the input of 'openWindow' function`
 
-### the information below is in the main script file
-History: Based on my previous stuy; 
+### revision history
  
  Date         Author          Notes for change
  =========================================================================
  17/12/2017   hcp4715         Start to modifying the code
  06/02/2018   hcp4715         finished revision
  18/03/2018   hcp4715         fixed small bug for recording data
-
+ 04/05/2018   hcp4715         revised the readme file
  =========================================================================
 
- Aim: Replicate my Experiment 7 of moral association, which dedicated for
- categorization task.
 
- This is the main m file for the experiment, which refer to the following
- scripts:
- 1. Moral_self_asso_exp7_rep_subinfo.m
- 2. Moral_self_asso_exp7_rep_getParams.m
- 3. Moral_self_asso_exp7_rep_match
- 4. Moral_self_asso_exp7_rep_categ
 
-Experimental design for the categorization task: 
- 2 (id: self vs. other) * 2 (moral valence: postive vs. negative) *
+### Experimental design
+
+This exp. include two tasks, the 1st one is a perception matching task (see Sui et al., 2012, JEP:HPP)
+design of this study: 2(matching:matched, mismatched) * 2(moral valence: pos. vs. neg.) * 2(self-ref: self v. other)
+
+The second one is a perceptual categorization task: 
+ 2 (self-ref: self vs. other) * 2 (moral valence: postive vs. negative) *
  2 categorization task(tasks type: morality, self)
 
 #### Input variables
@@ -72,7 +69,7 @@ Experimental design for the categorization task:
  Second,Categorization phase, judge the category of stimuli according to
  criteria.
  
-### Differences from exp7:
+### Differences from original experiment:
 
  Items          replication    original
 
@@ -85,3 +82,5 @@ Experimental design for the categorization task:
  feedback       words          schema faces
 
  dur.for categ.  100ms         200ms 
+ 
+ No. of trials  75/90          60/72
