@@ -1,6 +1,6 @@
 function [subID, age, gender, handness] = Moral_self_asso_exp7_rep_subinfo()
 while 1
-    prompt  = {'序号/participant ID:','性别/gender[1男 2女]:','年龄/age：', '利手/handness[R/L]:'};
+    prompt  = {'序号/participant ID:','性别/gender[male-男,femal-女]:','年龄/age：', '利手/handness[R/L]:'};
     dlgTitle= 'Please input personal information';
     lineNo  = 1;
     defaultanswer={'1','female','22','R'};
