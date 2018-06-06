@@ -1,5 +1,5 @@
 ---
-title: "Quality_Control_&_Preprocessing_for_Moral_Categ_Replication"
+title: "Quality_Control_for_Moral_Categ_Replication"
 author: "hcp"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: word_document
