@@ -100,6 +100,12 @@ df.L$Match    <- factor(df.L$Match,    levels = c("match","mismatch"))
 # make the variables in a specified order
 df.T$Morality <- factor(df.T$Morality, levels=c("Good","Bad"))    
 df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other"))
+
+# change all gender from number to string
+df.L$Sex[df.L$Sex == '1'] <- 'male'
+df.L$Sex[df.L$Sex == '2'] <- 'female'
+df.T$Sex[df.T$Sex == '1'] <- 'male'
+df.T$Sex[df.T$Sex == '2'] <- 'female'
 ```
 
 ```{r clean the data_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
