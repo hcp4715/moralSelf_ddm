@@ -1,17 +1,19 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
 *.bmp
 *.jpg
-*.out
-=======
 *.tiff
 *.eps
 *.pdf
-*.csv
->>>>>>> exp7_results
-=======
 *.bmp
-*.jpg
-*.out
 *.psd
->>>>>>> exp7_rep_proc
+*.pdf
+*.csv
+*.out
+*.docx
+*.doc
+*.zip
+*.caj
+*.txt
+*.pptx
+/pilot_1_match_flex_trial_number/*
+/pilot_2_match_fixed_trial_number/*
+/Protocol/*

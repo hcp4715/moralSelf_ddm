@@ -1,0 +1,706 @@
+---
+title: "Preprocessing_&_Plot_for_Moral_Categ_Replication"
+author: "hcp"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: word_document
+---
+<style type="text/css">
+
+body{ /* Normal  */
+   font-family: Times     
+   font-size: 12px;
+}
+td {  /* Table  */
+   font-size: 8px;
+}
+h1 { /* Header 1 */
+ font-size: 28px;
+}
+h2 { /* Header 2 */
+ font-size: 22px;
+}
+h3 { /* Header 3 */
+ font-size: 18px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 10px;
+}
+pre { /* Code block */
+  font-size: 10px
+}
+</style>
+
+
+This script is used for quality control and preprocessing of the replication data.
+
+
+```{r Initializing, include=FALSE,,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+source('Initial.r')
+
+```
+
+```{r loadingData_e7,,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# set the directories
+curDir <- getwd()   # directory for preprocessing
+rootDir <- gsub('.{7}$', '', curDir)
+rawDir <- paste(curDir,'/data/',sep = '')
+traDir <- paste(rootDir,'tradAnal',sep = '')
+ddmDir <- paste(rootDir,'hddmMod',sep = '')
+
+# get the file names for files contain "data_exp7_rep_match_"
+fNames.m <- list.files(path = rawDir, pattern = "data_exp7_rep_match_*")
+# add the directory information to the filenames
+fNames.m <- paste(rawDir,fNames.m, sep = '')
+
+# read these files and combine them into one file, get the raw data for matching task
+df.L    <- do.call("rbind",lapply(as.list(fNames.m),FUN=function(files){read.table(files, header=TRUE, sep="",stringsAsFactors=F)}))
+
+# do the same to data from categorization, get the raw data for categorization task
+fNames.c <- list.files(path = rawDir, pattern = "data_exp7_rep_categ_*")
+fNames.c <- paste(rawDir,fNames.c, sep = '')
+df.T    <- do.call("rbind",lapply(as.list(fNames.c),FUN=function(files){read.table(files, header=TRUE, sep="",stringsAsFactors=F)}))
+
+
+# render the data in numeric format for future analysis
+cols.num <- c('Sub',"Age","Block","Bin","Trial","RT","ACC")
+df.L[cols.num] <- sapply(df.L[cols.num], as.numeric)  
+df.T[cols.num] <- sapply(df.T[cols.num], as.numeric)  
+df.L <- df.L[!is.na(df.L$ACC),]
+df.T <- df.T[!is.na(df.T$ACC),]
+
+# get the independent varialbes
+# moral valence
+df.L$Morality[grepl("moral", df.L$Shape, fixed=TRUE)]   <- "Good"
+df.L$Morality[grepl("immoral", df.L$Shape, fixed=TRUE)] <- "Bad"
+
+# self-referential
+df.L$Identity[grepl("Self", df.L$Shape, fixed=TRUE)]    <- "Self"
+df.L$Identity[grepl("Other", df.L$Shape, fixed=TRUE)]   <- "Other"
+
+df.T$Morality[grepl("moral", df.T$Shape, fixed=TRUE)]   <- "Good"
+df.T$Morality[grepl("immoral", df.T$Shape, fixed=TRUE)] <- "Bad"
+
+df.T$Identity[grepl("Self", df.T$Shape, fixed=TRUE)]    <- "Self"
+df.T$Identity[grepl("Other", df.T$Shape, fixed=TRUE)]   <- "Other"
+
+
+df.T$Task[df.T$Task == 'self']            <- 'Id'
+df.T$Task[df.T$Task == 'moral']           <- 'Val'
+
+# rename columns
+colnames(df.L)[colnames(df.L)=="Sub"] <- "Subject"
+colnames(df.T)[colnames(df.T)=="Sub"] <- "Subject"
+
+# order the variables
+df.L$Morality <- factor(df.L$Morality, levels = c("Good","Bad"))    
+df.L$Identity <- factor(df.L$Identity, levels = c("Self","Other"))  
+df.L$Match    <- factor(df.L$Match,    levels = c("match","mismatch"))
+
+# make the variables in a specified order
+df.T$Morality <- factor(df.T$Morality, levels=c("Good","Bad"))    
+df.T$Identity <- factor(df.T$Identity, levels=c("Self","Other"))
+
+# change all gender from number to string
+df.L$Sex[df.L$Sex == '1'] <- 'male'
+df.L$Sex[df.L$Sex == '2'] <- 'female'
+df.T$Sex[df.T$Sex == '1'] <- 'male'
+df.T$Sex[df.T$Sex == '2'] <- 'female'
+```
+
+```{r clean the data_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# get the data file for hddm analysis
+df.L.hddm <- subset(df.L, ACC ==1 | ACC == 0)  # remove non-response trials or pressing wrong key
+df.T.hddm <- subset(df.T, ACC ==1 | ACC == 0) 
+
+df.L.hddm_m <- subset(df.L.hddm, Match == 'match') # select data
+df.L.hddm_m <- df.L.hddm_m[,c('Subject','Morality','Identity','RT','ACC')] # select column
+colnames(df.L.hddm_m) <- c("subj_idx","val",'id','rt','response')     # change column name
+
+df.L.hddm_nm <- subset(df.L.hddm, Match == 'mismatch')
+df.L.hddm_nm <- df.L.hddm_nm[,c('Subject','Morality','Identity','RT','ACC')]
+colnames(df.L.hddm_nm) <- c("subj_idx","val",'id','rt','response')
+
+df.T.hddm_val <- subset(df.T.hddm, Task == 'Val')
+df.T.hddm_val <- df.T.hddm_val[,c('Subject','Morality','Identity','RT','ACC')]
+colnames(df.T.hddm_val) <- c("subj_idx","val",'id','rt','response')
+
+df.T.hddm_id <- subset(df.T.hddm, Task == 'Id')
+df.T.hddm_id <- df.T.hddm_id[,c('Subject','Morality','Identity','RT','ACC')]
+colnames(df.T.hddm_id) <- c("subj_idx","val",'id','rt','response')
+
+setwd(ddmDir)
+write.csv(df.L.hddm_m,'exp7_rep_match_hddm.csv',row.names = F)
+write.csv(df.L.hddm_nm,'exp7_rep_mismatch_hddm.csv',row.names = F)
+write.csv(df.T.hddm_val,'exp7_rep_categ_val_hddm.csv',row.names = F)
+write.csv(df.T.hddm_id,'exp7_rep_categ_id_hddm.csv',row.names = F)
+rm('df.L.hddm','df.T.hddm','df.L.hddm_m','df.L.hddm_nm','df.T.hddm_val','df.T.hddm_id')
+setwd(curDir)
+
+# clean data for trad. analysis
+df.L1 <- df.L[,c("Subject", "Age", "Sex", "Match", "Morality", "Identity", "ACC","RT")]
+df.T1 <- df.T[,c("Subject", "Age", "Sex", "Task", "Morality", "Identity", "ACC","RT")]
+df.L1$RT <- df.L1$RT * 1000 # transfer from seconds to min seconds
+df.T1$RT <- df.T1$RT * 1000 # careful about the scale of time when using HDDM or ex-Gaussian
+
+# no response equal to wrong
+df.L1$ACC[df.L1$ACC != 1] <- 0
+df.T1$ACC[df.T1$ACC != 1] <- 0
+
+# check the number of trials are correct
+excldSub1_L <- c() # subject ID of those who failed matching task
+excldSub1_T <- c() # subject ID of those who failed categorization task
+
+df.L1.trials <-  plyr::ddply(df.L1,.(Subject, Match, Identity,Morality), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC))
+subjlistL <- unique(df.L1.trials$Subject)
+for (ii in 1:length(subjlistL)){
+  tmp <- subset(df.L1.trials,Subject == subjlistL[ii])
+  if(sum(tmp$N != 75)){ # if the number of trials in matching task correct 
+    excldSub1_L[ii] <- subjlistL[ii]
+    print(paste0("ERROR: the trials number of subject ", subjlistL[ii] , 
+                 " in matching task is not correct"))
+}}
+
+df.T1.trials <-  plyr::ddply(df.T1,.(Subject, Task, Identity,Morality), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC))
+
+subjlistT <- unique(df.T1.trials$Subject)
+for (jj in 1:length(subjlistT)){
+  tmp <- subset(df.T1.trials,Subject == subjlistT[jj])
+  if(sum(tmp$N != 90)){ # if the number of trials in matching task correct 
+    excldSub1_T[jj] <- subjlistT[jj]
+    print(paste0("ERROR: the trials number of subject ", subjlistT[jj] , 
+                 " in categ task is not correct"))
+  }}
+
+# get all the participants who were excluded:
+extraExcld <- c(7338)  # this participant didn't understand the instruction, one condition's Accuracy is 0
+excldSub1 <- c(excldSub1_L, excldSub1_T,extraExcld)
+excldSub1 <- excldSub1[!duplicated(excldSub1)]
+
+# df.L1 <- df.L1[!(df.L1$Subject %in% procFailureSub),]
+# df.T1 <- df.T1[!(df.T1$Subject %in% procFailureSub),]
+
+# calculate the overall accuracy for matching task
+df.L1.acc.g <-  plyr::ddply(df.L1,.(Subject), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+# calculate the overall accuracy for categorziation task
+df.T1.acc.g <-  plyr::ddply(df.T1,.(Subject), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+excldSub2_L <- df.L1.acc.g$Subject[df.L1.acc.g$ACC < 0.5]      # less 50% accuracy in matching task
+excldSub2_T <- df.T1.acc.g$Subject[df.T1.acc.g$ACC < 0.5]      # less than 50% accuracy in categorization task
+excldSub2   <- c(excldSub2_L, excldSub2_T)
+excldSub2 <- excldSub2[!duplicated(excldSub2)]   # invalid because of low overall accuracy
+
+excldSub   <- c(excldSub1, excldSub2)
+excldSub <- excldSub[!duplicated(excldSub)]   # total excluded
+
+valdSub <- setdiff(subjlistL, excldSub)
+
+df.L1.valid <- df.L1[!(df.L1$Subject %in% excldSub),]   # exclude the invalid subjects
+df.T1.valid <- df.T1[!(df.T1$Subject %in% excldSub),]
+# df.T1.valid <- df.T1.valid[!(df.T1.valid$Subject %in% excld.sub.T),]
+
+# check the number of participants are correct
+length(valdSub) + length(excldSub) == length(unique(df.L1$Subject))
+
+# excld.trials3 <- excld.trials[!(excld.trials$Subject %in% excld.sub),]
+excld.trials.L <- df.L1.valid[df.L1.valid$RT <= 200 & df.L1.valid$ACC == 1,]
+df.L1.V        <- df.L1.valid[!(df.L1.valid$RT <= 200 & df.L1.valid$ACC == 1),]  # valid trial data for match task
+excld.trials.T <- df.T1.valid[df.T1.valid$RT <= 200 & df.T1.valid$ACC == 1,]
+df.T1.V        <- df.T1.valid[!(df.T1.valid$RT <= 200 & df.T1.valid$ACC == 1),]  # valid trial data for categorization task
+nrow(excld.trials.T) + nrow(df.T1.V) == nrow(df.T1.valid) # if true, everything is ok
+
+
+## Basic information of the data ####
+df.L1.T.basic <- df.L1[!duplicated(df.L1$Subject), 2:5]
+numT.subj     <- nrow(df.L1.T.basic)
+numT.female   <- sum(df.L1.T.basic$Sex == 'female');
+numT.male     <- sum(df.L1.T.basic$Sex == 'male');
+ageT.mean     <- round(mean(df.L1.T.basic$Age),2);
+ageT.std      <- round(sd(df.L1.T.basic$Age),2);
+num.excld.sub <- length(unique(excldSub))
+# num.excld.sub.T <- length(unique(excld.sub.T))
+
+# valide data for matching task
+df.L1.V.basic <- df.L1.V[!duplicated(df.L1.V$Subject), 2:5]
+numV.female   <- sum(df.L1.V.basic$Sex == 'female');
+numV.male     <- sum(df.L1.V.basic$Sex == 'male');
+ageV.mean     <- round(mean(df.L1.V.basic$Age),2);
+ageV.std      <- round(sd(df.L1.V.basic$Age),2);
+ratio.excld.trials.L <- nrow(excld.trials.L)/nrow(df.L1.valid)
+ratio.excld.trials.T <- nrow(excld.trials.T)/nrow(df.T1.valid)
+
+# valid data for categorization task
+df.T1.V.basic <- df.T1.V[!duplicated(df.T1.V$Subject), 2:5]
+numV.female.T <- sum(df.T1.V.basic$Sex == 'female');
+numV.male.T <- sum(df.T1.V.basic$Sex == 'male');
+ageV.mean.T <- round(mean(df.T1.V.basic$Age),2);
+ageV.std.T <- round(sd(df.T1.V.basic$Age),2);
+ratio.excld.trials.T <- nrow(excld.trials.T)/nrow(df.T1.valid)
+```
+## Participants
+Total participants: `r numT.subj` (`r numT.female` female, age: `r ageT.mean` $\pm$ `r ageT.std`)
+
+Excluded because of wrong trials number: 
+
+matching task: `r excldSub1_L` ; 
+
+categ. task: `r excldSub1_T`; 
+
+total: `r excldSub1`.
+
+Excluded because the overall accuracy is lower than 50%: 
+matching task: `r excldSub2_L` ; 
+
+categ. task: `r excldSub2_T`; 
+
+total: `r excldSub2`.
+
+Remaining participant: `r length(valdSub)` (`r valdSub`)
+
+
+```{r preproc_match,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+### ACC ####
+df.L1.V.acc  <-  plyr::ddply(df.L1.V,.(Subject, Match, Morality, Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+df.L1.V.acc_w <- dcast(df.L1.V.acc, Subject ~ Match + Morality + Identity,value.var = "ACC")
+
+# rename the column number
+colnames(df.L1.V.acc_w)[2:9] <- paste("ACC", colnames(df.L1.V.acc_w[,2:9]), sep = "_")
+
+# d prime #### 
+df.L1.V$sdt <- NA
+for (i in 1:nrow(df.L1.V)){
+        if (df.L1.V$ACC[i] == 1 & df.L1.V$Match[i] == "match"){
+                df.L1.V$sdt[i] <- "hit"
+        } else if (df.L1.V$ACC[i] == 1 & df.L1.V$Match[i] == "mismatch"){
+                df.L1.V$sdt[i] <- "CR"
+        } else if (df.L1.V$ACC[i] == 0 & df.L1.V$Match[i] == "match"){
+                df.L1.V$sdt[i] <- "miss"
+        } else if (df.L1.V$ACC[i] == 0 & df.L1.V$Match[i] == "mismatch"){
+                df.L1.V$sdt[i] <- "FA"
+        }
+}
+
+# calculate the number of each for each condition
+df.L1.V.SDT <-  plyr::ddply(df.L1.V,.(Subject,Age, Sex, Morality,Identity,sdt), summarise,
+                     N = length(sdt))
+
+
+# long format to wide
+df.L1.V.SDT_w <- dcast(df.L1.V.SDT, Subject + Age + Sex+ Morality + Identity  ~ sdt,value.var = "N")
+df.L1.V.SDT_w$miss[is.na(df.L1.V.SDT_w$miss)] <- 0
+df.L1.V.SDT_w$FA[is.na(df.L1.V.SDT_w$FA)] <- 0
+df.L1.V.SDT_w$hitR <- df.L1.V.SDT_w$hit/(df.L1.V.SDT_w$hit + df.L1.V.SDT_w$miss)
+df.L1.V.SDT_w$faR <- df.L1.V.SDT_w$FA/(df.L1.V.SDT_w$FA + df.L1.V.SDT_w$CR)
+
+# standardized way to deal with the extreme values
+for (i in 1:nrow(df.L1.V.SDT_w)){
+        if (df.L1.V.SDT_w$hitR[i] == 1){
+                df.L1.V.SDT_w$hitR[i] <- 1 - 1/(2*(df.L1.V.SDT_w$hit[i] + df.L1.V.SDT_w$miss[i]))
+        }
+}
+
+for (i in 1:nrow(df.L1.V.SDT_w)){
+        if (df.L1.V.SDT_w$faR[i] == 0){
+                df.L1.V.SDT_w$faR[i] <- 1/(2*(df.L1.V.SDT_w$FA[i] + df.L1.V.SDT_w$CR[i]))
+        }
+}
+
+# calculate the d prime for each condition
+df.L1.V.SDT_w$dprime <- mapply(dprime,df.L1.V.SDT_w$hitR,df.L1.V.SDT_w$faR)
+df.L1.V.SDT_ww   <- dcast(df.L1.V.SDT_w, Subject + Sex + Age ~ Morality + Identity ,value.var = "dprime")
+
+df.L1.V.SDT_l <- df.L1.V.SDT_w[,c(1:5,12)]
+
+# rename the column number
+colnames(df.L1.V.SDT_ww)[4:7] <- paste("d", colnames(df.L1.V.SDT_ww[,4:7]), sep = "_")
+
+## doing the analysis for RT ####
+df.L1.V.RT <- df.L1.V[df.L1.V$ACC == 1,]  # exclued inaccurate data
+df.L1.V.RT.subj <- summarySEwithin(df.L1.V.RT,measurevar = 'RT', withinvar = c('Subject','Match','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+df.L1.V.RT.subj_w <- dcast(df.L1.V.RT.subj, Subject ~ Match + Morality + Identity ,value.var = "RT") 
+
+# rename the columns of RT data
+colnames(df.L1.V.RT.subj_w)[2:9] <- paste("RT", colnames(df.L1.V.RT.subj_w[,2:9]), sep = "_")
+
+## saving data ####
+# merge the dprime and RT data and save
+df.L1.V.sum_w <- merge(df.L1.V.acc_w,  df.L1.V.SDT_ww,by = "Subject")
+df.L1.V.sum_w <- merge(df.L1.V.sum_w,df.L1.V.RT.subj_w,by = 'Subject')
+
+# merge the RT and ACC data (long-format)
+df.L1.V.sum_rt_acc_l <- merge(df.L1.V.acc,df.L1.V.RT.subj,by = c("Subject","Match","Morality",'Identity'))
+df.L1.V.sum_rt_acc_l <- df.L1.V.sum_rt_acc_l[order(df.L1.V.sum_rt_acc_l$Subject),]
+
+df.L1.V.sum_rt_acc_l <- df.L1.V.sum_rt_acc_l[,c("Subject","Match","Morality",'Identity',"N.x","countN","ACC","RT")]
+colnames(df.L1.V.sum_rt_acc_l) <- c("Subject","Match","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
+
+# order the columns
+df.L1.V.sum_w <- df.L1.V.sum_w[,c(colnames(df.L1.V.sum_w)[c(1,10:11,2:9,12:23)])]
+
+# calculate the effect of self-ref and valence
+df.L1.v.sum_eff_w <- df.L1.V.sum_w[,1:3]
+df.L1.v.sum_eff_w$d_Good_Self_Other <- df.L1.V.sum_w$d_Good_Self - df.L1.V.sum_w$d_Good_Other
+df.L1.v.sum_eff_w$d_Self_Good_Bad   <- df.L1.V.sum_w$d_Good_Self - df.L1.V.sum_w$d_Bad_Self
+
+df.L1.v.sum_eff_w$RT_Good_Self_Other <- df.L1.V.sum_w$RT_match_Good_Other -  df.L1.V.sum_w$RT_match_Good_Self
+df.L1.v.sum_eff_w$RT_Self_Good_Bad   <- df.L1.V.sum_w$RT_match_Bad_Self -  df.L1.V.sum_w$RT_match_Good_Self
+
+
+# write files
+setwd(traDir)
+write.csv(df.L1.V.sum_w,'exp7_rep_match_behav_wide.csv',row.names = F)
+write.csv(df.L1.V.SDT_l,'exp7_rep_match__dprime_long.csv',row.names = F)
+write.csv(df.L1.V.sum_rt_acc_l,'exp7_rep_match__rt_acc_long.csv',row.names = F)
+setwd(curDir)
+
+```
+
+```{r preproc_categ,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+### ACC ####
+df.T1.V.acc  <-  plyr::ddply(df.T1.V,.(Subject, Task, Morality, Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+df.T1.V.acc_w <- dcast(df.T1.V.acc, Subject ~ Task + Morality + Identity,value.var = "ACC")
+
+# rename the column number
+colnames(df.T1.V.acc_w)[2:9] <- paste("ACC", colnames(df.T1.V.acc_w[,2:9]), sep = "_")
+
+# combing data from diff task for analyzing the interaction btw val and id
+df.T1.V.acc_noTask  <-  plyr::ddply(df.T1.V,.(Subject, Morality, Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+df.T1.V.acc_noTask_w <- dcast(df.T1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
+
+# rename the column number
+colnames(df.T1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.T1.V.acc_noTask_w[,2:5]), sep = "_")
+
+
+## doing the analysis for RT ####
+df.T1.V.RT <- df.T1.V[df.T1.V$ACC == 1,]  # exclued inaccurate data
+df.T1.V.RT.subj <- summarySEwithin(df.T1.V.RT,measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+df.T1.V.RT.subj_w <- dcast(df.T1.V.RT.subj, Subject ~ Task + Morality + Identity ,value.var = "RT") 
+
+# rename the columns of RT data
+colnames(df.T1.V.RT.subj_w)[2:9] <- paste("RT", colnames(df.T1.V.RT.subj_w[,2:9]), sep = "_")
+
+# combining data form different task for analyszing interaction of val and id
+df.T1.V.RT.subj_noTask <- summarySEwithin(df.T1.V.RT,measurevar = 'RT', withinvar = c('Subject','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+df.T1.V.RT.subj_noTask_w <- dcast(df.T1.V.RT.subj_noTask, Subject ~ Morality + Identity ,value.var = "RT") 
+
+# rename the columns of RT data
+colnames(df.T1.V.RT.subj_noTask_w)[2:5] <- paste("RT", colnames(df.T1.V.RT.subj_noTask_w[,2:5]), sep = "_")
+
+## saving data ####
+# merge the accuracy and RT data and save
+df.T1.V.sum_w <- merge(df.T1.V.acc_w,  df.T1.V.RT.subj_w,by = "Subject")
+df.T1.V.sum_noTask_w <- merge(df.T1.V.acc_noTask_w,  df.T1.V.RT.subj_noTask_w,by = "Subject")
+
+## calculated effects ####
+# self-reference effect
+df.T1.V.sum_w$RT_Val_Good_selfEffect <- df.T1.V.sum_w$RT_Val_Good_Other - df.T1.V.sum_w$RT_Val_Good_Self
+df.T1.V.sum_w$RT_Val_Bad_selfEffect  <- df.T1.V.sum_w$RT_Val_Bad_Other - df.T1.V.sum_w$RT_Val_Bad_Self
+df.T1.V.sum_w$RT_Id_Good_selfEffect  <- df.T1.V.sum_w$RT_Id_Good_Other - df.T1.V.sum_w$RT_Id_Good_Self
+df.T1.V.sum_w$RT_Id_Bad_selfEffect   <- df.T1.V.sum_w$RT_Id_Bad_Other - df.T1.V.sum_w$RT_Id_Bad_Self
+# valence effect
+df.T1.V.sum_w$RT_Val_Self_valEffect  <- df.T1.V.sum_w$RT_Val_Bad_Self - df.T1.V.sum_w$RT_Val_Good_Self
+df.T1.V.sum_w$RT_Val_Other_valEffect <- df.T1.V.sum_w$RT_Val_Bad_Other - df.T1.V.sum_w$RT_Val_Good_Other
+df.T1.V.sum_w$RT_Id_Self_valEffect   <- df.T1.V.sum_w$RT_Id_Bad_Self - df.T1.V.sum_w$RT_Id_Good_Self
+df.T1.V.sum_w$RT_Id_Other_valEffect  <- df.T1.V.sum_w$RT_Id_Bad_Other - df.T1.V.sum_w$RT_Id_Good_Other
+# task effect
+df.T1.V.sum_w$RT_Good_Self_taskEffect  <- df.T1.V.sum_w$RT_Val_Good_Self - df.T1.V.sum_w$RT_Id_Good_Self
+df.T1.V.sum_w$RT_Bad_Self_taskEffect   <- df.T1.V.sum_w$RT_Val_Bad_Self - df.T1.V.sum_w$RT_Id_Bad_Self
+df.T1.V.sum_w$RT_Good_Other_taskEffect <- df.T1.V.sum_w$RT_Val_Good_Self - df.T1.V.sum_w$RT_Id_Good_Other
+df.T1.V.sum_w$RT_Bad_Other_taskEffect  <- df.T1.V.sum_w$RT_Val_Bad_Other - df.T1.V.sum_w$RT_Id_Bad_Other
+
+# calculate the effect of self-ref and valence
+df.T1.v.sum_eff_w <- data.frame(df.T1.V.sum_w[,c('Subject')])
+colnames(df.T1.v.sum_eff_w) <- 'Subject'
+df.T1.v.sum_eff_w$RT_Val_Good_selfEffect <- df.T1.V.sum_w$RT_Val_Good_Other - df.T1.V.sum_w$RT_Val_Good_Self
+df.T1.v.sum_eff_w$RT_Val_Self_valEffect  <- df.T1.V.sum_w$RT_Val_Bad_Self - df.T1.V.sum_w$RT_Val_Good_Self
+df.T1.v.sum_eff_w$RT_Id_Good_selfEffect <- df.T1.V.sum_w$RT_Id_Good_Other - df.T1.V.sum_w$RT_Id_Good_Self
+df.T1.v.sum_eff_w$RT_Id_Self_valEffect  <- df.T1.V.sum_w$RT_Id_Bad_Self - df.T1.V.sum_w$RT_Id_Good_Self
+
+df.T1.v.sum_eff_w$ACC_Val_Good_selfEffect <- df.T1.V.sum_w$ACC_Val_Good_Other - df.T1.V.sum_w$ACC_Val_Good_Self
+df.T1.v.sum_eff_w$ACC_Val_Self_valEffect  <- df.T1.V.sum_w$ACC_Val_Bad_Self - df.T1.V.sum_w$ACC_Val_Good_Self
+df.T1.v.sum_eff_w$ACC_Id_Good_selfEffect <- df.T1.V.sum_w$ACC_Id_Good_Other - df.T1.V.sum_w$ACC_Id_Good_Self
+df.T1.v.sum_eff_w$ACC_Id_Self_valEffect  <- df.T1.V.sum_w$ACC_Id_Bad_Self - df.T1.V.sum_w$ACC_Id_Good_Self
+
+# merge the effect file
+df.v.sum_eff_all_w <- merge(df.L1.v.sum_eff_w,df.T1.v.sum_eff_w,by="Subject")
+
+# merge the RT and ACC data (long-format) ####
+df.T1.V.sum_rt_acc_l <- merge(df.T1.V.acc,df.T1.V.RT.subj,by = c("Subject","Task","Morality",'Identity'))
+df.T1.V.sum_rt_acc_l <- df.T1.V.sum_rt_acc_l[order(df.T1.V.sum_rt_acc_l$Subject),]
+
+df.T1.V.sum_rt_acc_l <- df.T1.V.sum_rt_acc_l[,c("Subject","Task","Morality",'Identity',"N.x","countN","ACC","RT")]
+colnames(df.T1.V.sum_rt_acc_l) <- c("Subject","Task","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
+
+# order the columns
+#df.T1.V.sum_w <- df.T1.V.sum_w[,c(colnames(df.T1.V.sum_w)[c(1,10:11,2:9,12:23)])]
+
+# write files to an upper-lelel folder
+setwd(traDir)
+write.csv(df.T1.V.sum_w,'exp7_rep_categ_behav_wide.csv',row.names = F)
+write.csv(df.T1.V.sum_noTask_w,'exp7_rep_categ_behav_noTask_wide.csv',row.names = F)
+write.csv(df.T1.V.sum_rt_acc_l,'exp7_rep_categ__rt_acc_long.csv',row.names = F)
+write.csv(df.v.sum_eff_all_w,'exp7_cross_taskeffect_wide.csv',row.names = F)
+setwd(curDir)
+```
+
+```{r plot_match_RT_data,echo=FALSE,warning=FALSE, message=FALSE}
+RTdata1 <- df.L1.V.sum_rt_acc_l %>%
+  select(Subject,Match,Morality,Identity,RT) %>% 
+  filter(Match == "match" & Morality == "Good")
+RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
+p1 <- ggbetweenstats(data = RTdata1, x = Identity, y = RT,  
+                     xlab = "Good", ylab = "Reaction times (ms)",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.line.y=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16), 
+                                                             axis.title.y=element_text(size=16),
+                                                             axis.text.x=element_text(size=14, color = "black"),
+                                                             axis.text.y=element_text(size=14, color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2),
+                                                             axis.ticks.y=element_line(size=1.2))
+
+RTdata2 <- df.L1.V.sum_rt_acc_l %>%
+  select(Subject,Match,Morality,Identity,RT) %>% 
+  filter(Match == "match" & Morality == "Bad")
+RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
+p2 <- ggbetweenstats(data = RTdata2, x = Identity, y = RT,  
+                     xlab = "Bad", ylab = "",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16),
+                                                             axis.text.x=element_text(size=14,color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2)) +scale_y_continuous(breaks = NULL)
+setwd(traDir)
+tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+p_rt_match <- multiplot(p1,p2,cols = 2)
+dev.off()
+setwd(curDir)
+multiplot(p1,p2,cols = 2)
+```
+
+
+```{r plot_match_dprime_data,echo=FALSE,warning=FALSE, message=FALSE}
+Ddata1 <- df.L1.V.SDT_l %>%
+  select(Subject,Morality,Identity,dprime) %>% 
+  filter(Morality == "Good")
+Ddata1$Identity <- factor(Ddata1$Identity,levels = c("Self","Other"))
+p1 <- ggbetweenstats(data = Ddata1, x = Identity, y = dprime,  
+                     xlab = "Good", ylab = "d prime",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.line.y=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16), 
+                                                             axis.title.y=element_text(size=16),
+                                                             axis.text.x=element_text(size=14, color = "black"),
+                                                             axis.text.y=element_text(size=14, color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2),
+                                                             axis.ticks.y=element_line(size=1.2))
+
+Ddata2 <- df.L1.V.SDT_l %>%
+  select(Subject,Morality,Identity,dprime) %>% 
+  filter(Morality == "Bad")
+Ddata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
+p2 <- ggbetweenstats(data = Ddata2, x = Identity, y = dprime,  
+                     xlab = "Bad", ylab = "",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16),
+                                                             axis.text.x=element_text(size=14,color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2)) +scale_y_continuous(breaks = NULL)
+p_dprime_match <- multiplot(p1,p2,cols = 2)
+# ggsave("p_rt_match.pdf", p_rt_match, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
+setwd(traDir)
+tiff("p_dprime_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+p_dprime_match <- multiplot(p1,p2,cols = 2)
+dev.off()
+setwd(curDir)
+#multiplot(p1,p2,cols = 2)
+```
+
+```{r plot_categ_ACC_val_data,echo=FALSE,warning=FALSE, message=FALSE}
+ACCdata1 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,ACC) %>% 
+  filter(Task == "Val"& Morality == 'Good')
+ACCdata1$Identity <- factor(ACCdata1$Identity,levels = c("Self","Other"))
+p1 <- ggbetweenstats(data = ACCdata1, x = Identity, y = ACC,  
+                     xlab = "Good", ylab = "Accuracy",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.line.y=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16), 
+                                                             axis.title.y=element_text(size=16),
+                                                             axis.text.x=element_text(size=14, color = "black"),
+                                                             axis.text.y=element_text(size=14, color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2),
+                                                             axis.ticks.y=element_line(size=1.2))
+
+ACCdata2 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,ACC) %>% 
+  filter(Task == "Val"& Morality == 'Bad')
+ACCdata2$Identity <- factor(ACCdata2$Identity,levels = c("Self","Other"))
+p2 <- ggbetweenstats(data = ACCdata2, x = Identity, y = ACC,  
+                     xlab = "Bad", ylab = "",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16),
+                                                             axis.text.x=element_text(size=14,color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2)) +scale_y_continuous(breaks = NULL)
+setwd(traDir)
+tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+p_rt_match <- multiplot(p1,p2,cols = 2)
+dev.off()
+setwd(curDir)
+multiplot(p1,p2,cols = 2)
+```
+
+```{r plot_categ_ACC_ID_data,echo=FALSE,warning=FALSE, message=FALSE}
+ACCdata1 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,ACC) %>% 
+  filter(Task == "Id"& Morality == 'Good')
+ACCdata1$Identity <- factor(ACCdata1$Identity,levels = c("Self","Other"))
+p1 <- ggbetweenstats(data = ACCdata1, x = Identity, y = ACC,  
+                     xlab = "Good", ylab = "Accuracy",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.line.y=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16), 
+                                                             axis.title.y=element_text(size=16),
+                                                             axis.text.x=element_text(size=14, color = "black"),
+                                                             axis.text.y=element_text(size=14, color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2),
+                                                             axis.ticks.y=element_line(size=1.2))
+
+ACCdata2 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,ACC) %>% 
+  filter(Task == "Id"& Morality == 'Bad')
+ACCdata2$Identity <- factor(ACCdata2$Identity,levels = c("Self","Other"))
+p2 <- ggbetweenstats(data = ACCdata2, x = Identity, y = ACC,  
+                     xlab = "Bad", ylab = "",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16),
+                                                             axis.text.x=element_text(size=14,color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2)) +scale_y_continuous(breaks = NULL)
+setwd(traDir)
+tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+p_rt_match <- multiplot(p1,p2,cols = 2)
+dev.off()
+setwd(curDir)
+multiplot(p1,p2,cols = 2)
+```
+
+
+```{r plot_categ_RT_val_data,echo=FALSE,warning=FALSE, message=FALSE}
+RTdata1 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,RT) %>% 
+  filter(Task == "Val"& Morality == 'Good')
+RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
+p1 <- ggbetweenstats(data = RTdata1, x = Identity, y = RT,  
+                     xlab = "Good", ylab = "Reaction times (ms)",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.line.y=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16), 
+                                                             axis.title.y=element_text(size=16),
+                                                             axis.text.x=element_text(size=14, color = "black"),
+                                                             axis.text.y=element_text(size=14, color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2),
+                                                             axis.ticks.y=element_line(size=1.2))
+
+RTdata2 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,RT) %>% 
+  filter(Task == "Val"& Morality == 'Bad')
+RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
+p2 <- ggbetweenstats(data = RTdata2, x = Identity, y = RT,  
+                     xlab = "Bad", ylab = "",
+                     type = FALSE) + theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16),
+                                                             axis.text.x=element_text(size=14,color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2)) +scale_y_continuous(breaks = NULL)
+setwd(traDir)
+tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+p_rt_match <- multiplot(p1,p2,cols = 2)
+dev.off()
+setwd(curDir)
+multiplot(p1,p2,cols = 2)
+```
+
+```{r plot_categ_RT_Id_data,echo=FALSE,warning=FALSE, message=FALSE}
+RTdata1 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,RT) %>% 
+  filter(Task == "Id"& Morality == 'Good')
+RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
+p1 <- ggbetweenstats(data = RTdata1, x = Identity, y = RT,  
+                     xlab = "Good", ylab = "Reaction times (ms)",
+                     type = FALSE) + scale_y_continuous(limits = c(300,900),breaks = seq(300,900,100)) +
+                     theme_classic() + theme(legend.position = "none",
+                                                             text=element_text(family='Times'),
+                                                             axis.line.x=element_line(size=1.2),
+                                                             axis.line.y=element_line(size=1.2),
+                                                             axis.title.x =element_text(size=16), 
+                                                             axis.title.y=element_text(size=16),
+                                                             axis.text.x=element_text(size=14, color = "black"),
+                                                             axis.text.y=element_text(size=14, color = "black"),
+                                                             axis.ticks.x=element_line(size=1.2),
+                                                             axis.ticks.y=element_line(size=1.2)) +scale_y_continuous(breaks = NULL)
+                    #+ coord_cartesian(ylim=c(300,900))
+                    
+
+#y_scale <- scale_y_continuous(limits = range(RTdata1$RT))
+RTdata2 <- df.T1.V.sum_rt_acc_l %>%
+  select(Subject,Task,Morality,Identity,RT) %>% 
+  filter(Task == "Id"& Morality == 'Bad')
+RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
+p2 <- ggbetweenstats(data = RTdata2, x = Identity, y = RT,  
+                     xlab = "Bad", ylab = "",
+                     type = FALSE)+
+      scale_y_continuous(limits = c(300,900),breaks = seq(300,900,100)) +
+      theme_classic() +
+      theme(legend.position = "none",text=element_text(family='Times'),
+                               axis.line.x=element_line(size=1.2),
+                               axis.title.x =element_text(size=16),
+                               axis.text.x=element_text(size=14,color = "black"),
+                               axis.ticks.x=element_line(size=1.2))
+
+setwd(traDir)
+tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+p_rt_match <- multiplot(p1,p2,cols = 2)
+dev.off()
+setwd(curDir)
+multiplot(p1,p2,cols = 2)
+```
