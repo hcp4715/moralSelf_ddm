@@ -17,7 +17,7 @@ pkgTest <- function(x)
 }
 
 pkgNeeded <- (c("tidyverse","ggplot2", "reshape2","ez", "bootES","MBESS", 
-                "BayesFactor","psych","corrplot",'plyr'))
+                "BayesFactor","psych","corrplot",'plyr','ggstatsplot'))
 
 lapply(pkgNeeded,pkgTest)
 rm('pkgNeeded') # remove the variable 'pkgNeeded';
@@ -25,20 +25,20 @@ rm('pkgNeeded') # remove the variable 'pkgNeeded';
 # Save some time and stor APA format-related code in an object so you can easily
 # use it in multiple plots
 windowsFonts(Times=windowsFont("TT Times New Roman")) # explicit mapping to "times"
-apatheme=theme_bw()+
+apatheme = theme_bw()+
         theme(panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               panel.background = element_blank(),
               panel.border = element_blank(),
               text=element_text(family='Times'),
               legend.title=element_blank(),
-              legend.text = element_text(size =20),
+              legend.text = element_text(size =16),
               legend.position='top',
-              plot.title = element_text(size = 20),
-              axis.text = element_text (size = 20, color = 'black'),
-              axis.title = element_text (size = 20),
-              axis.title.y = element_text(margin=margin(0,20,0,0)),  # increase the space between title and y axis
-              axis.title.x = element_text(margin=margin(20,0,0,0)),  # increase the sapce betwen title and x axis
+              plot.title = element_text(size = 16),
+              axis.text = element_text (size = 16, color = 'black'),
+              axis.title = element_text (size = 16),
+              axis.title.y = element_text(margin=margin(0,16,0,0)),  # increase the space between title and y axis
+              axis.title.x = element_text(margin=margin(16,0,0,0)),  # increase the sapce betwen title and x axis
               axis.line.x = element_line(color='black', size = 1),   # increase the size of font
               axis.line.y = element_line(color='black', size = 1))   # increase the size of font
 
