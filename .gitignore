@@ -1,3 +1,10 @@
+<<<<<<< HEAD
 *.bmp
 *.jpg
 *.out
+=======
+*.tiff
+*.eps
+*.pdf
+*.csv
+>>>>>>> exp7_results
