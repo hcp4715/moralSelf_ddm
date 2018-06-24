@@ -1,6 +1,9 @@
 # moralSelf_ddm
+
 ================
+
 This is the project files for Chuan-Peng Hu et al (in prep)
+
 ================
 
 This open repo includ scripts for the procedure and analysis script and data for two experiments.
