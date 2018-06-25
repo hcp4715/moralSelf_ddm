@@ -2,7 +2,7 @@
 
 ================
 
-This is the project files for Chuan-Peng Hu et al (in prep)
+This is the project files for Chuan-Peng Hu, Yuxuan Lan et al (in prep)
 
 ================
 
