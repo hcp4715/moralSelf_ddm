@@ -58,6 +58,8 @@ df.L    <- do.call("rbind",lapply(as.list(fNames.m),FUN=function(files){read.tab
 
 # do the same to data from categorization, get the raw data for categorization task
 fNames.c <- list.files(path = rawDir, pattern = "data_exp7_rep_categ_*")
+# remove invalid data data_exp7_rep_categ_7338.out
+fNames.c <- fNames.c[fNames.c != "data_exp7_rep_categ_7338.out"]
 fNames.c <- paste(rawDir,fNames.c, sep = '')
 df.T    <- do.call("rbind",lapply(as.list(fNames.c),FUN=function(files){read.table(files, header=TRUE, sep="",stringsAsFactors=F)}))
 
