@@ -17,9 +17,11 @@ pkgTest <- function(x)
 }
 
 pkgNeeded <- (c("tidyverse","ggplot2", "reshape2","ez", "bootES","MBESS", 
-                "BayesFactor","psych","corrplot",'plyr','ggstatsplot'))
+                "BayesFactor","psych","corrplot",'plyr','ggstatsplot',"readr",
+                "tidyr","Hmisc","RColorBrewer"))
 
 lapply(pkgNeeded,pkgTest)
+source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
 rm('pkgNeeded') # remove the variable 'pkgNeeded';
 
 # Save some time and stor APA format-related code in an object so you can easily
@@ -213,3 +215,19 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
                 }
         }
 }
+#
+raincloud_theme <-  theme(
+  text = element_text(size = 10),
+  axis.title.x = element_text(size = 16),
+  axis.title.y = element_text(size = 16),
+  axis.text = element_text(size = 14),
+  axis.text.x = element_text(angle = 45, vjust = 0.5),
+  legend.title=element_text(size=16),
+  legend.text=element_text(size=16),
+  legend.position = "right",
+  plot.title = element_text(lineheight=.8, face="bold", size = 16),
+  panel.border = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.grid.major = element_blank(),
+  axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
+  axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
