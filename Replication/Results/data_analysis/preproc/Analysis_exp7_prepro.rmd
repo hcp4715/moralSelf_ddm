@@ -64,7 +64,7 @@ df.C1$RT <- df.C1$RT * 1000 # careful about the scale of time when using HDDM or
 df.M1$ACC[df.M1$ACC != 1] <- 0
 df.C1$ACC[df.C1$ACC != 1] <- 0
 
-# check the number of trials are correct
+# exclude participant (1st round)
 excldSub1_M  <- c()     # subject ID of those who failed matching task
 excldSub1_C  <- c(7338) # subject 7338 excluded because Accuracy of one condition is zero
 
@@ -72,6 +72,8 @@ df.M1.trials <-  plyr::ddply(df.M1,.(Subject, Match, Identity,Morality), summari
                     N = length(ACC),
                     countN = sum(ACC))
 subjlistM <- unique(df.M1.trials$Subject)
+
+# exclude particiapnts (2nd round: incorrect trial number)
 excldSub2_M <- c()
 for (ii in 1:length(subjlistM)){
   tmp <- subset(df.M1.trials,Subject == subjlistM[ii])
@@ -95,10 +97,7 @@ for (jj in 1:length(subjlistC)){
                  " in categ task is not correct"))
   }}
 
-# df.M1 <- df.M1[!(df.M1$Subject %in% procFailureSub),]
-# df.C1 <- df.C1[!(df.C1$Subject %in% procFailureSub),]
-
-# calculate the overall accuracy for matching task
+# exclude participants (3rd round: < 0.5 overall accuracy)
 df.M1.acc.g <-  plyr::ddply(df.M1,.(Subject), summarise,
                     N = length(ACC),
                     countN = sum(ACC),
@@ -113,18 +112,19 @@ df.C1.acc.g <-  plyr::ddply(df.C1,.(Subject), summarise,
 excldSub3_M <- df.M1.acc.g$Subject[df.M1.acc.g$ACC < 0.5]      # less 50% accuracy in matching task
 excldSub3_C <- df.C1.acc.g$Subject[df.C1.acc.g$ACC < 0.5]      # less than 50% accuracy in categorization task
 
+# all participants excluded
 excldSub_M   <- c(excldSub1_M, excldSub2_M,excldSub3_M)
 excldSub_M <- excldSub_M[!duplicated(excldSub_M)]   # total excluded for matching task
 
 excldSub_C   <- c(excldSub1_C, excldSub2_C,excldSub3_C)
 excldSub_C <- excldSub_C[!duplicated(excldSub_C)]   # total excluded for matching task
 
+# particiapnts with valid data
 valdSub_M <- setdiff(subjlistM, excldSub_M)
 valdSub_C <- setdiff(subjlistC, excldSub_C)
 
 
 # select valid data for further analysis
-
 df.M1.valid <- df.M1[!(df.M1$Subject %in% excldSub_M),]   # exclude the invalid subjects
 df.C1.valid <- df.C1[!(df.C1$Subject %in% excldSub_C),]
 # df.C1.valid <- df.C1.valid[!(df.C1.valid$Subject %in% excld.sub.T),]
@@ -169,7 +169,6 @@ ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1.valid)
 num.excld.sub_C <- length(unique(valdSub_C))
 
 # get the data file for hddm analysis
-
 df.M.ddm.v <- df.M[!(df.M$Subject %in% excldSub_M),]   # exclude the invalid subjects
 df.C.ddm.v <- df.C[!(df.C$Subject %in% excldSub_C),]
 
@@ -387,13 +386,13 @@ df.C1.v.sum_eff_w <- data.frame(df.C1.V.sum_w[,c('Subject')])
 colnames(df.C1.v.sum_eff_w) <- 'Subject'
 df.C1.v.sum_eff_w$RT_Val_Good_selfEffect <- df.C1.V.sum_w$RT_Val_Good_Other - df.C1.V.sum_w$RT_Val_Good_Self
 df.C1.v.sum_eff_w$RT_Val_Self_valEffect  <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Good_Self
-df.C1.v.sum_eff_w$RT_Id_Good_selfEffect <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
-df.C1.v.sum_eff_w$RT_Id_Self_valEffect  <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.v.sum_eff_w$RT_Id_Good_selfEffect  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.v.sum_eff_w$RT_Id_Self_valEffect   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
 
 df.C1.v.sum_eff_w$ACC_Val_Good_selfEffect <- df.C1.V.sum_w$ACC_Val_Good_Other - df.C1.V.sum_w$ACC_Val_Good_Self
 df.C1.v.sum_eff_w$ACC_Val_Self_valEffect  <- df.C1.V.sum_w$ACC_Val_Bad_Self - df.C1.V.sum_w$ACC_Val_Good_Self
-df.C1.v.sum_eff_w$ACC_Id_Good_selfEffect <- df.C1.V.sum_w$ACC_Id_Good_Other - df.C1.V.sum_w$ACC_Id_Good_Self
-df.C1.v.sum_eff_w$ACC_Id_Self_valEffect  <- df.C1.V.sum_w$ACC_Id_Bad_Self - df.C1.V.sum_w$ACC_Id_Good_Self
+df.C1.v.sum_eff_w$ACC_Id_Good_selfEffect  <- df.C1.V.sum_w$ACC_Id_Good_Other - df.C1.V.sum_w$ACC_Id_Good_Self
+df.C1.v.sum_eff_w$ACC_Id_Self_valEffect   <- df.C1.V.sum_w$ACC_Id_Bad_Self - df.C1.V.sum_w$ACC_Id_Good_Self
 
 # merge the effect file
 df.v.sum_eff_all_w <- merge(df.M1.v.sum_eff_w,df.C1.v.sum_eff_w,by="Subject")
@@ -418,200 +417,58 @@ setwd(curDir)
 ```
 
 ```{r plot_match_RT_data,echo=FALSE,warning=FALSE, message=FALSE}
-RTdata1 <- df.M1.V.sum_rt_acc_l %>%
-  select(Subject,Match,Morality,Identity,RT) %>% 
-  filter(Match == "match" & Morality == "Good")
-RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
-p1 <- ggplot(data = RTdata1, aes(y = RT, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(300,900))+labs(x = "Good",y = "Reaction times(ms)")
-RTdata2 <- df.M1.V.sum_rt_acc_l %>%
-  select(Subject,Match,Morality,Identity,RT) %>% 
-  filter(Match == "match" & Morality == "Bad")
-RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
-p2 <- ggplot(data = RTdata2, aes(y = RT, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(300,900),breaks = NULL)+labs(x = "Bad",y = "")
+MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'RT', inData = df.M1.V.sum_rt_acc_l)
+#RTdata1 <- df.M1.V.sum_rt_acc_l %>%
+#  select(Subject,Match,Morality,Identity,RT) %>% 
+#  filter(Match == "match" & Morality == "Good")
+#RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
+#p1 <- ggplot(data = RTdata1, aes(y = RT, x = Identity,fill = Identity)) +
+#  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
+#  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
+#  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
+#  guides(fill = FALSE) +guides(color = FALSE)+
+#  theme_bw() +
+#  raincloud_theme+scale_y_continuous(limits = c(300,900))+labs(x = "Good",y = "Reaction times(ms)")
+#RTdata2 <- df.M1.V.sum_rt_acc_l %>%
+#  select(Subject,Match,Morality,Identity,RT) %>% 
+#  filter(Match == "match" & Morality == "Bad")
+#RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
+#p2 <- ggplot(data = RTdata2, aes(y = RT, x = Identity,fill = Identity)) +
+#  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
+#  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
+#  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
+#  guides(fill = FALSE) +guides(color = FALSE)+
+#  theme_bw() +
+#  raincloud_theme+scale_y_continuous(limits = c(300,900),breaks = NULL)+labs(x = "Bad",y = "")
 
-setwd(traDir)
-tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-p_rt_match <- multiplot(p1,p2,cols = 2)
-dev.off()
-setwd(curDir)
-multiplot(p1,p2,cols = 2)
+#setwd(traDir)
+#tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
+#p_rt_match <- multiplot(p1,p2,cols = 2)
+#dev.off()
+#setwd(curDir)
+#multiplot(p1,p2,cols = 2)
 ```
 
 
 ```{r plot_match_dprime_data,echo=FALSE,warning=FALSE, message=FALSE}
-Ddata1 <- df.M1.V.SDT_l %>%
-  select(Subject,Morality,Identity,dprime) %>% 
-  filter(Morality == "Good")
-Ddata1$Identity <- factor(Ddata1$Identity,levels = c("Self","Other"))
-p1 <- ggplot(data = Ddata1, aes(y = dprime, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = dprime,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(0,4))+labs(x = "Good",y = "dprime")
-Ddata2 <- df.M1.V.SDT_l %>%
-  select(Subject,Morality,Identity,dprime) %>% 
-  filter(Morality == "Bad")
-Ddata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
-p2 <- ggplot(data = Ddata2, aes(y = dprime, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = dprime,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(0,4),breaks = NULL)+labs(x = "Bad",y = "")
-p_dprime_match <- multiplot(p1,p2,cols = 2)
-# ggsave("p_rt_match.pdf", p_rt_match, scale = 1,height = 6, width = 8, dpi = 300, family = "Times")
-setwd(traDir)
-tiff("p_dprime_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-p_dprime_match <- multiplot(p1,p2,cols = 2)
-dev.off()
-setwd(curDir)
-#multiplot(p1,p2,cols = 2)
+MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'dprime', inData = df.M1.V.SDT_l)
 ```
 
 ```{r plot_categ_ACC_val_data,echo=FALSE,warning=FALSE, message=FALSE}
-ACCdata1 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,ACC) %>% 
-  filter(Task == "Val"& Morality == 'Good')
-ACCdata1$Identity <- factor(ACCdata1$Identity,levels = c("Self","Other"))
-p1 <- ggplot(data = ACCdata1, aes(y = ACC, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = ACC,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(0,1))+labs(x = "Good",y = "Accuracy")
+MSplots(saveDir = traDir, curDir = curDir, task = 'val',type = 'ACC', inData = df.C1.V.sum_rt_acc_l)
 
-ACCdata2 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,ACC) %>% 
-  filter(Task == "Val"& Morality == 'Bad')
-ACCdata2$Identity <- factor(ACCdata2$Identity,levels = c("Self","Other"))
-p2 <- ggplot(data = ACCdata2, aes(y = ACC, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = ACC,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(0,1),breaks = NULL)+labs(x = "Bad",y = "")
-setwd(traDir)
-tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-p_rt_match <- multiplot(p1,p2,cols = 2)
-dev.off()
-setwd(curDir)
-multiplot(p1,p2,cols = 2)
 ```
 
 ```{r plot_categ_ACC_ID_data,echo=FALSE,warning=FALSE, message=FALSE}
-ACCdata1 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,ACC) %>% 
-  filter(Task == "Id"& Morality == 'Good')
-ACCdata1$Identity <- factor(ACCdata1$Identity,levels = c("Self","Other"))
-p1 <- ggplot(data = ACCdata1, aes(y = ACC, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = ACC,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(0,1))+labs(x = "Good",y = "Accuracy")
-ACCdata2 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,ACC) %>% 
-  filter(Task == "Id"& Morality == 'Bad')
-ACCdata2$Identity <- factor(ACCdata2$Identity,levels = c("Self","Other"))
-p2 <- ggplot(data = ACCdata2, aes(y = ACC, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = ACC,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(0,1),breaks = NULL)+labs(x = "Bad",y = "")
-setwd(traDir)
-tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-p_rt_match <- multiplot(p1,p2,cols = 2)
-dev.off()
-setwd(curDir)
-multiplot(p1,p2,cols = 2)
+MSplots(saveDir = traDir, curDir = curDir, task = 'id',type = 'ACC', inData = df.C1.V.sum_rt_acc_l)
 ```
 
 
 ```{r plot_categ_RT_val_data,echo=FALSE,warning=FALSE, message=FALSE}
-RTdata1 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,RT) %>% 
-  filter(Task == "Val"& Morality == 'Good')
-RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
-p1 <- ggplot(data = RTdata1, aes(y = RT, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(300,900))+labs(x = "Good",y = "Reaction times(ms)")
-RTdata2 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,RT) %>% 
-  filter(Task == "Val"& Morality == 'Bad')
-RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
-p2 <- ggplot(data = RTdata2, aes(y = RT, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(300,900),breaks = NULL)+labs(x = "Bad",y = "")
+MSplots(saveDir = traDir, curDir = curDir, task = 'val',type = 'RT', inData = df.C1.V.sum_rt_acc_l)
 
-setwd(traDir)
-tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-p_rt_match <- multiplot(p1,p2,cols = 2)
-dev.off()
-setwd(curDir)
-multiplot(p1,p2,cols = 2)
 ```
 
 ```{r plot_categ_RT_Id_data,echo=FALSE,warning=FALSE, message=FALSE}
-RTdata1 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,RT) %>% 
-  filter(Task == "Id"& Morality == 'Good')
-RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
-p1 <- ggplot(data = RTdata1, aes(y = RT, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(300,900))+labs(x = "Good",y = "Reaction times(ms)")
-                    #+ coord_cartesian(ylim=c(300,900))
-                    
-
-#y_scale <- scale_y_continuous(limits = range(RTdata1$RT))
-RTdata2 <- df.C1.V.sum_rt_acc_l %>%
-  select(Subject,Task,Morality,Identity,RT) %>% 
-  filter(Task == "Id"& Morality == 'Bad')
-RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
-p2 <- ggplot(data = RTdata2, aes(y = RT, x = Identity,fill = Identity)) +
-  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-  guides(fill = FALSE) +guides(color = FALSE)+
-  theme_bw() +
-  raincloud_theme+scale_y_continuous(limits = c(300,900),breaks = NULL)+labs(x = "Bad",y = "")
-
-
-setwd(traDir)
-tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-p_rt_match <- multiplot(p1,p2,cols = 2)
-dev.off()
-setwd(curDir)
-multiplot(p1,p2,cols = 2)
+MSplots(saveDir = traDir, curDir = curDir, task = 'id',type = 'RT', inData = df.C1.V.sum_rt_acc_l)
 ```
