@@ -2,18 +2,16 @@
 """
 Created on Wed Jul 13 21:55:21 2016
 
-@author: hcp4715
-
-Last revision: 29th Dec. 2017
-
+@author: hcp47
 """
 
 # -*- coding: utf-8 -*-
 """
 Spyder Editor
 
-This is the script for the drift diffusion model analysis used in Hu, etal, in prep.
-This experiment included two tasks, aimed at exmining the influence of positive in perceptual decision making.
+This is the script for analyzing the data from matching task in DDM in Hu, etal, in prep.
+This experiment included two tasks, aimed at exmining the influence of positive in perceptual decision making
+history: 2018.07.02, updated to py 3 version, deleted redundent codes.
 """
 # %reset #this code will delete all the varibles in the memory
 
@@ -45,15 +43,15 @@ fig = plt.figure()
 ax = fig.add_subplot(111, xlabel='RT', ylabel='count', title='RT distributions')
 for i, subj_data in dat_M_match.groupby('subj_idx'):
     subj_data.rt.hist(bins=20, histtype='step', ax=ax)
-plt.savefig('plot_exp7_match_flipped.pdf')
+plt.savefig('hddm_exp7_L_match2_fig_1.pdf')
 
-#### model 1, free v,t,z
+#### model 1, free v, t,z
 M_match_vtz = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'z':['moral','id'],'t':['moral','id']}, include=['v', 'z', 't'],p_outlier=.05)
 M_match_vtz.find_starting_values()
-M_match_vtz.sample(10000,burn = 1000, dbname='traces_vtz.db', db='pickle')
+M_match_vtz.sample(10000,burn = 1000, dbname='traces_m_vtz.db', db='pickle')
 # save the model
 M_match_vtz.save('M_match_vtz')
-# M_match_vtz = hddm.load('M_match_vtz')
+#M_match_vtz = hddm.load('M_match_vtz')
 
 # check convergence of MCMC  #### out put of gelman_rubin ######
 models_vtz = list()
@@ -81,13 +79,10 @@ M_match_vtz.plot_posterior_predictive()
 ## DIC
 print("M_match_vtz DIC: %f" % M_match_vtz.dic) # -120.9797
 
-stats_match_vtz = M_match_vtz.gen_stats()
-stats_match_vtz.to_csv('stats_match_vtz.csv', sep = ',')
-
-##### model 2 , free v,t
+##### model 2, free v,t
 M_match_vt = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'t':['moral','id']}, include=['v', 't'],p_outlier=.05)
 M_match_vt.find_starting_values()
-M_match_vt.sample(10000,burn = 1000, dbname='traces_vt.db', db='pickle')
+M_match_vt.sample(10000,burn = 1000, dbname='traces_m_vt.db', db='pickle')
 # save the model
 M_match_vt.save('M_match_vt')
 
@@ -101,7 +96,7 @@ print("M_match_vt DIC: %f" % M_match_vt.dic) # 186.23
 ##### model 3, free v,z
 M_match_vz = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'z':['moral','id']}, include=['v', 'z'],p_outlier=.05)
 M_match_vz.find_starting_values()
-M_match_vz.sample(10000,burn = 1000, dbname='traces_vz.db', db='pickle')
+M_match_vz.sample(10000,burn = 1000, dbname='traces_m_vz.db', db='pickle')
 # save the model
 M_match_vz.save('M_match_vz')
 
@@ -110,10 +105,10 @@ ppc_compare_vz= hddm.utils.post_pred_stats(dat_M_match, ppc_data_vz)  # MSE
 ppc_compare_vz.to_csv('ppc_compare_btw_vz.csv', sep = ',')
 print("M_match_vz DIC: %f" % M_match_vz.dic) # 475.77
 
-##### model 4, free v
+##### model 4 , free v
 M_match_v = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id']}, include=['v'],p_outlier=.05)
 M_match_v.find_starting_values()
-M_match_v.sample(10000,burn = 1000, dbname='traces_v.db', db='pickle')
+M_match_v.sample(10000,burn = 1000, dbname='traces_m_v.db', db='pickle')
 # save the model
 M_match_v.save('M_match_v')
 
@@ -125,9 +120,8 @@ M_match_v.plot_posterior_predictive()
 print("M_match_v DIC: %f" % M_match_v.dic)# 897.274
 
 ##### extracting the parameters from best-fitting model
-stats_L = M_match_vtz.gen_stats()
-# stats_test = m_loadtest.gen_stats()
-stats_L.to_csv('M_match_vtz_20170125.csv', sep = ',')
+stats_match_vtz = M_match_vtz.gen_stats()
+stats_match_vtz.to_csv('stats_match_vtz.csv', sep = ',')
 
 #  look at the posterior of each parameters for different conditions
 v_moralself,v_immoralself, v_moralother, v_immoralother = M_match_vtz.nodes_db.node[['v(self.moral)','v(self.immoral)','v(other.moral)','v(other.immoral)']]
@@ -178,15 +172,15 @@ fig = plt.figure()
 ax = fig.add_subplot(111, xlabel='RT', ylabel='count', title='RT distributions')
 for i, subj_data in dat_M_nonmatch.groupby('subj_idx'):
     subj_data.rt.hist(bins=20, histtype='step', ax=ax)
-plt.savefig('plot_exp7_mismatch_flipped.pdf')
+plt.savefig('hddm_exp7_L_mismatch_fig_1.pdf')
 
 # same model as matched trials
 M_nonmatch_vtz = hddm.HDDM(dat_M_nonmatch,depends_on = {'v':['moral','id'],'t':['moral','id'],'z':['moral','id']}, include=['v', 'z','t'],p_outlier=.05)
 M_nonmatch_vtz.find_starting_values()
-M_nonmatch_vtz.sample(20000,burn = 2000, dbname='traces_nonmatch_vtz.db', db='pickle')
+M_nonmatch_vtz.sample(20000,burn = 2000, dbname='traces_nm_vtz.db', db='pickle')
 # save the model
 M_nonmatch_vtz.save('M_nonmatch_vtz')
-#M_nonmatch_vtz = hddm.load('M_nonmatch_vtz')
+# M_nonmatch_vtz = hddm.load('M_nonmatch_vtz')
 
 ppc_data_nonmatch_vtz = hddm.utils.post_pred_gen(M_nonmatch_vtz)
 ppc_compare_nonmatch_vtz= hddm.utils.post_pred_stats(ppc_data_nonmatch_vtz, dat_M_nonmatch)  # MSE 
