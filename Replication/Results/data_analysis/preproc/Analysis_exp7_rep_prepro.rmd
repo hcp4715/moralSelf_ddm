@@ -46,7 +46,7 @@ traDir <- paste(rootDir,'tradAnal',sep = '')
 ddmDir <- paste(rootDir,'hddmMod',sep = '')
 ```
 
-```{r loadingData_e7,,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+```{r loadingData_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
 # read these files and combine them into one file, get the raw data for matching task
 df.M <- read.csv('MS_rep_matchingTask_raw.csv', header=TRUE, sep=",",stringsAsFactors=F)
 df.C <- read.csv('MS_rep_categTask_raw.csv', header=TRUE, sep=",",stringsAsFactors=F)
