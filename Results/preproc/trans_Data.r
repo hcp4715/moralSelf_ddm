@@ -89,5 +89,5 @@ df.C$Identity <- factor(df.C$Identity, levels=c("Self","Other"))
 df.M1 <- df.M[,c("Subject", "Age", "Gender", "Match", "Morality", "Identity", "ACC","RT")]
 df.C1 <- df.C[,c("Subject", "Age", "Gender", "Task", "Morality", "Identity", "ACC","RT")]
 
-write.csv(df.M1,'MS_matchingTask_raw.csv',row.names = F)
+write.csv(df.M1,'MS_matchTask_raw.csv',row.names = F)
 write.csv(df.C1,'MS_categTask_raw.csv',row.names = F)
