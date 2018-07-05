@@ -449,7 +449,6 @@ MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'RT', inData = 
 #multiplot(p1,p2,cols = 2)
 ```
 
-
 ```{r plot_match_dprime_data,echo=FALSE,warning=FALSE, message=FALSE}
 MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'dprime', inData = df.M1.V.SDT_l)
 ```
