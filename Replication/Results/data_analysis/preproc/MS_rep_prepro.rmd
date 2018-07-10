@@ -192,10 +192,10 @@ df.C.hddm_id <- df.C.hddm_id[,c('Subject','Morality','Identity','RT','ACC')]
 colnames(df.C.hddm_id) <- c("subj_idx","val",'id','rt','response')
 
 setwd(ddmDir)
-write.csv(df.M.hddm_m,'exp7_rep_match_hddm.csv',row.names = F)
-write.csv(df.M.hddm_nm,'exp7_rep_mismatch_hddm.csv',row.names = F)
-write.csv(df.C.hddm_val,'exp7_rep_categ_val_hddm.csv',row.names = F)
-write.csv(df.C.hddm_id,'exp7_rep_categ_id_hddm.csv',row.names = F)
+write.csv(df.M.hddm_m,'MS_rep_match_hddm.csv',row.names = F)
+write.csv(df.M.hddm_nm,'MS_rep_mismatch_hddm.csv',row.names = F)
+write.csv(df.C.hddm_val,'MS_rep_categ_val_hddm.csv',row.names = F)
+write.csv(df.C.hddm_id,'MS_rep_categ_id_hddm.csv',row.names = F)
 rm('df.M.hddm','df.C.hddm','df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id')
 setwd(curDir)
 
@@ -313,9 +313,9 @@ df.M1.v.sum_eff_w$RT_Self_Good_Bad   <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1
 
 # write files
 setwd(traDir)
-write.csv(df.M1.V.sum_w,'exp7_rep_match_behav_wide.csv',row.names = F)
-write.csv(df.M1.V.SDT_l,'exp7_rep_match__dprime_long.csv',row.names = F)
-write.csv(df.M1.V.sum_rt_acc_l,'exp7_rep_match__rt_acc_long.csv',row.names = F)
+write.csv(df.M1.V.sum_w,'MS_rep_match_behav_wide.csv',row.names = F)
+write.csv(df.M1.V.SDT_l,'MS_rep_match__dprime_long.csv',row.names = F)
+write.csv(df.M1.V.sum_rt_acc_l,'MS_rep_match__rt_acc_long.csv',row.names = F)
 setwd(curDir)
 
 ```
@@ -409,44 +409,16 @@ colnames(df.C1.V.sum_rt_acc_l) <- c("Subject","Task","Morality",'Identity',"Ntri
 
 # write files to an upper-lelel folder
 setwd(traDir)
-write.csv(df.C1.V.sum_w,'exp7_rep_categ_behav_wide.csv',row.names = F)
-write.csv(df.C1.V.sum_noTask_w,'exp7_rep_categ_behav_noTask_wide.csv',row.names = F)
-write.csv(df.C1.V.sum_rt_acc_l,'exp7_rep_categ__rt_acc_long.csv',row.names = F)
-write.csv(df.v.sum_eff_all_w,'exp7_cross_taskeffect_wide.csv',row.names = F)
+write.csv(df.C1.V.sum_w,'MS_rep_categ_behav_wide.csv',row.names = F)
+write.csv(df.C1.V.sum_noTask_w,'MS_rep_categ_behav_noTask_wide.csv',row.names = F)
+write.csv(df.C1.V.sum_rt_acc_l,'MS_rep_categ__rt_acc_long.csv',row.names = F)
+write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
 ```
 
 ```{r plot_match_RT_data,echo=FALSE,warning=FALSE, message=FALSE}
 MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'RT', inData = df.M1.V.sum_rt_acc_l)
-#RTdata1 <- df.M1.V.sum_rt_acc_l %>%
-#  select(Subject,Match,Morality,Identity,RT) %>% 
-#  filter(Match == "match" & Morality == "Good")
-#RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
-#p1 <- ggplot(data = RTdata1, aes(y = RT, x = Identity,fill = Identity)) +
-#  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-#  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-#  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-#  guides(fill = FALSE) +guides(color = FALSE)+
-#  theme_bw() +
-#  raincloud_theme+scale_y_continuous(limits = c(300,900))+labs(x = "Good",y = "Reaction times(ms)")
-#RTdata2 <- df.M1.V.sum_rt_acc_l %>%
-#  select(Subject,Match,Morality,Identity,RT) %>% 
-#  filter(Match == "match" & Morality == "Bad")
-#RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
-#p2 <- ggplot(data = RTdata2, aes(y = RT, x = Identity,fill = Identity)) +
-#  geom_flat_violin(position = position_nudge(x = .2, y = 0)) +
-#  geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .15), size = .5) +
-#  geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-#  guides(fill = FALSE) +guides(color = FALSE)+
-#  theme_bw() +
-#  raincloud_theme+scale_y_continuous(limits = c(300,900),breaks = NULL)+labs(x = "Bad",y = "")
 
-#setwd(traDir)
-#tiff("p_rt_match.tiff", width = 9, height = 6, units = 'in', res = 300)
-#p_rt_match <- multiplot(p1,p2,cols = 2)
-#dev.off()
-#setwd(curDir)
-#multiplot(p1,p2,cols = 2)
 ```
 
 ```{r plot_match_dprime_data,echo=FALSE,warning=FALSE, message=FALSE}

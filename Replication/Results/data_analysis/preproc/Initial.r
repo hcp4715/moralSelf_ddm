@@ -242,16 +242,23 @@ MSplots <- function(saveDir = traDir, curDir = curDir, task = 'match',type = 'AC
       ACCdata1 <- inData %>%
         select(Subject,Task,Morality,Identity,ACC) %>% 
         filter(Task == "Val"& Morality == 'Good')
-      ACCdata2 <- df.C1.V.sum_rt_acc_l %>%
+      ACCdata2 <- inData %>%
         select(Subject,Task,Morality,Identity,ACC) %>% 
         filter(Task == "Val"& Morality == 'Bad')
-    } else{
+    } else if (task == 'id'){
       ACCdata1 <- inData %>%
         select(Subject,Task,Morality,Identity,ACC) %>% 
         filter(Task == "Id"& Morality == 'Good')
-      ACCdata2 <- df.C1.V.sum_rt_acc_l %>%
+      ACCdata2 <- inData %>%
         select(Subject,Task,Morality,Identity,ACC) %>% 
         filter(Task == "Id"& Morality == 'Bad')
+    }else{
+      ACCdata1 <- inData %>%
+        select(Subject,Morality,Identity,ACC) %>% 
+        filter(Morality == 'Good')
+      ACCdata2 <- inData %>%
+        select(Subject,Morality,Identity,ACC) %>% 
+        filter(Morality == 'Bad')
     }
 
     ACCdata1$Identity <- factor(ACCdata1$Identity,levels = c("Self","Other"))
@@ -304,19 +311,26 @@ MSplots <- function(saveDir = traDir, curDir = curDir, task = 'match',type = 'AC
         select(Subject,Match,Morality,Identity,RT) %>% 
         filter(Match == "match" & Morality == "Bad")
     }else if(task == 'val'){
-      RTdata1 <- df.C1.V.sum_rt_acc_l %>%
+      RTdata1 <- inData %>%
         select(Subject,Task,Morality,Identity,RT) %>% 
         filter(Task == "Val"& Morality == 'Good')
-      RTdata2 <- df.C1.V.sum_rt_acc_l %>%
+      RTdata2 <- inData %>%
         select(Subject,Task,Morality,Identity,RT) %>% 
         filter(Task == "Val"& Morality == 'Bad')
-    }else{
-      RTdata1 <- df.C1.V.sum_rt_acc_l %>%
+    }else if (task == 'id'){
+      RTdata1 <- inData %>%
         select(Subject,Task,Morality,Identity,RT) %>% 
         filter(Task == "Id"& Morality == 'Good')
-      RTdata2 <- df.C1.V.sum_rt_acc_l %>%
+      RTdata2 <- inData %>%
         select(Subject,Task,Morality,Identity,RT) %>% 
         filter(Task == "Id"& Morality == 'Bad')
+    }else {
+      RTdata1 <- inData %>%
+        select(Subject,Morality,Identity,RT) %>% 
+        filter(Morality == 'Good')
+      RTdata2 <- inData %>%
+        select(Subject,Morality,Identity,RT) %>% 
+        filter(Morality == 'Bad')
     }
     
     RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))

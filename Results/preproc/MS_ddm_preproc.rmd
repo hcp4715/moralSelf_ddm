@@ -310,7 +310,6 @@ df.C1.V.acc <- plyr::ddply(df.C1.V,.(Subject,Age, Gender, Task,Morality,Identity
 
 # wide-format
 df.C1.V.acc_w  <- dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity ,value.var = "ACC")
-
 # rename the column number
 colnames(df.C1.V.acc_w)[2:9] <- paste("ACC", colnames(df.C1.V.acc_w[,2:9]), sep = "_")
 
@@ -326,13 +325,13 @@ colnames(df.C1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.C1.V.acc_noTask_
 
 # combine data cross task
 # tmp <- aggregate(df.C1.V.acc[,7],list(df.C1.V.acc$Subject,df.C1.V.acc$Morality,df.C1.V.acc$Identity),mean)
-df.C1.V.acc.noTask <- summarySE(df.C1.V.acc,measurevar = 'ACC',groupvars = c('Subject','Morality','Identity'))
-df.C1.V.acc.noTask_w <- dcast(df.C1.V.acc.noTask, Subject ~  Morality + Identity  ,value.var = "ACC")
+#df.C1.V.acc.noTask <- summarySE(df.C1.V.acc,measurevar = 'ACC',groupvars = c('Subject','Morality','Identity'))
+#df.C1.V.acc.noTask_w <- dcast(df.C1.V.acc.noTask, Subject ~  Morality + Identity  ,value.var = "ACC")
 
-df.C1.V.acc.noTask_w$good_bad_slf <- df.C1.V.acc.noTask_w$Good_Self - df.C1.V.acc.noTask_w$Bad_Self
-df.C1.V.acc.noTask_w$good_bad_oth <- df.C1.V.acc.noTask_w$Good_Self - df.C1.V.acc.noTask_w$Bad_Other
-df.C1.V.acc.noTask_w$slf_oth_good <- df.C1.V.acc.noTask_w$Good_Self - df.C1.V.acc.noTask_w$Good_Other
-df.C1.V.acc.noTask_w$slf_oth_bad <- df.C1.V.acc.noTask_w$Bad_Self - df.C1.V.acc.noTask_w$Bad_Other
+df.C1.V.acc_noTask_w$good_bad_slf <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Self
+df.C1.V.acc_noTask_w$good_bad_oth <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
+df.C1.V.acc_noTask_w$slf_oth_good <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Good_Other
+df.C1.V.acc_noTask_w$slf_oth_bad <- df.C1.V.acc_noTask_w$ACC_Bad_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
 
 ## preprocessing RT data
 df.C1.V.RT <- df.C1.V[df.C1.V$ACC == 1,]  # exclued inaccurate data
@@ -377,11 +376,19 @@ df.C1.V.sum_rt_acc_l <- df.C1.V.sum_rt_acc_l[order(df.C1.V.sum_rt_acc_l$Subject)
 df.C1.V.sum_rt_acc_l <- df.C1.V.sum_rt_acc_l[,c("Subject","Task","Morality",'Identity',"N.x","countN","ACC","RT")]
 colnames(df.C1.V.sum_rt_acc_l) <- c("Subject","Task","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
 
+# merge the RT and ACC data without task (long-format) ####
+df.C1.V.sum_rt_acc_noTask_l <- merge(df.C1.V.acc_noTask,df.C1.V.RT.subj_noTask,by = c("Subject","Morality",'Identity'))
+df.C1.V.sum_rt_acc_noTask_l <- df.C1.V.sum_rt_acc_noTask_l[order(df.C1.V.sum_rt_acc_noTask_l$Subject),]
+
+df.C1.V.sum_rt_acc_noTask_l <- df.C1.V.sum_rt_acc_noTask_l[,c("Subject","Morality",'Identity',"N.x","countN","ACC","RT")]
+colnames(df.C1.V.sum_rt_acc_noTask_l) <- c("Subject","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
+
 # write files to an upper-lelel folder
 setwd(traDir)
 write.csv(df.C1.V.sum_w,'MS_categ_behav_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_noTask_w,'MS_categ_behav_noTask_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_rt_acc_l,'MS_categ__rt_acc_long.csv',row.names = F)
+write.csv(df.C1.V.sum_rt_acc_noTask_l,'MS_categ__rt_acc_noTask_long.csv',row.names = F)
 write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
 ```
@@ -409,4 +416,11 @@ MSplots(saveDir = traDir, curDir = curDir, task = 'val',type = 'RT', inData = df
 MSplots(saveDir = traDir, curDir = curDir, task = 'id',type = 'ACC', inData = df.C1.V.sum_rt_acc_l)
 # plot RT
 MSplots(saveDir = traDir, curDir = curDir, task = 'id',type = 'RT', inData = df.C1.V.sum_rt_acc_l)
+```
+
+```{r plot_noTask_data,echo=FALSE,warning=FALSE, message=FALSE}
+# plot ACC
+MSplots(saveDir = traDir, curDir = curDir, task = 'categ',type = 'ACC', inData = df.C1.V.sum_rt_acc_noTask_l)
+# plot RT
+MSplots(saveDir = traDir, curDir = curDir, task = 'categ',type = 'RT', inData = df.C1.V.sum_rt_acc_noTask_l)
 ```
