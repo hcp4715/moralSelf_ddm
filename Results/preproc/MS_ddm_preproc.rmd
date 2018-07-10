@@ -287,11 +287,11 @@ df.M1.V.sum_w <- df.M1.V.sum_w[,c(colnames(df.M1.V.sum_w)[c(1,10:11,2:9,12:23)])
 
 # calculate the effect of self-ref and valence
 df.M1.v.sum_eff_w <- df.M1.V.sum_w[,1:3]
-df.M1.v.sum_eff_w$d_Good_Self_Other <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Good_Other
-df.M1.v.sum_eff_w$d_Self_Good_Bad   <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Bad_Self
+df.M1.v.sum_eff_w$d_Good_selfEffect <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Good_Other
+df.M1.v.sum_eff_w$d_Self_valEffect   <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Bad_Self
 
-df.M1.v.sum_eff_w$RT_Good_Self_Other <- df.M1.V.sum_w$RT_match_Good_Other -  df.M1.V.sum_w$RT_match_Good_Self
-df.M1.v.sum_eff_w$RT_Self_Good_Bad   <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1.V.sum_w$RT_match_Good_Self
+df.M1.v.sum_eff_w$RT_Good_selfEffect <- df.M1.V.sum_w$RT_match_Good_Other -  df.M1.V.sum_w$RT_match_Good_Self
+df.M1.v.sum_eff_w$RT_Self_valEffect   <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1.V.sum_w$RT_match_Good_Self
 
 # write files
 setwd(traDir)
@@ -323,11 +323,7 @@ df.C1.V.acc_noTask_w <- dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,
 # rename the column number
 colnames(df.C1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.C1.V.acc_noTask_w[,2:5]), sep = "_")
 
-# combine data cross task
-# tmp <- aggregate(df.C1.V.acc[,7],list(df.C1.V.acc$Subject,df.C1.V.acc$Morality,df.C1.V.acc$Identity),mean)
-#df.C1.V.acc.noTask <- summarySE(df.C1.V.acc,measurevar = 'ACC',groupvars = c('Subject','Morality','Identity'))
-#df.C1.V.acc.noTask_w <- dcast(df.C1.V.acc.noTask, Subject ~  Morality + Identity  ,value.var = "ACC")
-
+# calculate the mean differences(?)
 df.C1.V.acc_noTask_w$good_bad_slf <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Self
 df.C1.V.acc_noTask_w$good_bad_oth <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
 df.C1.V.acc_noTask_w$slf_oth_good <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Good_Other
@@ -361,10 +357,10 @@ df.C1.v.sum_eff_w$RT_Val_Self_valEffect  <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C
 df.C1.v.sum_eff_w$RT_Id_Good_selfEffect  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
 df.C1.v.sum_eff_w$RT_Id_Self_valEffect   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
 
-df.C1.v.sum_eff_w$ACC_Val_Good_selfEffect <- df.C1.V.sum_w$ACC_Val_Good_Other - df.C1.V.sum_w$ACC_Val_Good_Self
-df.C1.v.sum_eff_w$ACC_Val_Self_valEffect  <- df.C1.V.sum_w$ACC_Val_Bad_Self - df.C1.V.sum_w$ACC_Val_Good_Self
-df.C1.v.sum_eff_w$ACC_Id_Good_selfEffect  <- df.C1.V.sum_w$ACC_Id_Good_Other - df.C1.V.sum_w$ACC_Id_Good_Self
-df.C1.v.sum_eff_w$ACC_Id_Self_valEffect   <- df.C1.V.sum_w$ACC_Id_Bad_Self - df.C1.V.sum_w$ACC_Id_Good_Self
+df.C1.v.sum_eff_w$ACC_Val_Good_selfEffect <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Good_Other
+df.C1.v.sum_eff_w$ACC_Val_Self_valEffect  <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Bad_Self
+df.C1.v.sum_eff_w$ACC_Id_Good_selfEffect  <- df.C1.V.sum_w$ACC_Id_Good_Self - df.C1.V.sum_w$ACC_Id_Good_Other
+df.C1.v.sum_eff_w$ACC_Id_Self_valEffect   <- df.C1.V.sum_w$ACC_Id_Good_Self - df.C1.V.sum_w$ACC_Id_Bad_Self
 
 # merge the effect file
 df.v.sum_eff_all_w <- merge(df.M1.v.sum_eff_w,df.C1.v.sum_eff_w,by="Subject")
