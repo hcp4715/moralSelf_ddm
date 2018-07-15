@@ -42,6 +42,7 @@ rootDir <- gsub('.{7}$', '', curDir)
 #rawDir <- paste(curDir,'/data/',sep = '')
 traDir <- paste(rootDir,'Traditional_Analysis',sep = '')
 ddmDir <- paste(rootDir,'HDDM',sep = '')
+exgDir <- paste(rootDir,'exGaussian',sep = '')
 ```
 
 
@@ -190,6 +191,14 @@ write.csv(df.C.hddm_val,'MS_categ_val_hddm.csv',row.names = F)
 write.csv(df.C.hddm_id,'MS_categ_id_hddm.csv',row.names = F)
 setwd(curDir)
 rm('df.M.hddm','df.C.hddm','df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id')
+
+# get the data for exGaussian analysis
+df.C.exG <- df.C.valid
+df.C.exG <- subset(df.C.exG, ACC == 1 & RT > .2)
+setwd(exgDir)
+write.csv(df.C.exG,'MS_categ_exG.csv',row.names = F)
+rm(df.C.exG)
+
 ```
 ## Participants
 `r length(subTotl)` college students (`r numT.female` female, age: `r ageT.mean` $\pm$ `r ageT.std`) participated in this experiment. All partcipants were right handed, and all had normal or corrected-to-normal vision. Informed consent was obtained from all partcipants prior to the experiment according to procedure approved by a local ethics committee. Data of `r length(excldSub1)` participants were excluded from matching task because of the procedura failure, and `r length(excldSub2.M)` of the participants data were excluded from the analysis for matching task and categorization task because of less than 50% overall accuracy for the matching task, leaving `r nrow(df.M1.V.basic)` participants (`r numV.female` female, age: `r ageV.mean` $\pm$ `r ageV.std` years) for matching task. `r length(excldSub2.C)` addtional participants's data in categorization task were excluded becasue of less than 50% accuracy for the categorization task,leaving `r nrow(df.C1.V.basic)` participants (`r numV.female.C` female, age: `r ageV.mean.C` $\pm$ `r ageV.std.C` years) for categorization task.
