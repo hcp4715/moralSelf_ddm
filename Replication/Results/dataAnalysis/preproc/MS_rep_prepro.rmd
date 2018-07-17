@@ -412,7 +412,7 @@ setwd(traDir)
 write.csv(df.C1.V.sum_w,'MS_rep_categ_behav_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_noTask_w,'MS_rep_categ_behav_noTask_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_rt_acc_l,'MS_rep_categ__rt_acc_long.csv',row.names = F)
-write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
+write.csv(df.v.sum_eff_all_w,'MS_rep_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
 ```
 
