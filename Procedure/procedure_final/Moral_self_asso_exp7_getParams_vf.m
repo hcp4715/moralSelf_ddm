@@ -1,7 +1,7 @@
-function params = Moral_self_asso_exp7_rep_getParams(subID)
+function params = Moral_self_asso_exp7_getParams_vf(subID)
 
 % function params = getParams
-% 
+% Part of CFS_self experiment
 % This function makes the struct that holds th parameters for the
 % presentation of the stimuli and such.
 %
@@ -11,7 +11,7 @@ function params = Moral_self_asso_exp7_rep_getParams(subID)
 % hcp             2016/05/29            adjust for categorization task, not
 %                                       finished
 % hcp             2016/06/19            adjust for new balance design
-% hcp             2017/12/17            modified to repliation of exp7
+
 
 %% define the useful directory in this experiment
 params.rootDir = pwd;
@@ -119,7 +119,7 @@ cd(params.rootDir);
 
 %%  ******************************* 
 AssertOpenGL;
-params.whichscreen = min(Screen('Screens'));     % 有的是用max，作用差不多
+params.whichscreen = min(Screen('Screens'));   % 有的是用max，作用差不多
 % ifi=Screen('GetFlipInterval',window);          % 获得刷新的时间 
 % % define colors 
 params.black = BlackIndex(params.whichscreen);
@@ -141,16 +141,16 @@ params.distDeg=3.5;    % 图像中心与注意点的视角
 %% parameters for presenting location of stimuli
 params.shapeWidth = round(params.TargetDeg*params.pixsPerDeg);         % the width of shape;
 params.shapeLength = round(params.TargetDeg*params.pixsPerDeg);        % the length of shape;
-params.shapeSize = [0 0 params.shapeWidth params.shapeLength];         % size of shape
+params.shapeSize = [0 0 params.shapeWidth params.shapeLength];  % size of shape
 params.labelWidth = round(params.TargetDeg*params.pixsPerDeg);         % the width of label
-params.labelHight = round(1.6*params.pixsPerDeg);                      % the length of label
-params.labelSize = [0 0 params.labelWidth params.labelHight];          % window for presenting target images  2012.12.25:图片大小根据现有图片进行了调整
+params.labelHight = round(1.6*params.pixsPerDeg);               % the length of label
+params.labelSize = [0 0 params.labelWidth params.labelHight];   % window for presenting target images  2012.12.25:图片大小根据现有图片进行了调整
 params.offset = round(params.distDeg*params.pixsPerDeg);               % the distance between stimuli window and middle poit of the screen
 
 % design related variable (not used in current experiment
 params.IV1 = 2;           % 自变量1，两个水平: 自我 vs. 他人
-params.IV2 = 3 ;          % Independent variable 2，three levels: moral, netural, vs. immoral
-params.trials4EachCond = 2;       % trials for each condition, need to get back to 60 when
+params.IV2 = 2 ;          % 自变量2，两个水平: 道德 vs. 不道德
+params.trials4EachCond = 2;       % 每种条件下的试次数
 
 % 视觉刺激位置相关参数：
 % params.shapeRect = CenterRect(params.shapeSize,rect);  % define the size of the rect used for presenting stimulus
@@ -161,15 +161,15 @@ params.trials4EachCond = 2;       % trials for each condition, need to get back 
 
 % params.RampDur = 1;  % ramp up的时间
 
-params.ISI         = (0.5+randsample(0:400,1)/1000);    %ISI, in seconds
-params.fixDur      = 0.5 - randsample(0:100,1)/1000;    % duration of fixation for each trial
-params.TargetDur   = 0.1;                               % 刺激呈现时间
-params.FeedbackDur = 0.5;                               % duration for feedback in practice
+params.ISI         = (0.5+randsample(0:400,1)/1000); %ISI, in seconds
+params.fixDur      = 0.5 - randsample(0:100,1)/1000;      % duration of fixation for each trial
+params.TargetDur   = 0.1;   % 刺激呈现时间
+params.FeedbackDur = 0.5; % duration for feedback in practice
 params.BlankDur    = (0.8+randsample(0:300,1)/1000);    %800-1100ms随机
 % params.TrialDur    = params.fixDur + params.TargetDur + params.BlankDur + params.FeedbackDur;     %trialDur也是随机数
 
 % define parameters for the duration of each stimuli
 % params.CycleFrames = 10;     % 10 帖图，后面将用在目标图片的对比在1分钟之内ramp up使用
-params.fps = round( FrameRate(w));                      % 屏幕的刷新率
+params.fps = round( FrameRate(w));  % 屏幕的刷新率
 params.ifi = Screen('GetFlipInterval',w);
-params.waitframes = round(params.fps/10) ;              % 屏幕刷新率的10分之一，与后面刺激呈现的时间相关
+params.waitframes = round(params.fps/10) ;   % 屏幕刷新率的10分之一，与后面刺激呈现的时间相关
