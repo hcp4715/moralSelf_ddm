@@ -393,8 +393,8 @@ df.C1.v.sum_eff_w$Val_RT_goodslf_badslf  <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C
 df.C1.v.sum_eff_w$Val_RT_goodoth_badoth <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Val_Good_Other
 df.C1.v.sum_eff_w$Val_RT_badslf_badoth <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Bad_Other
 
-df.C1.v.sum_eff_w$Id_RT_Good_selfEffect  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
-df.C1.v.sum_eff_w$Id_RT_Self_valEffect   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.v.sum_eff_w$Id_RT_goodslf_goodoth  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.v.sum_eff_w$Id_RT_goodslf_badslf   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
 df.C1.v.sum_eff_w$Id_RT_goodoth_badoth <- df.C1.V.sum_w$RT_Id_Bad_Other - df.C1.V.sum_w$RT_Id_Good_Other
 df.C1.v.sum_eff_w$Id_RT_badslf_badoth <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Bad_Other
 
