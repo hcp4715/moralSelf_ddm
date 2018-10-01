@@ -402,13 +402,81 @@ df.C1.V.sum_rt_acc_noTask_l <- df.C1.V.sum_rt_acc_noTask_l[order(df.C1.V.sum_rt_
 df.C1.V.sum_rt_acc_noTask_l <- df.C1.V.sum_rt_acc_noTask_l[,c("Subject","Morality",'Identity',"N.x","countN","ACC","RT")]
 colnames(df.C1.V.sum_rt_acc_noTask_l) <- c("Subject","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
 
-# write files to an upper-lelel folder
+# write files to an upper-level folder
 setwd(traDir)
 write.csv(df.C1.V.sum_w,'MS_categ_behav_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_noTask_w,'MS_categ_behav_noTask_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_rt_acc_l,'MS_categ__rt_acc_long.csv',row.names = F)
 write.csv(df.C1.V.sum_rt_acc_noTask_l,'MS_categ__rt_acc_noTask_long.csv',row.names = F)
 write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
+setwd(curDir)
+```
+
+```{r preproc questionnair,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# load the data
+df.quest <- read.csv("exp7_survey_monkey_raw_c.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
+
+# calculate the reliability of each questionnair
+# get the name and key for each scale
+slfEsteemNames <- c( "slfEsteem_1", "slfEsteem_2", "slfEsteem_3", "slfEsteem_4", "slfEsteem_5",
+                     "slfEsteem_6", "slfEsteem_7", "slfEsteem_8", "slfEsteem_9", "slfEsteem_10")
+slfEsteemKeys  <- c(1,2,-3,4,-5,6,7,-8,-9,-10)        # for current dataset
+slfEsteemKeys2 <- c( "slfEsteem_1", "slfEsteem_2", "-slfEsteem_3", "slfEsteem_4", "-slfEsteem_5",
+                     "slfEsteem_6", "slfEsteem_7", "-slfEsteem_8", "-slfEsteem_9", "-slfEsteem_10")
+slfEsteemAlpha <- psych::alpha(df.quest[,slfEsteemNames],keys = slfEsteemKeys) # alpha
+print(slfEsteemAlpha$total[2])
+slfEsteemOmega <- psych::omega(df.quest[,slfEsteemNames]) # omega
+print(c(slfEsteemOmega$omega_h,slfEsteemOmega$omega.tot))
+
+# calculate the score for the trait self-esteem
+slfEsteemScore <- psych::scoreItems(slfEsteemKeys2,df.quest[,slfEsteemNames], totals = F, min = 1, max = 4)
+df.quest$slfEsteem <- slfEsteemScore$scores
+
+# calculate for moral identity
+moralIdNames <- c("MoralId_1","MoralId_2","MoralId_3","MoralId_4","MoralId_5","MoralId_6",
+                  "MoralId_7","MoralId_8","MoralId_9","MoralId_10","MoralId_11","MoralId_12",
+                  "MoralId_13","MoralId_14","MoralId_15")
+moralIdKeys <- c(1,2,3,4,-5,6,7,8,9,10,11,12,13,14,15)
+
+moralIdAlpha <- psych::alpha(df.quest[,moralIdNames],keys = moralIdKeys) # alpha
+print(moralIdAlpha$total[2])
+moralIdOmega <- psych::omega(df.quest[,moralIdNames]) # omega
+print(c(moralIdOmega$omega_h,moralIdOmega$omega.tot))
+
+moralIdinNames <- c("MoralId_1","MoralId_2","MoralId_5","MoralId_8","MoralId_10",
+                    "MoralId_11","MoralId_12", "MoralId_13","MoralId_14")
+moralIdinKeys <- c(1,2,-3,4,5,6,7,8,9)
+moralIdinKeys2 <- c("MoralId_1","MoralId_2","-MoralId_5","MoralId_8","MoralId_10",
+                    "MoralId_11","MoralId_12", "MoralId_13","MoralId_14")
+moralIdinAlpha <- psych::alpha(df.quest[,moralIdinNames],keys = moralIdinKeys) # alpha
+print(moralIdinAlpha$total[2])
+moralIdinOmega <- psych::omega(df.quest[,moralIdinNames]) # omega
+print(c(moralIdinOmega$omega_h,moralIdinOmega$omega.tot))
+
+# caculate the score for internal moral identity
+moralIdinScore <- psych::scoreItems(moralIdinKeys2,df.quest[,moralIdinNames], totals = F, min = -2, max = 2)
+df.quest$moralIdinScore <- moralIdinScore$scores
+
+
+moralIdexNames <- c("MoralId_3","MoralId_4","MoralId_6",
+                  "MoralId_7","MoralId_9","MoralId_15")
+moralIdexKeys <- c(1,2,3,4,5,6)
+moralIdexAlpha <- psych::alpha(df.quest[,moralIdexNames],keys = moralIdexKeys) # alpha
+print(moralIdexAlpha$total[2])
+moralIdexOmega <- psych::omega(df.quest[,moralIdexNames]) # omega
+print(c(moralIdexOmega$omega_h,moralIdexOmega$omega.tot))
+
+# calculate the score for external moral identity
+moralIdexScore <- psych::scoreItems(moralIdexNames,df.quest[,moralIdexNames], totals = F, min = -2, max = 2)
+df.quest$moralIdexScore <- moralIdexScore$scores
+
+# find the intersection between behavioral data and questionnarie data.
+tmp <- merge(df.v.sum_eff_all_w,df.quest[,c("subjID","slfEsteem","moralIdinScore","moralIdexScore")],by.x = "Subject",by.y = "subjID",all = TRUE)
+tmp <- tmp[complete.cases(tmp),]
+
+# write files to an upper-level folder
+setwd(traDir)
+write.csv(tmp,'MS_cross_taskeffect_wide_w_scale.csv',row.names = F)
 setwd(curDir)
 ```
 
