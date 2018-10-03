@@ -38,14 +38,32 @@ apatheme = theme_bw()+
               text=element_text(family='Times'),
               legend.title=element_blank(),
               legend.text = element_text(size =16),
-              legend.position='top',
-              plot.title = element_text(size = 16),
+              #legend.position='top',
+              plot.title = element_text(lineheight=.8, face="bold", size = 16),
               axis.text = element_text (size = 16, color = 'black'),
+#              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
               axis.title = element_text (size = 16),
-              axis.title.y = element_text(margin=margin(0,16,0,0)),  # increase the space between title and y axis
-              axis.title.x = element_text(margin=margin(16,0,0,0)),  # increase the sapce betwen title and x axis
+              axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
+              axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
               axis.line.x = element_line(color='black', size = 1),   # increase the size of font
               axis.line.y = element_line(color='black', size = 1))   # increase the size of font
+
+#raincloud_theme <-  theme_bw() + 
+#      theme(panel.grid.major = element_blank(),
+#            panel.grid.minor = element_blank(),
+#            panel.background = element_blank(),
+#            panel.border = element_blank(),
+#            text=element_text(family='Times'), # text = element_text(size = 10),
+#      axis.title.x = element_text(size = 16),
+#      axis.title.y = element_text(size = 16),
+#      axis.text = element_text(size = 14),
+#      axis.text.x = element_text(angle = 45, vjust = 0.5),
+#      legend.title=element_text(size=16,colour = 'black'),
+#      legend.text=element_text(size=16,colour = 'black'),
+#      legend.position = "right",
+#      plot.title = element_text(lineheight=.8, face="bold", size = 16,colour = 'black'),
+#      axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
+#      axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
 
 # define the d prime function
 dprime <- function(hit,fa) {
@@ -219,145 +237,136 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
         }
 }
 #
-raincloud_theme <-  theme(
-  text = element_text(size = 10),
-  axis.title.x = element_text(size = 16),
-  axis.title.y = element_text(size = 16),
-  axis.text = element_text(size = 14),
-  axis.text.x = element_text(angle = 45, vjust = 0.5),
-  legend.title=element_text(size=16,colour = 'black'),
-  legend.text=element_text(size=16,colour = 'black'),
-  legend.position = "right",
-  plot.title = element_text(lineheight=.8, face="bold", size = 16,colour = 'black'),
-  panel.border = element_blank(),
-  panel.grid.minor = element_blank(),
-  panel.grid.major = element_blank(),
-  axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
-  axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
 
-# define a function for the plots
-MSplots <- function(saveDir = traDir, curDir = curDir, task = 'match',type = 'ACC', inData){
-  if(type == 'ACC'){
-    if(task == 'val'){
-      ACCdata1 <- inData %>%
-        select(Subject,Task,Morality,Identity,ACC) %>% 
-        filter(Task == "Val"& Morality == 'Good')
-      ACCdata2 <- inData %>%
-        select(Subject,Task,Morality,Identity,ACC) %>% 
-        filter(Task == "Val"& Morality == 'Bad')
-    } else if (task == 'id'){
-      ACCdata1 <- inData %>%
-        select(Subject,Task,Morality,Identity,ACC) %>% 
-        filter(Task == "Id"& Morality == 'Good')
-      ACCdata2 <- inData %>%
-        select(Subject,Task,Morality,Identity,ACC) %>% 
-        filter(Task == "Id"& Morality == 'Bad')
-    }else{
-      ACCdata1 <- inData %>%
-        select(Subject,Morality,Identity,ACC) %>% 
-        filter(Morality == 'Good')
-      ACCdata2 <- inData %>%
-        select(Subject,Morality,Identity,ACC) %>% 
-        filter(Morality == 'Bad')
-    }
 
-    ACCdata1$Identity <- factor(ACCdata1$Identity,levels = c("Self","Other"))
-    ACCdata2$Identity <- factor(ACCdata2$Identity,levels = c("Self","Other"))
-    p1 <- ggplot(data = ACCdata1, aes(y = ACC, x = Identity,fill = Identity)) +
-      geom_flat_violin(position = position_nudge(x = .1, y = 0)) +
-      geom_point(aes(y = ACC,color = Identity), position = position_jitter(width = .1), size = 1) +
-      geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-      guides(fill = FALSE) +guides(color = FALSE)+
-     # theme_bw() +
-      raincloud_theme+scale_y_continuous(limits = c(0,1))+labs(x = "Good",y = "Accuracy")
+########### define a function for the plots ##########
+#### For categorization task
+CAplots <- function(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', inData){
+      inData$Identity <- factor(inData$Identity,levels = c("Self","Other"))
+      inData$Morality <- factor(inData$Morality,levels = c("Good","Bad"))
+      #inData$Morality[inData$Morality == "Good"] <- 1
+      #inData$Morality[inData$Morality == "Bad"]  <- 2
+      if(task == 'val'){              # valence-based categorization
+            ACCdata <- inData %>%
+                  select(Subject,Task,Morality,Identity,ACC) %>% 
+                  filter(Task == "Val")
+            rtData <- inData %>%
+                  select(Subject,Task,Morality,Identity,RT) %>% 
+                  filter(Task == "Val")
+            
+          } else if (task == 'id'){   # id-based categorization
+            ACCdata <- inData %>%
+                  select(Subject,Task,Morality,Identity,ACC) %>% 
+                  filter(Task == "id")
+            rtData <- inData %>%
+                  select(Subject,Task,Morality,Identity,RT) %>% 
+                  filter(Task == "id")
+          }else{                         #  combined for experiment 1
+            ACCData <- inData %>%
+                  select(Subject,Morality,Identity,ACC)
+            rtData <- inData %>%
+                  select(Subject,Morality,Identity,RT)
+            
+      }
+
+    P.acc <- ggplot(ACCData,aes(x = Morality, 
+                                y = ACC, fill = Identity))+
+          geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
+                           adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
+          geom_dotplot(aes(x = Morality,y = ACC, color = Identity), 
+                       binaxis='y', binwidth = 0.0125, stackdir='center', dotsize= 0.5,position = position_dodge(0.15)) +
+          geom_boxplot(aes(x = Morality,  y = ACC,fill = Identity),outlier.shape = NA,
+                       alpha = 0.5, width = 0.1,  color = "black",
+                       position = position_dodge(0.15))+ 
+          scale_color_brewer(palette = "Dark2")+
+          scale_fill_brewer(palette = "Dark2")+
+          ylab("Accuracy")+
+          #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
+          scale_y_continuous(expand = c(0, 0), limits = c(0,1))+
+          apatheme
     
-    p2 <- ggplot(data = ACCdata2, aes(y = ACC, x = Identity,fill = Identity)) +
-      geom_flat_violin(position = position_nudge(x = .1, y = 0)) +
-      geom_point(aes(y = ACC,color = Identity), position = position_jitter(width = .1), size = 1) +
-      geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-      guides(fill = FALSE) +guides(color = FALSE)+
-      #theme_bw() +
-      raincloud_theme+scale_y_continuous(limits = c(0,1),breaks = NULL)+labs(x = "Bad",y = "")
-  }else if(type == 'dprime'){
-    Ddata1 <- inData %>%
-      select(Subject,Morality,Identity,dprime) %>% 
-      filter(Morality == "Good")
-    Ddata1$Identity <- factor(Ddata1$Identity,levels = c("Self","Other"))
-    p1 <- ggplot(data = Ddata1, aes(y = dprime, x = Identity,fill = Identity)) +
-      geom_flat_violin(position = position_nudge(x = .1, y = 0)) +
-      geom_point(aes(y = dprime,color = Identity), position = position_jitter(width = .1), size = 1) +
-      geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-      guides(fill = FALSE) +guides(color = FALSE)+
-      #theme_bw() +
-      raincloud_theme+scale_y_continuous(limits = c(0,4))+labs(x = "Good",y = "dprime")
-    Ddata2 <- inData %>%
-      select(Subject,Morality,Identity,dprime) %>% 
-      filter(Morality == "Bad")
-    Ddata2$Identity <- factor(Ddata2$Identity,levels = c("Self","Other"))
-    p2 <- ggplot(data = Ddata2, aes(y = dprime, x = Identity,fill = Identity)) +
-      geom_flat_violin(position = position_nudge(x = .1, y = 0)) +
-      geom_point(aes(y = dprime,color = Identity), position = position_jitter(width = .1), size = 1) +
-      geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-      guides(fill = FALSE) +guides(color = FALSE)+
-      # theme_bw() +
-      raincloud_theme+scale_y_continuous(limits = c(0,4),breaks = NULL)+labs(x = "Bad",y = "")
+    fileName = paste0('p_',expName,'_',task,'_ACC','.pdf')
+    ggsave(fileName, P.acc, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
     
-  }else if(type == 'RT'){
-    if(task == 'match'){
-      RTdata1 <- inData %>%
-        select(Subject,Match,Morality,Identity,RT) %>% 
-        filter(Match == "match" & Morality == "Good")
-      RTdata2 <- inData %>%
-        select(Subject,Match,Morality,Identity,RT) %>% 
-        filter(Match == "match" & Morality == "Bad")
-    }else if(task == 'val'){
-      RTdata1 <- inData %>%
-        select(Subject,Task,Morality,Identity,RT) %>% 
-        filter(Task == "Val"& Morality == 'Good')
-      RTdata2 <- inData %>%
-        select(Subject,Task,Morality,Identity,RT) %>% 
-        filter(Task == "Val"& Morality == 'Bad')
-    }else if (task == 'id'){
-      RTdata1 <- inData %>%
-        select(Subject,Task,Morality,Identity,RT) %>% 
-        filter(Task == "Id"& Morality == 'Good')
-      RTdata2 <- inData %>%
-        select(Subject,Task,Morality,Identity,RT) %>% 
-        filter(Task == "Id"& Morality == 'Bad')
-    }else {
-      RTdata1 <- inData %>%
-        select(Subject,Morality,Identity,RT) %>% 
-        filter(Morality == 'Good')
-      RTdata2 <- inData %>%
-        select(Subject,Morality,Identity,RT) %>% 
-        filter(Morality == 'Bad')
-    }
     
-    RTdata1$Identity <- factor(RTdata1$Identity,levels = c("Self","Other"))
-    RTdata2$Identity <- factor(RTdata2$Identity,levels = c("Self","Other"))
+    P.rt <- ggplot(rtData,aes(x = Morality, y = RT, fill = Identity))+
+          geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
+                           adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
+          #geom_point(aes(x = as.numeric(Morality)-0.15,y = RT, color = Identity), 
+          #           position = position_jitter(width = 0.02),size = 1, shape = 20)+
+          geom_dotplot(aes(x = Morality,y = RT, color = Identity), 
+                       binaxis='y', binwidth = 8, stackdir='center', dotsize= 0.5,position = position_dodge(0.15)) + 
+          geom_boxplot(aes(x = Morality,  y = RT,fill = Identity),outlier.shape = NA,
+                       alpha = 0.5, width = 0.1,  color = "black",
+                       position = position_dodge(0.15))+ 
+          scale_color_brewer(palette = "Dark2")+
+          scale_fill_brewer(palette = "Dark2")+
+          ylab("Reaction Times")+
+          #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
+          scale_y_continuous(expand = c(0, 0),limits = c(400,1000))+
+          apatheme
     
-    p1 <- ggplot(data = RTdata1, aes(y = RT, x = Identity,fill = Identity)) +
-      geom_flat_violin(position = position_nudge(x = .1, y = 0)) +
-      geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .1), size = 1) +
-      geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-      guides(fill = FALSE) +guides(color = FALSE)+
-      # theme_bw() +
-      raincloud_theme+scale_y_continuous(limits = c(300,900))+labs(x = "Good",y = "Reaction times(ms)")
+    fileName = paste0('p_',expName,'_',task,'_RT','.pdf')
+    ggsave(fileName, P.rt, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
     
-    p2 <- ggplot(data = RTdata2, aes(y = RT, x = Identity,fill = Identity)) +
-      geom_flat_violin(position = position_nudge(x = .1, y = 0)) +
-      geom_point(aes(y = RT,color = Identity), position = position_jitter(width = .1), size = 1) +
-      geom_boxplot(width = .1, outlier.shape = NA, alpha = 0.5) +
-      guides(fill = FALSE) +guides(color = FALSE)+
-      #theme_bw() +
-      raincloud_theme+scale_y_continuous(limits = c(300,900),breaks = NULL)+labs(x = "Bad",y = "")
-  }
+    fileName = paste0('p_',expName,'_',task,'.tiff')
+    setwd(saveDir)
+    tiff(fileName, width = 9, height = 6, units = 'in', res = 300)
+    p_dprime_match <- multiplot(P.rt,P.acc,cols = 2)
+    dev.off()
+    setwd(curDir)
+    return(multiplot(P.rt,P.acc,cols = 2))
+}
+ 
+#### For Match task
+Mplots <- function(saveDir = traDir, curDir = curDir, expName = 'exp7', dData,rtData){
+      dData$Identity <- factor(dData$Identity,levels = c("Self","Other"))
+      dData$Morality <- factor(dData$Morality,levels = c("Good","Bad"))
+      rtData$Identity <- factor(rtData$Identity,levels = c("Self","Other"))
+      rtData$Morality <- factor(rtData$Morality,levels = c("Good","Bad"))
+
+      P.dprime <- ggplot(dData,aes(x = Morality, y = dprime, fill = Identity)) +
+            geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
+                             adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
+            geom_dotplot(aes(x = Morality,y = dprime, color = Identity), 
+                         binaxis='y', binwidth = 0.1, stackdir='center', dotsize= 0.5,
+                         position = position_dodge(0.15)) +
+            geom_boxplot(aes(x = Morality,  y = dprime,fill = Identity),outlier.shape = NA,
+                         alpha = 0.5, width = 0.1,  color = "black",
+                         position = position_dodge(0.15)) + 
+            scale_color_brewer(palette = "Dark2") +
+            scale_fill_brewer(palette = "Dark2") +
+            ylab("d prime") +
+           # scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
+            scale_y_continuous(expand = c(0, 0), limits = c(-1,5)) +
+            apatheme
+      fileName = paste0('p_',expName,'_match_dprime','.pdf')
+      ggsave(fileName, P.dprime, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
+      
+      P.rt <- ggplot(rtData,aes(x = Morality, y = RT, fill = Identity))+
+            geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
+                             adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
+            #geom_point(aes(x = as.numeric(Morality)-0.15,y = RT, color = Identity), 
+            #           position = position_jitter(width = 0.02),size = 1, shape = 20)+
+            geom_dotplot(aes(x = Morality,y = RT, color = Identity), 
+                         binaxis='y', binwidth = 8, stackdir='center', dotsize= 0.5,position = position_dodge(0.15)) + 
+            geom_boxplot(aes(x = Morality,  y = RT,fill = Identity),outlier.shape = NA,
+                         alpha = 0.5, width = 0.1,  color = "black",
+                         position = position_dodge(0.15))+ 
+            scale_color_brewer(palette = "Dark2")+
+            scale_fill_brewer(palette = "Dark2")+
+            ylab("Reaction Times")+
+            #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
+            scale_y_continuous(expand = c(0, 0),limits = c(400,1000))+
+            apatheme
+      fileName = paste0('p_',expName,'_match_RT','.pdf')
+      ggsave(fileName, P.rt, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
   
-  fileName = paste0('p_',task,'_',type,'.tiff')
-  setwd(saveDir)
-  tiff(fileName, width = 9, height = 6, units = 'in', res = 300)
-  p_dprime_match <- multiplot(p1,p2,cols = 2)
-  dev.off()
-  setwd(curDir)
-  return(multiplot(p1,p2,cols = 2))
+      fileName = paste0('p_',expName,'_','.tiff')
+      setwd(saveDir)
+      tiff(fileName, width = 12, height = 6, units = 'in', res = 300)
+      p_dprime_match <- multiplot(P.rt,P.dprime,cols = 2)
+      dev.off()
+      setwd(curDir)
+      return(multiplot(P.rt,P.dprime,cols = 2))
 }
