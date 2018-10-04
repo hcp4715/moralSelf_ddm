@@ -5,8 +5,8 @@ Sys.setlocale("LC_ALL", "English")  # set local encoding to English
 Sys.setenv(LANG = "en") # set the feedback language to English
 options(scipen = 999)   # force R to output in decimal instead of scientifc notion
 options(digits=5)       # limit the number of reporting
-rm(list = setdiff(ls(), lsf.str()))  # remove all data but keep functions
-
+#rm(list = setdiff(ls(), lsf.str()))  # remove all data but keep functions
+rm(list = ls())
 pkgTest <- function(x)
 {
         if (!require(x,character.only = TRUE))
@@ -257,19 +257,19 @@ CAplots <- function(saveDir = traDir, curDir = curDir,expName = 'exp7', task = '
           } else if (task == 'id'){   # id-based categorization
             ACCdata <- inData %>%
                   select(Subject,Task,Morality,Identity,ACC) %>% 
-                  filter(Task == "id")
+                  filter(Task == "Id")
             rtData <- inData %>%
                   select(Subject,Task,Morality,Identity,RT) %>% 
-                  filter(Task == "id")
+                  filter(Task == "Id")
           }else{                         #  combined for experiment 1
-            ACCData <- inData %>%
+            ACCdata <- inData %>%
                   select(Subject,Morality,Identity,ACC)
             rtData <- inData %>%
                   select(Subject,Morality,Identity,RT)
             
       }
 
-    P.acc <- ggplot(ACCData,aes(x = Morality, 
+    P.acc <- ggplot(ACCdata,aes(x = Morality, 
                                 y = ACC, fill = Identity))+
           geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
                            adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
@@ -303,7 +303,7 @@ CAplots <- function(saveDir = traDir, curDir = curDir,expName = 'exp7', task = '
           scale_fill_brewer(palette = "Dark2")+
           ylab("Reaction Times")+
           #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
-          scale_y_continuous(expand = c(0, 0),limits = c(400,1000))+
+          scale_y_continuous(expand = c(0, 0),limits = c(200,1000))+
           apatheme
     
     fileName = paste0('p_',expName,'_',task,'_RT','.pdf')
@@ -357,12 +357,12 @@ Mplots <- function(saveDir = traDir, curDir = curDir, expName = 'exp7', dData,rt
             scale_fill_brewer(palette = "Dark2")+
             ylab("Reaction Times")+
             #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
-            scale_y_continuous(expand = c(0, 0),limits = c(400,1000))+
+            scale_y_continuous(expand = c(0, 0),limits = c(200,1000))+
             apatheme
       fileName = paste0('p_',expName,'_match_RT','.pdf')
       ggsave(fileName, P.rt, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
   
-      fileName = paste0('p_',expName,'_','.tiff')
+      fileName = paste0('p_',expName,'_match_','.tiff')
       setwd(saveDir)
       tiff(fileName, width = 12, height = 6, units = 'in', res = 300)
       p_dprime_match <- multiplot(P.rt,P.dprime,cols = 2)

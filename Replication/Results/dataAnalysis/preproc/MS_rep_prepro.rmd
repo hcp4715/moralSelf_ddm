@@ -195,7 +195,7 @@ write.csv(df.M.hddm_m,'MS_rep_match_hddm.csv',row.names = F)
 write.csv(df.M.hddm_nm,'MS_rep_mismatch_hddm.csv',row.names = F)
 write.csv(df.C.hddm_val,'MS_rep_categ_val_hddm.csv',row.names = F)
 write.csv(df.C.hddm_id,'MS_rep_categ_id_hddm.csv',row.names = F)
-rm('df.M.hddm','df.C.hddm','df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id')
+rm('df.M.hddm','df.C.hddm','df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id','df.M.ddm.v','df.C.ddm.v')
 setwd(curDir)
 
 ```
@@ -513,11 +513,11 @@ setwd(curDir)
 
 ```{r plot_match_data,echo=FALSE,warning=FALSE, message=FALSE}
 #MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'RT', inData = df.M1.V.sum_rt_acc_l)
-Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.M1.V.sum_rt_acc_l)
+Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7_rep', df.M1.V.SDT_l,df.M1.V.sum_rt_acc_l)
       
 ```
 
 ```{r plot_categ_val_data,echo=FALSE,warning=FALSE, message=FALSE}
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', df.C1.V.sum_rt_acc_l)
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'val', df.C1.V.sum_rt_acc_l)
+CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7_rep', task = 'id', df.C1.V.sum_rt_acc_l)
+CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7_rep', task = 'val', df.C1.V.sum_rt_acc_l)
 ```
