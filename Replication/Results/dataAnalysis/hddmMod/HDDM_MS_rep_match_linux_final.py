@@ -56,7 +56,7 @@ M_match_vtz.find_starting_values()
 M_match_vtz.sample(10000,burn = 1000, dbname='traces_m_vtz.db', db='pickle')
 # save the model
 M_match_vtz.save('exp7_rep_match_vtz')
-M_match_vtz = hddm.load('exp7_rep_match_vtz')
+#M_match_vtz = hddm.load('exp7_rep_match_vtz')
 
 # check convergence of MCMC  #### out put of gelman_rubin ######
 models_vtz = list()

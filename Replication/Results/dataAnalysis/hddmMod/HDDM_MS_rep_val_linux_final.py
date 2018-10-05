@@ -56,7 +56,7 @@ C_val_vtz.sample(10000,burn = 1000, dbname='traces_val_vtz.db', db='pickle')
    
 # save the model
 C_val_vtz.save('C_val_vtz')
-# C_val_vtz = hddm.load('C_val_vtz')
+#C_val_vtz = hddm.load('C_val_vtz')
 
 # doing Gelman-Rubin statistic
 models_categ_val = []

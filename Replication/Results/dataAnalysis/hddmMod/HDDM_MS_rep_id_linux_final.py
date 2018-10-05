@@ -52,7 +52,7 @@ C_Id_vtz.find_starting_values()
 C_Id_vtz.sample(10000,burn = 1000, dbname='traces_id_vtz.db', db='pickle')
 # save the model
 C_Id_vtz.save('C_Id_vtz')
-# C_Id_vtz = hddm.load('C_Id_vtz')
+#C_Id_vtz = hddm.load('C_Id_vtz')
 
 # check convergence of MCMC  #### out put of gelman_rubin ######
 models_vtz = list()
@@ -131,37 +131,37 @@ stats_C_id = C_Id_vtz.gen_stats()
 stats_C_id.to_csv('C_Id_vtz_20170125.csv', sep = ',')
 
 #  look at the posterior of each parameters for different conditions
-v_GoodSelf,v_BadSelf, v_GoodOther, v_BadOther = C_Id_vtz.nodes_db.node[['v(Self.Good)','v(Self.Bad)','v(Other.Good)','v(Other.Bad)']]
-hddm.analyze.plot_posterior_nodes([v_GoodSelf,v_BadSelf, v_GoodOther, v_BadOther])
+v_GoodSelf_id,v_BadSelf_id, v_GoodOther_id, v_BadOther_id = C_Id_vtz.nodes_db.node[['v(Self.Good)','v(Self.Bad)','v(Other.Good)','v(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([v_GoodSelf_id,v_BadSelf_id, v_GoodOther_id, v_BadOther_id])
 plt.savefig('exp7_rep_C_Id_vtz_fig_v.pdf')
 
-z_GoodSelf,z_BadSelf, z_GoodOther, z_BadOther = C_Id_vtz.nodes_db.node[['z(Self.Good)','z(Self.Bad)','z(Other.Good)','z(Other.Bad)']]
-hddm.analyze.plot_posterior_nodes([z_GoodSelf,z_BadSelf, z_GoodOther, z_BadOther])
+z_GoodSelf_id,z_BadSelf_id, z_GoodOther_id, z_BadOther_id = C_Id_vtz.nodes_db.node[['z(Self.Good)','z(Self.Bad)','z(Other.Good)','z(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([z_GoodSelf_id,z_BadSelf_id, z_GoodOther_id, z_BadOther_id])
 plt.savefig('exp7_rep_C_Id_vtz_fig_z.pdf')
 
-t_GoodSelf,t_BadSelf, t_GoodOther, t_BadOther = C_Id_vtz.nodes_db.node[['t(Self.Good)','t(Self.Bad)','t(Other.Good)','t(Other.Bad)']]
-hddm.analyze.plot_posterior_nodes([t_GoodSelf,t_BadSelf, t_GoodOther, t_BadOther])
+t_GoodSelf_id,t_BadSelf_id, t_GoodOther_id, t_BadOther_id = C_Id_vtz.nodes_db.node[['t(Self.Good)','t(Self.Bad)','t(Other.Good)','t(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([t_GoodSelf_id,t_BadSelf_id, t_GoodOther_id, t_BadOther_id])
 plt.savefig('exp7_rep_C_Id_vtz_fig_t.pdf')
 
 # compare the posterior differences for each condition
-print("P(v_GoodSelf > v_BadSelf) = ", (v_GoodSelf.trace() > v_BadSelf.trace()).mean())            # .995
-print("P(v_GoodSelf > v_GoodOther) = ", (v_GoodSelf.trace() > v_GoodOther.trace()).mean())        # .995
-print("P(v_GoodSelf > v_BadOther) = ", (v_GoodSelf.trace() > v_BadOther.trace()).mean())          # .949
-print("P(v_moral_other > v_BadOther) = ", (v_GoodOther.trace() > v_BadOther.trace()).mean())      # .173
-print("P(v_moral_other > v_BadSelf) = ", (v_GoodOther.trace() > v_BadSelf.trace()).mean())        # .488
-print("P(v_immoral_other > v_BadSelf) = ", (v_BadOther.trace() > v_BadSelf.trace()).mean())       # .819
+print("P(v_GoodSelf_id > v_BadSelf_id) = ", (v_GoodSelf_id.trace() > v_BadSelf_id.trace()).mean())            # .995
+print("P(v_GoodSelf_id > v_GoodOther_id) = ", (v_GoodSelf_id.trace() > v_GoodOther_id.trace()).mean())        # .995
+print("P(v_GoodSelf_id > v_BadOther_id) = ", (v_GoodSelf_id.trace() > v_BadOther_id.trace()).mean())          # .949
+print("P(v_GoodOther_id > v_BadOther_id) = ", (v_GoodOther_id.trace() > v_BadOther_id.trace()).mean())      # .173
+print("P(v_GoodOther_id > v_BadSelf_id) = ", (v_GoodOther_id.trace() > v_BadSelf_id.trace()).mean())        # .488
+print("P(v_BadOther_id > v_BadSelf_id) = ", (v_BadOther_id.trace() > v_BadSelf_id.trace()).mean())       # .819
 
-print("P(z_GoodSelf > v_BadSelf) = ", (z_GoodSelf.trace() > z_BadSelf.trace()).mean())        # 
-print("P(z_GoodSelf > z_GoodOther) = ", (z_GoodSelf.trace() > z_GoodOther.trace()).mean())    # 
-print("P(z_GoodSelf > z_BadOther) = ", (z_GoodSelf.trace() > z_BadOther.trace()).mean())      # 
-print("P(z_GoodOther > z_BadOther) = ", (z_GoodOther.trace() > z_BadOther.trace()).mean())    # 
-print("P(v_BadSelf > z_GoodOther) = ", (z_BadSelf.trace() > z_GoodOther.trace()).mean())      # 
-print("P(v_BadSelf > z_BadOther) = ", (z_BadSelf.trace() > z_BadOther.trace()).mean())        # 
-print("P(v_Self > z_ther) = ", ((z_BadSelf.trace() + z_GoodSelf.trace())/2 > (z_BadOther.trace()+z_GoodOther.trace())/2).mean())  # 
+print("P(z_GoodSelf > v_BadSelf) = ", (z_GoodSelf_id.trace() > z_BadSelf_id.trace()).mean())        # 
+print("P(z_GoodSelf > z_GoodOther) = ", (z_GoodSelf_id.trace() > z_GoodOther_id.trace()).mean())    # 
+print("P(z_GoodSelf > z_BadOther) = ", (z_GoodSelf_id.trace() > z_BadOther_id.trace()).mean())      # 
+print("P(z_GoodOther > z_BadOther) = ", (z_GoodOther_id.trace() > z_BadOther_id.trace()).mean())    # 
+print("P(v_BadSelf > z_GoodOther) = ", (z_BadSelf_id.trace() > z_GoodOther_id.trace()).mean())      # 
+print("P(v_BadSelf > z_BadOther) = ", (z_BadSelf_id.trace() > z_BadOther_id.trace()).mean())        # 
+print("P(v_Self > z_ther) = ", ((z_BadSelf_id.trace() + z_GoodSelf_id.trace())/2 > (z_BadOther_id.trace()+z_GoodOther_id.trace())/2).mean())  # 
 
-print("P(t_BadSelf > t_GoodSelf)  = ", (t_BadSelf.trace() > t_GoodSelf.trace()).mean())       # 
-print("P(t_GoodOther > t_GoodSelf ) = ", (t_GoodOther.trace() > t_GoodSelf.trace()).mean())   # 
-print("P(t_BadOther > t_GoodSelf) = ", (t_BadOther.trace() > t_GoodSelf.trace()).mean())      # 
-print("P(t_BadOther > t_GoodOther) = ", (t_BadOther.trace() > t_GoodOther.trace()).mean())    # 
-print("P(t_BadSelf > t_GoodOther) = ", (t_BadSelf.trace() > t_GoodOther.trace()).mean())      # 
-print("P(t_BadSelf > t_BadOther) = ", (t_BadSelf.trace() > t_BadOther.trace()).mean())        # 
+print("P(t_BadSelf > t_GoodSelf)  = ", (t_BadSelf_id.trace() > t_GoodSelf_id.trace()).mean())       # 
+print("P(t_GoodOther > t_GoodSelf ) = ", (t_GoodOther_id.trace() > t_GoodSelf_id.trace()).mean())   # 
+print("P(t_BadOther > t_GoodSelf) = ", (t_BadOther_id.trace() > t_GoodSelf_id.trace()).mean())      # 
+print("P(t_BadOther > t_GoodOther) = ", (t_BadOther_id.trace() > t_GoodOther_id.trace()).mean())    # 
+print("P(t_BadSelf > t_GoodOther) = ", (t_BadSelf_id.trace() > t_GoodOther_id.trace()).mean())      # 
+print("P(t_BadSelf > t_BadOther) = ", (t_BadSelf_id.trace() > t_BadOther_id.trace()).mean())        # 

@@ -25,14 +25,13 @@ os.chdir("/home/brain/host/hddm_exp7/")
 import pandas as pd
 import matplotlib.pyplot as plt
 # plt.rcParams['image.cmap'] = 'viridis'  # change default colormap
-import hddm
-import time
+import hddm, time, csv
 
 from cycler import cycler
 plt.rcParams['axes.prop_cycle'] = cycler(color='bgrcmyk')
 
 # Load match data from csv file into a NumPy structured array
-dat_M_match = hddm.load_csv('data_M_match_hddm.csv')
+dat_M_match = hddm.load_csv('MS_match_hddm.csv')
 dat_M_match.head(10)
 
 # flip the error RTs to be negative
@@ -45,18 +44,19 @@ for i, subj_data in dat_M_match.groupby('subj_idx'):
     subj_data.rt.hist(bins=20, histtype='step', ax=ax)
 plt.savefig('hddm_exp7_L_match2_fig_1.pdf')
 
+start_time = time.time() # the start time of the processing
 #### model 1, free v, t,z
-M_match_vtz = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'z':['moral','id'],'t':['moral','id']}, include=['v', 'z', 't'],p_outlier=.05)
+M_match_vtz = hddm.HDDM(dat_M_match,depends_on = {'v':['val','id'],'z':['val','id'],'t':['val','id']}, include=['v', 'z', 't'],p_outlier=.05)
 M_match_vtz.find_starting_values()
 M_match_vtz.sample(10000,burn = 1000, dbname='traces_m_vtz.db', db='pickle')
 # save the model
 M_match_vtz.save('M_match_vtz')
-#M_match_vtz = hddm.load('M_match_vtz')
+M_match_vtz = hddm.load('M_match_vtz')
 
 # check convergence of MCMC  #### out put of gelman_rubin ######
 models_vtz = list()
 for i in range(5):
-    m = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'z':['moral','id'],'t':['moral','id']}, include=['v', 'z', 't'],p_outlier=.05)
+    m = hddm.HDDM(dat_M_match,depends_on = {'v':['val','id'],'z':['val','id'],'t':['val','id']}, include=['v', 'z', 't'],p_outlier=.05)
     m.find_starting_values()
     m.sample(10000, burn=1000)
     models_vtz.append(m)
@@ -64,23 +64,26 @@ for i in range(5):
 R_hat_vtz = hddm.analyze.gelman_rubin(models_vtz)
 
 # save R_hat_vtz to csv
-import csv
 with open('R_hat_vtz.csv','w') as f:
     w = csv.writer(f)
     w.writerows(R_hat_vtz.items())
 
 ## ppc
 ppc_data_bw_vtz = hddm.utils.post_pred_gen(M_match_vtz)
-ppc_compare_btw_vtz = hddm.utils.post_pred_stats(dat_M_match, ppc_data_bw_vtz)  # MSE 0.0296
-ppc_compare_btw_vtz.to_csv('ppc_compare_btw_vtz.csv', sep = ',')
+ppc_compare_btw_vtz = hddm.utils.post_pred_stats(dat_M_match, ppc_data_bw_vtz)  # MSE
+ppc_compare_btw_vtz.to_csv('ppc_compare_match_vtz.csv', sep = ',')
 M_match_vtz.plot_posterior_predictive()
 # M_match_vtz.plot_posterior_quantiles()
 
 ## DIC
-print("M_match_vtz DIC: %f" % M_match_vtz.dic) # -120.9797
+print("M_match_vtz DIC: %f" % M_match_vtz.dic) # -35.15
+
+m1_time = time.time() # the start time of the processing
+
+print("Running M1 used: %f " % (m1_time - start_time))
 
 ##### model 2, free v,t
-M_match_vt = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'t':['moral','id']}, include=['v', 't'],p_outlier=.05)
+M_match_vt = hddm.HDDM(dat_M_match,depends_on = {'v':['val','id'],'t':['val','id']}, include=['v', 't'],p_outlier=.05)
 M_match_vt.find_starting_values()
 M_match_vt.sample(10000,burn = 1000, dbname='traces_m_vt.db', db='pickle')
 # save the model
@@ -88,25 +91,25 @@ M_match_vt.save('M_match_vt')
 
 ppc_data_vt = hddm.utils.post_pred_gen(M_match_vt)
 ppc_compare_vt= hddm.utils.post_pred_stats(dat_M_match, ppc_data_vt)  # MSE 
-ppc_compare_vt.to_csv('ppc_compare_btw_vt.csv', sep = ',')
+ppc_compare_vt.to_csv('ppc_compare_match_vt.csv', sep = ',')
 M_match_vt.plot_posterior_predictive()
 # M_match_vt.plot_posterior_quantiles()
-print("M_match_vt DIC: %f" % M_match_vt.dic) # 186.23
+print("M_match_vt DIC: %f" % M_match_vt.dic) # 252.6
 
 ##### model 3, free v,z
-M_match_vz = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id'],'z':['moral','id']}, include=['v', 'z'],p_outlier=.05)
+M_match_vz = hddm.HDDM(dat_M_match,depends_on = {'v':['val','id'],'z':['val','id']}, include=['v', 'z'],p_outlier=.05)
 M_match_vz.find_starting_values()
 M_match_vz.sample(10000,burn = 1000, dbname='traces_m_vz.db', db='pickle')
 # save the model
 M_match_vz.save('M_match_vz')
 
 ppc_data_vz = hddm.utils.post_pred_gen(M_match_vz)
-ppc_compare_vz= hddm.utils.post_pred_stats(dat_M_match, ppc_data_vz)  # MSE 
-ppc_compare_vz.to_csv('ppc_compare_btw_vz.csv', sep = ',')
-print("M_match_vz DIC: %f" % M_match_vz.dic) # 475.77
+ppc_compare_vz= hddm.utils.post_pred_stats(dat_M_match, ppc_data_vz)  # MSE 0.0328
+ppc_compare_vz.to_csv('ppc_compare_match_vz.csv', sep = ',')
+print("M_match_vz DIC: %f" % M_match_vz.dic) # 559.3
 
 ##### model 4 , free v
-M_match_v = hddm.HDDM(dat_M_match,depends_on = {'v':['moral','id']}, include=['v'],p_outlier=.05)
+M_match_v = hddm.HDDM(dat_M_match,depends_on = {'v':['val','id']}, include=['v'],p_outlier=.05)
 M_match_v.find_starting_values()
 M_match_v.sample(10000,burn = 1000, dbname='traces_m_v.db', db='pickle')
 # save the model
@@ -114,54 +117,54 @@ M_match_v.save('M_match_v')
 
 ppc_data_v = hddm.utils.post_pred_gen(M_match_v)
 ppc_compare_v= hddm.utils.post_pred_stats(dat_M_match, ppc_data_v)  # MSE 
-ppc_compare_v.to_csv('ppc_compare_btw_v.csv', sep = ',')
+ppc_compare_v.to_csv('ppc_compare_match_v.csv', sep = ',')
 M_match_v.plot_posterior_predictive()
 # M_match_v.plot_posterior_quantiles()
-print("M_match_v DIC: %f" % M_match_v.dic)# 897.274
+print("M_match_v DIC: %f" % M_match_v.dic)# 988.2
 
 ##### extracting the parameters from best-fitting model
 stats_match_vtz = M_match_vtz.gen_stats()
 stats_match_vtz.to_csv('stats_match_vtz.csv', sep = ',')
 
 #  look at the posterior of each parameters for different conditions
-v_moralself,v_immoralself, v_moralother, v_immoralother = M_match_vtz.nodes_db.node[['v(self.moral)','v(self.immoral)','v(other.moral)','v(other.immoral)']]
-hddm.analyze.plot_posterior_nodes([v_moralself,v_immoralself, v_moralother, v_immoralother])
-plt.savefig('exp7_M_match_vtz_fig_v.pdf')
+v_GoodSelf,v_BadSelf, v_GoodOther, v_BadOther = M_match_vtz.nodes_db.node[['v(Self.Good)','v(Self.Bad)','v(Other.Good)','v(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([v_GoodSelf,v_BadSelf, v_GoodOther, v_BadOther])
+plt.savefig('MS_match_vtz_fig_v.pdf')
 
-z_moralself,z_immoralself, z_moralother, z_immoralother = M_match_vtz.nodes_db.node[['z(self.moral)','z(self.immoral)','z(other.moral)','z(other.immoral)']]
-hddm.analyze.plot_posterior_nodes([z_moralself,z_immoralself, z_moralother, z_immoralother])
-plt.savefig('exp7_M_match_vtz_fig_z.pdf')
+z_GoodSelf,z_BadSelf, z_GoodOther, z_BadOther = M_match_vtz.nodes_db.node[['z(Self.Good)','z(Self.Bad)','z(Other.Good)','z(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([z_GoodSelf,z_BadSelf, z_GoodOther, z_BadOther])
+plt.savefig('MS_match_vtz_fig_z.pdf')
 
-t_moralself,t_immoralself, t_moralother, t_immoralother = M_match_vtz.nodes_db.node[['t(self.moral)','t(self.immoral)','t(other.moral)','t(other.immoral)']]
-hddm.analyze.plot_posterior_nodes([t_moralself,t_immoralself, t_moralother, t_immoralother])
-plt.savefig('exp7_M_match_vtz_fig_t.pdf')
+t_GoodSelf,t_BadSelf, t_GoodOther, t_BadOther = M_match_vtz.nodes_db.node[['t(Self.Good)','t(Self.Bad)','t(Other.Good)','t(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([t_GoodSelf,t_BadSelf, t_GoodOther, t_BadOther])
+plt.savefig('MS_match_vtz_fig_t.pdf')
 
 # compare the posterior differences for each condition
-print("P(v_moral_self > v_immoral_self) = ", (v_moralself.trace() > v_immoralself.trace()).mean())         # 0.9998
-print("P(v_moral_self > v_moral_other) = ", (v_moralself.trace() > v_moralother.trace()).mean())           # 0.71011
-print("P(v_moral_self > v_immoral_other) = ", (v_moralself.trace() > v_immoralother.trace()).mean())       # 0.97878
-print("P(v_moral_other > v_immoral_other) = ", (v_moralother.trace() > v_immoralother.trace()).mean())     # 0.9223
-print("P(v_moral_other > v_immoral_self) = ", (v_moralother.trace() > v_immoralself.trace()).mean())       # 0.998889
-print("P(v_immoral_other > v_immoral_self) = ", (v_immoralother.trace() > v_immoralself.trace()).mean())   # 0.966222
+print("P(v_GoodSelf > v_BadSelf) = ", (v_GoodSelf.trace() > v_BadSelf.trace()).mean())         # 0.9998
+print("P(v_GoodSelf > v_GoodOther) = ", (v_GoodSelf.trace() > v_GoodOther.trace()).mean())     # 0.7097
+print("P(v_GoodSelf > v_BadOther) = ", (v_GoodSelf.trace() > v_BadOther.trace()).mean())       # 0.9758
+print("P(v_GoodOther > v_BadOther) = ", (v_GoodOther.trace() > v_BadOther.trace()).mean())     # 0.9263
+print("P(v_GoodOther > v_BadSelf) = ", (v_GoodOther.trace() > v_BadSelf.trace()).mean())       # 0.9992
+print("P(v_BadOther > v_BadSelf) = ", (v_BadOther.trace() > v_BadSelf.trace()).mean())         # 0.9652
 
-print("P(z_moral_self > z_immoral_self) = ", (z_moralself.trace() > z_immoralself.trace()).mean())        # 0.7558
-print("P(z_moral_self > z_moral_other) = ", (z_moralself.trace() > z_moralother.trace()).mean())          # 0.9198
-print("P(z_moral_self > z_immoral_other) = ", (z_moralself.trace() > z_immoralother.trace()).mean())      # 0.939555
-print("P(z_moral_other > z_immoral_other) = ", (z_moralother.trace() > z_immoralother.trace()).mean())    # 0.545
-print("P(z_immoral_self > z_moral_other) = ", (z_immoralself.trace() > z_moralother.trace()).mean())      # 0.771333
-print("P(z_immoral_self > z_immoral_other) = ", (z_immoralself.trace() > z_immoralother.trace()).mean())  # 0.808444
-print("P(z_immoral_self > z_immoral_other) = ", ((z_immoralself.trace() + z_moralself.trace())/2 > (z_immoralother.trace()+z_moralother.trace())/2).mean())  # 0.94577
+print("P(z_GoodSelf > z_BadSelf) = ", (z_GoodSelf.trace() > z_BadSelf.trace()).mean())        # 0.6978
+print("P(z_GoodSelf > z_GoodOther) = ", (z_GoodSelf.trace() > z_GoodOther.trace()).mean())    # 0.9111
+print("P(z_GoodSelf > z_BadOther) = ", (z_GoodSelf.trace() > z_BadOther.trace()).mean())      # 0.928
+print("P(z_GoodOther > z_BadOther) = ", (z_GoodOther.trace() > z_BadOther.trace()).mean())    # 0.530
+print("P(z_BadSelf > z_GoodOther) = ", (z_BadSelf.trace() > z_GoodOther.trace()).mean())      # 0.8088
+print("P(z_BadSelf > z_BadOther) = ", (z_BadSelf.trace() > z_BadOther.trace()).mean())        # 0.8278
+print("P(z_BadSelf > z_BadOther) = ", ((z_BadSelf.trace() + z_GoodSelf.trace())/2 > (z_BadOther.trace()+z_GoodOther.trace())/2).mean())  # 0.9541
 
-print("P(t_immoral_self > t_moral_self)  = ", (t_immoralself.trace() > t_moralself.trace()).mean())       # 0.909777
-print("P(t_moral_other > t_moral_self ) = ", (t_moralother.trace() > t_moralself.trace()).mean())         # 0.673
-print("P(t_immoral_other > t_moral_self) = ", (t_immoralother.trace() > t_moralself.trace()).mean())      # 0.84933
-print("P(t_immoral_other > t_moral_other) = ", (t_immoralother.trace() > t_moralother.trace()).mean())    # 0.729777
-print("P(t_immoral_self > t_moral_other) = ", (t_immoralself.trace() > t_moralother.trace()).mean())      # 0.806333
-print("P(t_immoral_self > t_immoral_other) = ", (t_immoralself.trace() > t_immoralother.trace()).mean())  # 0.601444
+print("P(t_BadSelf > t_GoodSelf)  = ", (t_BadSelf.trace() > t_GoodSelf.trace()).mean())       # 0.9143
+print("P(t_GoodOther > t_GoodSelf ) = ", (t_GoodOther.trace() > t_GoodSelf.trace()).mean())   # 0.7557
+print("P(t_BadOther > t_GoodSelf) = ", (t_BadOther.trace() > t_GoodSelf.trace()).mean())      # 0.8793
+print("P(t_BadOther > t_GoodOther) = ", (t_BadOther.trace() > t_GoodOther.trace()).mean())    # 0.6854
+print("P(t_BadSelf > t_GoodOther) = ", (t_BadSelf.trace() > t_GoodOther.trace()).mean())      # 0.7482
+print("P(t_BadSelf > t_BadOther) = ", (t_BadSelf.trace() > t_BadOther.trace()).mean())        # 0.5273
 
 # fit data from mismatch for using the same model
 # Load mismatch data from csv file into a NumPy structured array
-dat_M_nonmatch = hddm.load_csv('data_M_nonmatch_hddm.csv')
+dat_M_nonmatch = hddm.load_csv('MS_mismatch_hddm.csv')
 dat_M_nonmatch.head(10)
 
 # flip the error RTs to be negative
@@ -180,7 +183,7 @@ M_nonmatch_vtz.find_starting_values()
 M_nonmatch_vtz.sample(20000,burn = 2000, dbname='traces_nm_vtz.db', db='pickle')
 # save the model
 M_nonmatch_vtz.save('M_nonmatch_vtz')
-# M_nonmatch_vtz = hddm.load('M_nonmatch_vtz')
+M_nonmatch_vtz = hddm.load('M_nonmatch_vtz')
 
 ppc_data_nonmatch_vtz = hddm.utils.post_pred_gen(M_nonmatch_vtz)
 ppc_compare_nonmatch_vtz= hddm.utils.post_pred_stats(ppc_data_nonmatch_vtz, dat_M_nonmatch)  # MSE 
@@ -192,16 +195,16 @@ M_nonmatch_vtz.plot_posterior_predictive()
 print("M_nonmatch_vtz DIC: %f" % M_nonmatch_vtz.dic) # 1279.019
 
 #  look at the posterior of each parameters for different conditions
-v_mis_moralself,v_mis_immoralself, v_mis_moralother, v_mis_immoralother = M_nonmatch_vtz.nodes_db.node[['v(self.moral)','v(self.immoral)','v(other.moral)','v(other.immoral)']]
-hddm.analyze.plot_posterior_nodes([v_mis_moralself,v_mis_immoralself, v_mis_moralother, v_mis_immoralother])
+v_mis_GoodSelf,v_mis_BadSelf, v_mis_GoodOther, v_mis_BadOther = M_nonmatch_vtz.nodes_db.node[['v(Self.Good)','v(Self.Bad)','v(Other.Good)','v(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([v_mis_GoodSelf,v_mis_BadSelf, v_mis_GoodOther, v_mis_BadOther])
 plt.savefig('exp7_L_mismatch_m1_fig_v.pdf')
 
-z_mis_moralself,z_mis_immoralself, z_mis_moralother, z_mis_immoralother = M_nonmatch_vtz.nodes_db.node[['z(self.moral)','z(self.immoral)','z(other.moral)','z(other.immoral)']]
-hddm.analyze.plot_posterior_nodes([z_mis_moralself,z_mis_immoralself, z_mis_moralother, z_mis_immoralother])
+z_mis_GoodSelf,z_mis_BadSelf, z_mis_GoodOther, z_mis_BadOther = M_nonmatch_vtz.nodes_db.node[['z(Self.Good)','z(Self.Bad)','z(Other.Good)','z(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([z_mis_GoodSelf,z_mis_BadSelf, z_mis_GoodOther, z_mis_BadOther])
 plt.savefig('exp7_L_mismatch_m1_fig_z.pdf')
 
-t_mis_moralself,t_mis_immoralself, t_mis_moralother, t_mis_immoralother = M_nonmatch_vtz.nodes_db.node[['t(self.moral)','t(self.immoral)','t(other.moral)','t(other.immoral)']]
-hddm.analyze.plot_posterior_nodes([t_mis_moralself,t_mis_immoralself, t_mis_moralother, t_mis_immoralother])
+t_mis_GoodSelf,t_mis_BadSelf, t_mis_GoodOther, t_mis_BadOther = M_nonmatch_vtz.nodes_db.node[['t(Self.Good)','t(Self.Bad)','t(Other.Good)','t(Other.Bad)']]
+hddm.analyze.plot_posterior_nodes([t_mis_GoodSelf,t_mis_BadSelf, t_mis_GoodOther, t_mis_BadOther])
 plt.savefig('exp7_L_mismatch_m1_fig_t.pdf')
 
 # get parameters 
@@ -221,23 +224,23 @@ for i in range(5):
 Non_R_hat_vtz = hddm.analyze.gelman_rubin(models_non)
 
 # compare the posterior differences for each condition
-print("P(v_mis_moral_self > v_mis_immoral_self) = ", (v_mis_moralself.trace() > v_mis_immoralself.trace()).mean())         # 0.2646667
-print("P(v_mis_moral_self > v_mis_moral_other) = ", (v_mis_moralself.trace() > v_mis_moralother.trace()).mean())           # 0.2917777
-print("P(v_mis_moral_self > v_mis_immoral_other) = ", (v_mis_moralself.trace() > v_mis_immoralother.trace()).mean())       # 0.0632222
-print("P(v_mis_moral_other > v_mis_immoral_other) = ", (v_mis_moralother.trace() > v_mis_immoralother.trace()).mean())     # 0.1601111
-print("P(v_mis_moral_other > v_mis_immoral_self) = ", (v_mis_moralother.trace() > v_mis_immoralself.trace()).mean())       # 0.477
-print("P(v_mis_immoral_other > v_mis_immoral_self) = ", (v_mis_immoralother.trace() > v_mis_immoralself.trace()).mean())   # 0.817
+print("P(v_mis_GoodSelf > v_mis_BadSelf) = ", (v_mis_GoodSelf.trace() > v_mis_BadSelf.trace()).mean())         # 0.2646667
+print("P(v_mis_GoodSelf > v_mis_GoodOther) = ", (v_mis_GoodSelf.trace() > v_mis_GoodOther.trace()).mean())           # 0.2917777
+print("P(v_mis_GoodSelf > v_mis_BadOther) = ", (v_mis_GoodSelf.trace() > v_mis_BadOther.trace()).mean())       # 0.0632222
+print("P(v_mis_GoodOther > v_mis_BadOther) = ", (v_mis_GoodOther.trace() > v_mis_BadOther.trace()).mean())     # 0.1601111
+print("P(v_mis_GoodOther > v_mis_BadSelf) = ", (v_mis_GoodOther.trace() > v_mis_BadSelf.trace()).mean())       # 0.477
+print("P(v_mis_BadOther > v_mis_BadSelf) = ", (v_mis_BadOther.trace() > v_mis_BadSelf.trace()).mean())   # 0.817
 
-print("P(z_mis_moral_self < z_mis_immoral_self) = ", (z_mis_moralself.trace() < z_mis_immoralself.trace()).mean())        #  1.0
-print("P(z_mis_moral_self < z_mis_moral_other) = ", (z_mis_moralself.trace() < z_mis_moralother.trace()).mean())          #  0.999
-print("P(z_mis_moral_self < z_mis_immoral_other) = ", (z_mis_moralself.trace() < z_mis_immoralother.trace()).mean())      #  0.96
-print("P(z_mis_immoral_other < z_mis_moral_other) = ", (z_mis_immoralother.trace() < z_mis_moralother.trace()).mean())    #  0.911777
-print("P(z_mis_immoral_other < z_mis_immoral_self) = ", (z_mis_immoralother.trace() < z_mis_immoralself.trace()).mean())  #  0.996777
-print("P(z_mis_moral_other < z_mis_immoral_self) = ", (z_mis_moralother.trace() < z_mis_immoralself.trace()).mean())      #  0.9186667
+print("P(z_mis_GoodSelf < z_mis_BadSelf) = ", (z_mis_GoodSelf.trace() < z_mis_BadSelf.trace()).mean())        #  1.0
+print("P(z_mis_GoodSelf < z_mis_GoodOther) = ", (z_mis_GoodSelf.trace() < z_mis_GoodOther.trace()).mean())          #  0.999
+print("P(z_mis_GoodSelf < z_mis_BadOther) = ", (z_mis_GoodSelf.trace() < z_mis_BadOther.trace()).mean())      #  0.96
+print("P(z_mis_BadOther < z_mis_GoodOther) = ", (z_mis_BadOther.trace() < z_mis_GoodOther.trace()).mean())    #  0.911777
+print("P(z_mis_BadOther < z_mis_BadSelf) = ", (z_mis_BadOther.trace() < z_mis_BadSelf.trace()).mean())  #  0.996777
+print("P(z_mis_GoodOther < z_mis_BadSelf) = ", (z_mis_GoodOther.trace() < z_mis_BadSelf.trace()).mean())      #  0.9186667
 
-print("P(t_mis_immoral_self > t_mis_moral_self)  = ", (t_mis_immoralself.trace() > t_mis_moralself.trace()).mean())       # 0.73188
-print("P(t_mis_moral_other > t_mis_moral_self ) = ", (t_mis_moralother.trace() > t_mis_moralself.trace()).mean())         # 0.63922
-print("P(t_mis_immoral_other > t_mis_moral_self) = ", (t_mis_immoralother.trace() > t_mis_moralself.trace()).mean())      # 0.789
-print("P(t_mis_immoral_other > t_mis_moral_other) = ", (t_mis_immoralother.trace() > t_mis_moralother.trace()).mean())    # 0.6613
-print("P(t_mis_immoral_self > t_mis_moral_other) = ", (t_mis_immoralself.trace() > t_mis_moralother.trace()).mean())      # 0.60044
-print("P(t_mis_immoral_self > t_mis_immoral_other) = ", (t_mis_immoralself.trace() > t_mis_immoralother.trace()).mean())  # 0.429922
+print("P(t_mis_BadSelf > t_mis_GoodSelf)  = ", (t_mis_BadSelf.trace() > t_mis_GoodSelf.trace()).mean())       # 0.73188
+print("P(t_mis_GoodOther > t_mis_GoodSelf ) = ", (t_mis_GoodOther.trace() > t_mis_GoodSelf.trace()).mean())         # 0.63922
+print("P(t_mis_BadOther > t_mis_GoodSelf) = ", (t_mis_BadOther.trace() > t_mis_GoodSelf.trace()).mean())      # 0.789
+print("P(t_mis_BadOther > t_mis_GoodOther) = ", (t_mis_BadOther.trace() > t_mis_GoodOther.trace()).mean())    # 0.6613
+print("P(t_mis_BadSelf > t_mis_GoodOther) = ", (t_mis_BadSelf.trace() > t_mis_GoodOther.trace()).mean())      # 0.60044
+print("P(t_mis_BadSelf > t_mis_BadOther) = ", (t_mis_BadSelf.trace() > t_mis_BadOther.trace()).mean())  # 0.429922
