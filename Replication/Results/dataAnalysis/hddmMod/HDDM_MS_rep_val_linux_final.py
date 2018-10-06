@@ -144,15 +144,15 @@ print("--- %s seconds ---" % (end_time - start_time)) #56149.486803770065 second
 #  look at the posterior of each parameters for different conditions
 v_GoodSelf_val,v_BadSelf_val, v_GoodOther_val, v_BadOther_val = C_val_vtz.nodes_db.node[['v(Self.Good)','v(Self.Bad)','v(Other.Good)','v(Other.Bad)']]
 hddm.analyze.plot_posterior_nodes([v_GoodSelf_val,v_BadSelf_val, v_GoodOther_val, v_BadOther_val])
-plt.savefig('exp7_rep_C_vzt_val_v.pdf')
+plt.savefig('exp7_rep_C_vzt_val_fig_v.pdf')
 
 z_GoodSelf_val,z_BadSelf_val, z_GoodOther_val, z_BadOther_val = C_val_vtz.nodes_db.node[['z(Self.Good)','z(Self.Bad)','z(Other.Good)','z(Other.Bad)']] 
 hddm.analyze.plot_posterior_nodes([z_GoodSelf_val,z_BadSelf_val, z_GoodOther_val, z_BadOther_val]) 
-plt.savefig('exp7_rep_C_val_z.pdf') 
+plt.savefig('exp7_rep_C_val_fig_z.pdf') 
 
 t_GoodSelf_val,t_BadSelf_val, t_GoodOther_val, t_BadOther_val= C_val_vtz.nodes_db.node[['t(Self.Good)','t(Self.Bad)','t(Other.Good)','t(Other.Bad)']] 
 hddm.analyze.plot_posterior_nodes([t_GoodSelf_val,t_BadSelf_val, t_GoodOther_val, t_BadOther_val]) 
-plt.savefig('exp7_rep_C_val_t.pdf') 
+plt.savefig('exp7_rep_C_val_fig_t.pdf') 
 
 # print the comparision
 print("P(v_M_GoodSelf > v_M_BadSelf ) = ", (v_GoodSelf_val.trace() > v_BadSelf_val.trace()).mean())       # 0.997

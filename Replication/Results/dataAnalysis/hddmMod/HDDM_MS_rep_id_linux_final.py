@@ -52,7 +52,7 @@ C_Id_vtz.find_starting_values()
 C_Id_vtz.sample(10000,burn = 1000, dbname='traces_id_vtz.db', db='pickle')
 # save the model
 C_Id_vtz.save('C_Id_vtz')
-#C_Id_vtz = hddm.load('C_Id_vtz')
+C_Id_vtz = hddm.load('C_Id_vtz')
 
 # check convergence of MCMC  #### out put of gelman_rubin ######
 models_vtz = list()
@@ -151,9 +151,9 @@ print("P(v_GoodOther_id > v_BadOther_id) = ", (v_GoodOther_id.trace() > v_BadOth
 print("P(v_GoodOther_id > v_BadSelf_id) = ", (v_GoodOther_id.trace() > v_BadSelf_id.trace()).mean())        # .488
 print("P(v_BadOther_id > v_BadSelf_id) = ", (v_BadOther_id.trace() > v_BadSelf_id.trace()).mean())       # .819
 
-print("P(z_GoodSelf > v_BadSelf) = ", (z_GoodSelf_id.trace() > z_BadSelf_id.trace()).mean())        # 
-print("P(z_GoodSelf > z_GoodOther) = ", (z_GoodSelf_id.trace() > z_GoodOther_id.trace()).mean())    # 
-print("P(z_GoodSelf > z_BadOther) = ", (z_GoodSelf_id.trace() > z_BadOther_id.trace()).mean())      # 
+print("P(z_BadSelf > z_GoodSelf) = ", ( z_BadSelf_id.trace() > z_GoodSelf_id.trace() ).mean())          # 0.984
+print("P(z_BadSelf > z_GoodOther) = ", (z_BadSelf_id.trace() > z_GoodOther_id.trace()).mean())          # 0.998 
+print("P(z_BadSelf > z_BadOther) = ", (z_BadSelf_id.trace() > z_BadOther_id.trace()).mean())            # 0.987
 print("P(z_GoodOther > z_BadOther) = ", (z_GoodOther_id.trace() > z_BadOther_id.trace()).mean())    # 
 print("P(v_BadSelf > z_GoodOther) = ", (z_BadSelf_id.trace() > z_GoodOther_id.trace()).mean())      # 
 print("P(v_BadSelf > z_BadOther) = ", (z_BadSelf_id.trace() > z_BadOther_id.trace()).mean())        # 
