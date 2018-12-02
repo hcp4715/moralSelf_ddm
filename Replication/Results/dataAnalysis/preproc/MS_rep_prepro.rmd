@@ -427,6 +427,18 @@ write.csv(df.C1.V.sum_noTask_w,'MS_rep_categ_behav_noTask_wide.csv',row.names = 
 write.csv(df.C1.V.sum_rt_acc_l,'MS_rep_categ__rt_acc_long.csv',row.names = F)
 write.csv(df.v.sum_eff_all_w,'MS_rep_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
+
+# plot four scatter point.
+# p1: goodself-goodother (d in matching and acc in id-based)
+cor_p1 <- ggplot(df.v.sum_eff_all_w, aes(d_goodslf_goodoth, Id_ACC_goodslf_goodoth))+ 
+          geom_point() + 
+          labs(x = "Matching task (d prime)", y = "Identity-base Categorization task (accuracy)") +
+          geom_smooth(method="lm")
+
+# p2: goodself-goodother (RT in matching and RT in id-based)
+# p3: badself-badother (d in matching and acc in id-based)
+# p4: badself-badother (RT in matching and RT in id-based)
+
 ```
 
 ```{r preproc questionnair,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
