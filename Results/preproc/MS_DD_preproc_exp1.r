@@ -1,90 +1,69 @@
----
-title: "Data_Analysis_MS_ddm_exp1"
-author: "hcp"
-date: "2017-12"
-output: word_document
----
-<style type="text/css">
+### This script is used to preprocessing the data of the moral self experiment (DDM), experiment 1. 
+#
+### Hu, C-P., Lan, Y., Macrae, N., & Sui. J. (2019) 
+### Script author: Chuan-Peng Hu
+### Email = hcp4715@gmail.com       twitter= @hcp4715
+#
+### Input: 
+###      MS_matchTask_raw.csv -- raw data of matching task;
+###      MS_categTask_raw.csv -- raw data of categorization task;
+#
+### Output:
+###     df.M.hddm_m.csv  -- clean data of matching trials from matchign task, for HDDM analysis;
+###     df.M.hddm_nm.csv -- clean data of nonmatching trials from matchign task, for HDDM analysis;
+###     df.C.hddm_val    -- clean data of valence-based categorization trials, for HDDM analysis;
+###     df.C.hddm_id     -- clean data of identity-based categorization trials, for HDDM analysis;
+# 
+###     MS_categ_behav_wide.csv        -- cleaned summary results (wide-format) of categorization task for 
+###                                             statistical analysis in JASP
+###     MS_categ_behav_noTask_wide.csv -- cleaned summary results (wide-format) of categorization task (collapsed
+###                                             data from different task) for statistical analysis in JASP
+###     MS_categ__rt_acc_long.csv      -- cleaned summary results of RT and accuracy (long-format) of 
+###                                             categorization task, for JASP analysis
+###     MS_categ__rt_acc_noTask_long.csv -- cleaned summary reuslt of RT and accuracy (long-format) of categorization 
+###                                             task (collapsed data from different task) for JASP analysis
+###     MS_cross_taskeffect_wide.csv    -- cleaned summary results for cross task analysis
 
-body{ /* Normal  */
-   font-family: Times     
-   font-size: 12px;
-}
-td {  /* Table  */
-   font-size: 8px;
-}
-h1 { /* Header 1 */
- font-size: 28px;
-}
-h2 { /* Header 2 */
- font-size: 22px;
-}
-h3 { /* Header 3 */
- font-size: 18px;
- color: DarkBlue;
-}
-code.r{ /* Code block */
-  font-size: 10px;
-}
-pre { /* Code block */
-  font-size: 10px
-}
-</style>
+# ---------- Table of Contents ----------------------------------------------------------
+# ---------- 1. Initializing and prepare ------------------------------------------------
+# ---------- 2. Loading data and clean the data -----------------------------------------
+# ---------- 3. Matching task: prepare the Accuracy, d-prime and RT ---------------------
+# ---------- 4. Categorization task: prepare the Accuracy and RT ------------------------
+# ---------- 5. Questionnaire: prepare and save  ----------------------------------------
+# ---------- 6. Plots -------------------------------------------------------
 
 
-This script is used to preprocessing the data of the moral self experiment (DDM), experiment 1. 
+# ---------------------------------------------------------------------------------------
+# ---------- 1. Initializing and prepare               ----------------------------------
+# ---------------------------------------------------------------------------------------
 
-Input: 
-  MS_matchTask_raw.csv -- raw data of matching task;
-  MS_categTask_raw.csv -- raw data of categorization task;
-  
-Output:
-  df.M.hddm_m.csv  -- clean data of matching trials from matchign task, for HDDM analysis;
-  df.M.hddm_nm.csv -- clean data of nonmatching trials from matchign task, for HDDM analysis;
-  df.C.hddm_val    -- clean data of valence-based categorization trials, for HDDM analysis;
-  df.C.hddm_id     -- clean data of identity-based categorization trials, for HDDM analysis;
-  
-  MS_categ_behav_wide.csv -- cleaned summary results (wide-format) of categorization task for statistical analysis in JASP
-  MS_categ_behav_noTask_wide.csv -- cleaned summary results (wide-format) of categorization task (collapsed data from different task) for statistical analysis in JASP
-  MS_categ__rt_acc_long.csv -- cleaned summary results of RT and accuracy (long-format) of categorization task, for JASP analysis
-  MS_categ__rt_acc_noTask_long.csv -- cleaned summary reuslt of RT and accuracy (long-format) of categorization task (collapsed data from different task) for JASP analysis
-  MS_cross_taskeffect_wide.csv-- cleaned summary results for cross task analysis
-  
-  
-
-```{r Initializing, include=FALSE}
-source('Initial.r')
-curDir  <- getwd() # get the current working directory
-#curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # directory for preprocessing
-
+source('Initial.r')  # initializing (clear global environment; load packages and functions)
+curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
 rootDir <- gsub('.{7}$', '', curDir)                      # get the parental folder
-#rawDir <- paste(curDir,'/data/',sep = '')
-traDir <- paste(rootDir,'Traditional_Analysis',sep = '')  # folder for traditional analsysi
-ddmDir <- paste(rootDir,'HDDM',sep = '')                  # folder for DDM analysis
+traDir <- paste(rootDir,'traditional_analysis',sep = '')  # folder for traditional analsysi
+ddmDir <- paste(rootDir,'hddm',sep = '')                  # folder for DDM analysis
 exgDir <- paste(rootDir,'exGaussian',sep = '')            # folder for ExGaussian analysis
-```
 
+# ---------------------------------------------------------------------------------------
+# ---------- 2. Loading data and clean the data        ----------------------------------
+# ---------------------------------------------------------------------------------------
 
-```{r loadingData_MS_ddm_exp1,echo=FALSE,results='hide'}
-df.M <- read.csv("MS_matchTask_raw.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for matching task
-df.C <- read.csv("MS_categTask_raw.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for categorization task
+df.M.raw <- read.csv("MS_matchTask_raw.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for matching task
+df.C.raw <- read.csv("MS_categTask_raw.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for categorization task
 
-subTotl <- unique(df.M$Subject)
+subTotl <- unique(df.M.raw$Subject)
 
 # make the variables in a specified order
-df.M$Morality <- factor(df.M$Morality, levels = c("Good","Bad"))    
-df.M$Identity <- factor(df.M$Identity, levels = c("Self","Other"))  
-df.M$Match    <- factor(df.M$Match,    levels = c("match","nonmatch"))
-
-df.C$Morality <- factor(df.C$Morality, levels=c("Good","Bad"))    
-df.C$Identity <- factor(df.C$Identity, levels=c("Self","Other"))
-
-# Clear data for all following analysis
+df.M.raw$Morality <- factor(df.M.raw$Morality, levels=c("Good","Bad"))    
+df.M.raw$Identity <- factor(df.M.raw$Identity, levels=c("Self","Other"))  
+df.M.raw$Match    <- factor(df.M.raw$Match,    levels=c("match","nonmatch"))
+df.C.raw$Morality <- factor(df.C.raw$Morality, levels=c("Good","Bad"))    
+df.C.raw$Identity <- factor(df.C.raw$Identity, levels=c("Self","Other"))
 
 # Exclude Subject, criterion 1: procedure failure
 excldSub1 <- c("7","8","2027","7035")
-df.M <- df.M[!(df.M$Subject %in% excldSub1),]
-df.C <- df.C[!(df.C$Subject %in% excldSub1),]
+df.M <- df.M.raw[!(df.M.raw$Subject %in% excldSub1),]
+df.C <- df.C.raw[!(df.C.raw$Subject %in% excldSub1),]
 
 # exclude trials, criterio 1: no importance-based trials
 df.C <- df.C[df.C$Task != 'importance',]  # exclude the results from importance task, should be 17856 rows
@@ -92,15 +71,16 @@ df.C <- df.C[df.C$Task != 'importance',]  # exclude the results from importance 
 # exclude trials, criterio 2: practicing trials in matching task (first 48 trials)
 subNo <- unique(df.M$Subject)
 for (subj in subNo) {
-        if (exists('df.M.fm')){
-                df.tmp <- df.M[df.M$Subject == subj,]
-                df.tmp <- df.tmp[49:nrow(df.tmp),]
-                df.M.fm <- rbind(df.M.fm,df.tmp)
-        } else {
-                df.M.fm <- df.M[df.M$Subject == subj,]
-                df.M.fm <- df.M.fm[49:nrow(df.M.fm),]
-        }
+      if (exists('df.M.fm')){
+            df.tmp <- df.M[df.M$Subject == subj,]
+            df.tmp <- df.tmp[49:nrow(df.tmp),]
+            df.M.fm <- rbind(df.M.fm,df.tmp)
+      } else {
+            df.M.fm <- df.M[df.M$Subject == subj,]
+            df.M.fm <- df.M.fm[49:nrow(df.M.fm),]
+      }
 }   # df.M.fm should be 14880 rows
+
 df.M <- df.M.fm          # all the experimental trials
 rm(subNo,df.M.fm,df.tmp) # remove the intermedia variables
 
@@ -112,16 +92,20 @@ df.C.tmp <- df.C
 df.C.tmp$ACC[df.C.tmp$ACC == -1] <- 0 # this was not done in previous analysis, resulting the wronly excluded participants in registration
 
 # calculate the overall accuracy for matching task
-df.M.acc.g <-  ddply(df.M.tmp,.(Subject), summarise,
-                    N = length(ACC),
-                    countN = sum(ACC),
-                    ACC = sum(ACC)/length(ACC))
+df.M.acc.g <-  df.M.tmp %>%
+      dplyr::group_by(Subject) %>%
+      dplyr::summarise(N = length(ACC),
+                     countN = sum(ACC),
+                     ACC = sum(ACC)/length(ACC)) %>%
+      dplyr::ungroup()
 
 # calculate the overall accuracy for categorziation task
-df.C.acc.g <-  ddply(df.C.tmp,.(Subject), summarise,
-                    N = length(ACC),
-                    countN = sum(ACC),
-                    ACC = sum(ACC)/length(ACC))
+df.C.acc.g <-  df.C.tmp  %>%
+      dplyr::group_by(Subject) %>%
+      dplyr::summarise(N = length(ACC),
+                       countN = sum(ACC),
+                       ACC = sum(ACC)/length(ACC)) %>%
+      dplyr::ungroup()
 
 excldSub2.M <- df.M.acc.g$Subject[df.M.acc.g$ACC < 0.5]      # < 50% accuracy in matching task
 excldSub2.C <- df.C.acc.g$Subject[df.C.acc.g$ACC < 0.5]      # < 50% accuracy in categorization task
@@ -129,9 +113,7 @@ df.M.valid <- df.M[!(df.M$Subject %in% excldSub2.M),]        # exclude the inval
 df.C.valid <- df.C[!(df.C$Subject %in% excldSub2.M),]
 df.C.valid <- df.C.valid[!(df.C.valid$Subject %in% excldSub2.C),] # one participants were excluded for categorization task
 rm(df.M,df.C,df.M.tmp,df.C.tmp)
-```
 
-```{r clean the data,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
 # clean data for traditional analysis
 df.M1 <- df.M.valid
 df.C1 <- df.C.valid
@@ -150,43 +132,39 @@ df.C1.V        <- df.C1[!(df.C1$RT <= 200),]        # valid trial data for categ
 nrow(excld.trials.C) + nrow(df.C1.V) == nrow(df.C1) # if true, everything is ok
 
 ## Basic information of the data ####
-df.M1.T.basic.info <- df.M1 %>%
-  dplyr::select(Subject, Age, Gender) %>%
-  dplyr::distinct(Subject, Age, Gender) %>%
-  dplyr::summarise(N = length(Subject),
-                   N.f = sum(Gender == 'female'),
-                   N.m = sum(Gender == 'male'),
-                   MeanAge = round(mean(Age),2),
-                   SDAge   = round(sd(Age),2))
-#numT.subj <- nrow(df.M1.T.basic)
-#numT.female <- sum(df.M1.T.basic$Gender == 'female');
-#numT.male <- sum(df.M1.T.basic$Gender == 'male');
-#ageT.mean <- round(mean(df.M1.T.basic$Age),2);
-#ageT.std <- round(sd(df.M1.T.basic$Age),2);
+df.M1.T.basic.info <- df.M.raw %>%
+      dplyr::select(Subject, Age, Gender) %>%
+      dplyr::distinct(Subject, Age, Gender) %>%
+      dplyr::summarise(N = length(Subject),
+                       N.f = sum(Gender == 'female'),
+                       N.m = sum(Gender == 'male'),
+                       MeanAge = round(mean(Age),2),
+                       SDAge   = round(sd(Age),2))
+
 num.excldSub2.M <- length(unique(excldSub2.M))
 num.excldSub2.C <- length(unique(excldSub2.C))
 
 # valid data for matching task
 df.M1.V.basic.info <- df.M1.V %>%
-  dplyr::select(Subject, Age, Gender) %>%
-  dplyr::distinct(Subject, Age, Gender) %>%
-  dplyr::summarise(N = length(Subject),
-                   N.f = sum(Gender == 'female'),
-                   N.m = sum(Gender == 'male'),
-                   MeanAge = round(mean(Age),2),
-                   SDAge   = round(sd(Age),2))
+      dplyr::select(Subject, Age, Gender) %>%
+      dplyr::distinct(Subject, Age, Gender) %>%
+      dplyr::summarise(N = length(Subject),
+                       N.f = sum(Gender == 'female'),
+                       N.m = sum(Gender == 'male'),
+                       MeanAge = round(mean(Age),2),
+                       SDAge   = round(sd(Age),2))
 
 ratio.excld.trials.M <- nrow(excld.trials.M)/nrow(df.M1)
 
 # valid data for categorization task
 df.C1.V.basic.info <- df.C1.V %>%
-  dplyr::select(Subject, Age, Gender) %>%
-  dplyr::distinct(Subject, Age, Gender) %>%
-  dplyr::summarise(N = length(Subject),
-                   N.f = sum(Gender == 'female'),
-                   N.m = sum(Gender == 'male'),
-                   MeanAge = round(mean(Age),2),
-                   SDAge   = round(sd(Age),2))
+      dplyr::select(Subject, Age, Gender) %>%
+      dplyr::distinct(Subject, Age, Gender) %>%
+      dplyr::summarise(N = length(Subject),
+                       N.f = sum(Gender == 'female'),
+                       N.m = sum(Gender == 'male'),
+                       MeanAge = round(mean(Age),2),
+                       SDAge   = round(sd(Age),2))
 
 ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1)
 
@@ -198,28 +176,28 @@ ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1)
 # Note: we didn't remove the correct response less than 200 ms
 
 df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
-  dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-  dplyr::filter(Match == 'match') %>%
-  dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-  dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+      dplyr::filter(Match == 'match') %>%
+      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
+      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
 df.M.hddm_nm <- df.M.valid %>%
-  dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-  dplyr::filter(Match == 'nonmatch') %>%
-  dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-  dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+      dplyr::filter(Match == 'nonmatch') %>%
+      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
+      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
 df.C.hddm_val <- df.C.valid %>%
-  dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-  dplyr::filter(Task == 'Val') %>%                     # select the valence-based task
-  dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-  dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+      dplyr::filter(Task == 'Val') %>%                     # select the valence-based task
+      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
+      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
 df.C.hddm_id <- df.C.valid %>%
-  dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-  dplyr::filter(Task == 'Id') %>%                      # select the valence-based task
-  dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-  dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+      dplyr::filter(Task == 'Id') %>%                      # select the valence-based task
+      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
+      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
 setwd(ddmDir)
 write.csv(df.M.hddm_m,'MS_match_hddm.csv',row.names = F)
@@ -233,31 +211,26 @@ rm('df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id')
 ######## get the data file for exGaussian analysis  #######
 ###########################################################
 df.C.exG <- df.C.valid %>%
-  dplyr::filter(ACC == 1 & RT > .2)    # only for correct and valid trials
+      dplyr::filter(ACC == 1 & RT > .2)    # only for correct and valid trials
 
 setwd(exgDir)
 write.csv(df.C.exG,'MS_categ_exG.csv',row.names = F)
 rm(df.C.exG)
 
-```
-## Participants
-`r df.M1.T.basic.info$N` college students (`r df.M1.T.basic.info$N.f` female, age: `r df.M1.T.basic.info$MeanAge` $\pm$ `r df.M1.T.basic.info$SDAge`) participated in this experiment. All partcipants were right handed, and all had normal or corrected-to-normal vision. Informed consent was obtained from all partcipants prior to the experiment according to procedure approved by a local ethics committee. Data of `r length(excldSub1)` participants were excluded from matching task because of the procedura failure, and `r length(excldSub2.M)` of the participants data were excluded from the analysis for matching task and categorization task because of less than 50% overall accuracy for the matching task, leaving `r nrow(df.M1.V.basic)` participants (`r numV.female` female, age: `r ageV.mean` $\pm$ `r ageV.std` years) for matching task. `r length(excldSub2.C)` addtional participants's data in categorization task were excluded becasue of less than 50% accuracy for the categorization task,leaving `r nrow(df.C1.V.basic)` participants (`r numV.female.C` female, age: `r ageV.mean.C` $\pm$ `r ageV.std.C` years) for categorization task.
+# ---------------------------------------------------------------------------------------
+# -------- 3. Matching task: prepare the Accuracy, d-prime and RT -----------------------
+# ---------------------------------------------------------------------------------------
 
-
-##Results 
-For the learning phase, we excluded the first 24 trials, which is suppose to be the duration participants were practicing. Also, trials that responsed less than 200 ms or no-response was excluded.For the learning phase, `r round(ratio.excld.trials.M,4)` of the total trials was excluded, for the testing phase, `r round(ratio.excld.trials.C,4)` of the total trials was excluded.
-
-#### Analaysis of ACC and d prime
-```{r analyzing for match task, echo=FALSE, results='hide', warning=FALSE, message=FALSE}
 ####################################
 ###############   ACC    ###########
 ####################################
 df.M1.V.acc  <- df.M1.V %>%
-  dplyr::group_by(Subject, Match, Morality, Identity)  %>% 
-  dplyr::summarise(N = length(ACC),
-                   countN = sum(ACC),
-                   ACC = sum(ACC)/length(ACC))
+      dplyr::group_by(Subject, Match, Morality, Identity)  %>% 
+      dplyr::summarise(N = length(ACC),
+                       countN = sum(ACC),
+                       ACC = sum(ACC)/length(ACC))
 
+# transform to wide-format
 df.M1.V.acc_w <- dcast(df.M1.V.acc, Subject ~ Match + Morality + Identity,value.var = "ACC")
 
 # rename the column number
@@ -269,15 +242,15 @@ colnames(df.M1.V.acc_w)[2:9] <- paste("ACC", colnames(df.M1.V.acc_w[,2:9]), sep 
 # calculate the number of hit,CR,miss or FA 
 df.M1.V$sdt <- NA
 for (i in 1:nrow(df.M1.V)){
-        if (df.M1.V$ACC[i] == 1 & df.M1.V$Match[i] == "match"){
-                df.M1.V$sdt[i] <- "hit"
-        } else if (df.M1.V$ACC[i] == 1 & df.M1.V$Match[i] == "nonmatch" ){
-                df.M1.V$sdt[i] <- "CR"
-        } else if (df.M1.V$ACC[i] == 0 & df.M1.V$Match[i] == "match"){
-                df.M1.V$sdt[i] <- "miss"
-        } else if (df.M1.V$ACC[i] == 0 & df.M1.V$Match[i] == "nonmatch" ){
-                df.M1.V$sdt[i] <- "FA"
-        }
+      if (df.M1.V$ACC[i] == 1 & df.M1.V$Match[i] == "match"){
+            df.M1.V$sdt[i] <- "hit"
+      } else if (df.M1.V$ACC[i] == 1 & df.M1.V$Match[i] == "nonmatch" ){
+            df.M1.V$sdt[i] <- "CR"
+      } else if (df.M1.V$ACC[i] == 0 & df.M1.V$Match[i] == "match"){
+            df.M1.V$sdt[i] <- "miss"
+      } else if (df.M1.V$ACC[i] == 0 & df.M1.V$Match[i] == "nonmatch" ){
+            df.M1.V$sdt[i] <- "FA"
+      }
 }
 
 # calculate the number of each for each condition
@@ -293,15 +266,15 @@ df.M1.V.SDT_w$faR <- df.M1.V.SDT_w$FA/(df.M1.V.SDT_w$FA + df.M1.V.SDT_w$CR)
 
 # standardized way to deal with the extreme values
 for (i in 1:nrow(df.M1.V.SDT_w)){
-        if (df.M1.V.SDT_w$hitR[i] == 1){
-                df.M1.V.SDT_w$hitR[i] <- 1 - 1/(2*(df.M1.V.SDT_w$hit[i] + df.M1.V.SDT_w$miss[i]))
-        }
+      if (df.M1.V.SDT_w$hitR[i] == 1){
+            df.M1.V.SDT_w$hitR[i] <- 1 - 1/(2*(df.M1.V.SDT_w$hit[i] + df.M1.V.SDT_w$miss[i]))
+      }
 }
 
 for (i in 1:nrow(df.M1.V.SDT_w)){
-        if (df.M1.V.SDT_w$faR[i] == 0){
-                df.M1.V.SDT_w$faR[i] <- 1/(2*(df.M1.V.SDT_w$FA[i] + df.M1.V.SDT_w$CR[i]))
-        }
+      if (df.M1.V.SDT_w$faR[i] == 0){
+            df.M1.V.SDT_w$faR[i] <- 1/(2*(df.M1.V.SDT_w$FA[i] + df.M1.V.SDT_w$CR[i]))
+      }
 }
 
 # calculate the d prime for each condition
@@ -363,15 +336,20 @@ write.csv(df.M1.V.sum_w,'MS_match_behav_wide.csv',row.names = F)
 write.csv(df.M1.V.SDT_l,'MS_match__dprime_long.csv',row.names = F)
 write.csv(df.M1.V.sum_rt_acc_l,'MS_match__rt_acc_long.csv',row.names = F)
 setwd(curDir)
-```
 
-```{r preproc MS_categ_task,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
 
+# ---------------------------------------------------------------------------------------
+# ---------- 4. Categorization task: prepare the Accuracy and RT ------------------------
+# ---------------------------------------------------------------------------------------
+
+####################################
+###############   ACC    ###########
+####################################
 
 df.C1.V.acc <- plyr::ddply(df.C1.V,.(Subject,Age, Gender, Task,Morality,Identity), summarise,
-                    N = length(ACC),
-                    countN = sum(ACC),
-                    ACC = sum(ACC)/length(ACC))
+                           N = length(ACC),
+                           countN = sum(ACC),
+                           ACC = sum(ACC)/length(ACC))
 
 # wide-format
 df.C1.V.acc_w  <- dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity ,value.var = "ACC")
@@ -380,9 +358,9 @@ colnames(df.C1.V.acc_w)[2:9] <- paste("ACC", colnames(df.C1.V.acc_w[,2:9]), sep 
 
 # combing data from diff task for analyzing the interaction btw val and id
 df.C1.V.acc_noTask  <-  plyr::ddply(df.C1.V,.(Subject, Morality, Identity), summarise,
-                    N = length(ACC),
-                    countN = sum(ACC),
-                    ACC = sum(ACC)/length(ACC))
+                                    N = length(ACC),
+                                    countN = sum(ACC),
+                                    ACC = sum(ACC)/length(ACC))
 
 df.C1.V.acc_noTask_w <- dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
 # rename the column number
@@ -394,7 +372,10 @@ df.C1.V.acc_noTask_w$good_bad_oth <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.
 df.C1.V.acc_noTask_w$slf_oth_good <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Good_Other
 df.C1.V.acc_noTask_w$slf_oth_bad <- df.C1.V.acc_noTask_w$ACC_Bad_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
 
-## preprocessing RT data
+####################################
+###############   RT     ###########
+####################################
+
 df.C1.V.RT <- df.C1.V[df.C1.V$ACC == 1,]  # exclued inaccurate data
 df.C1.V.RT.subj <- summarySEwithin(df.C1.V.RT,measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
 df.C1.V.RT.subj_w <- dcast(df.C1.V.RT.subj, Subject ~ Task + Morality + Identity ,value.var = "RT") 
@@ -414,6 +395,9 @@ colnames(df.C1.V.RT.subj_noTask_w)[2:5] <- paste("RT", colnames(df.C1.V.RT.subj_
 df.C1.V.sum_w <- merge(df.C1.V.acc_w,  df.C1.V.RT.subj_w,by = "Subject")
 df.C1.V.sum_noTask_w <- merge(df.C1.V.acc_noTask_w,  df.C1.V.RT.subj_noTask_w,by = "Subject")
 
+####################################
+## effects in categorization  ######
+####################################
 # calculate the effect of self-ref and valence
 df.C1.v.sum_eff_w <- data.frame(df.C1.V.sum_w[,c('Subject')])
 colnames(df.C1.v.sum_eff_w) <- 'Subject'
@@ -462,9 +446,11 @@ write.csv(df.C1.V.sum_rt_acc_l,'MS_categ__rt_acc_long.csv',row.names = F)
 write.csv(df.C1.V.sum_rt_acc_noTask_l,'MS_categ__rt_acc_noTask_long.csv',row.names = F)
 write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
-```
 
-```{r preproc questionnair,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# ---------------------------------------------------------------------------------------
+# ------------ 5. Questionnaire: prepare and save  --------------------------------------
+# ---------------------------------------------------------------------------------------
+
 # load the data
 df.quest <- read.csv("exp7_survey_monkey_raw_c.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
 
@@ -509,9 +495,8 @@ print(c(moralIdinOmega$omega_h,moralIdinOmega$omega.tot))
 moralIdinScore <- psych::scoreItems(moralIdinKeys2,df.quest[,moralIdinNames], totals = F, min = -2, max = 2)
 df.quest$moralIdinScore <- moralIdinScore$scores
 
-
 moralIdexNames <- c("MoralId_3","MoralId_4","MoralId_6",
-                  "MoralId_7","MoralId_9","MoralId_15")
+                    "MoralId_7","MoralId_9","MoralId_15")
 moralIdexKeys <- c(1,2,3,4,5,6)
 moralIdexAlpha <- psych::alpha(df.quest[,moralIdexNames],keys = moralIdexKeys) # alpha
 print(moralIdexAlpha$total[2])
@@ -530,25 +515,20 @@ tmp <- tmp[complete.cases(tmp),]
 setwd(traDir)
 write.csv(tmp,'MS_cross_taskeffect_wide_w_scale.csv',row.names = F)
 setwd(curDir)
-```
 
-```{r plot_match_data,echo=FALSE,warning=FALSE, message=FALSE}
+# ---------------------------------------------------------------------------------------
+# ------------ 6. Plots  ----------------------------------------------------------------
+# ---------------------------------------------------------------------------------------
+
+## Matching task, plots are save to 'saveDir'
 Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.C1.V.sum_rt_acc_l)
-```
 
-```{r plot_categ_data,echo=FALSE,warning=FALSE, message=FALSE}
 # plot id-based data
 CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', df.C1.V.sum_rt_acc_l)
 
 # plot val-based data
 CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'val', df.C1.V.sum_rt_acc_l)
 
-```
-
-```{r plot_noTask_data,echo=FALSE,warning=FALSE, message=FALSE}
-# plot ACC
+# plot the categorization task (collapsed different tasks)
 CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
-#MSplots(saveDir = traDir, curDir = curDir, task = 'categ',type = 'ACC', inData = df.C1.V.sum_rt_acc_noTask_l)
-# plot RT
-#MSplots(saveDir = traDir, curDir = curDir, task = 'categ',type = 'RT', inData = df.C1.V.sum_rt_acc_noTask_l)
-```
+
