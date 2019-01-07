@@ -37,6 +37,9 @@
 # ---------- 1. Initializing and prepare               ----------------------------------
 # ---------------------------------------------------------------------------------------
 
+
+curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
+setwd(curDir)
 source('Initial.r')  # initializing (clear global environment; load packages and functions)
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
 rootDir <- gsub('.{7}$', '', curDir)                      # get the parental folder
@@ -370,7 +373,7 @@ colnames(df.C1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.C1.V.acc_noTask_
 df.C1.V.acc_noTask_w$good_bad_slf <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Self
 df.C1.V.acc_noTask_w$good_bad_oth <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
 df.C1.V.acc_noTask_w$slf_oth_good <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Good_Other
-df.C1.V.acc_noTask_w$slf_oth_bad <- df.C1.V.acc_noTask_w$ACC_Bad_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
+df.C1.V.acc_noTask_w$slf_oth_bad  <- df.C1.V.acc_noTask_w$ACC_Bad_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
 
 ####################################
 ###############   RT     ###########
@@ -519,7 +522,9 @@ setwd(curDir)
 # ---------------------------------------------------------------------------------------
 # ------------ 6. Plots  ----------------------------------------------------------------
 # ---------------------------------------------------------------------------------------
-
+# plots here are made by pre-defined functions in initial.r:
+#     "Mplots" -- plot for matching task
+#     "CAplots" -- plot for categorization task
 ## Matching task, plots are save to 'saveDir'
 Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.C1.V.sum_rt_acc_l)
 
