@@ -7,18 +7,18 @@
 #  hcp     20/02/2017        used for the final data
 #  hcp     08/04/2017        save to pdf
 #  hcp     15/07/2018        update to latest format and data
+#  hcp     Jan 09, 2019      delete extra comments and prepared to open
 
-#### This part of the code is preparation ####
-source('Initial.r')
-library(retimes)
+########## preparation #################################################
+# define directories
+curDir <- dirname(rstudioapi::getSourceEditorContext()$path) #Get the directory ofcurrent script
+setwd(curDir)
 
-############## load and clear data ##########################
-# read data from 6 participants
-df.exG <- read.csv("MS_categ_exG.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) 
-#df.exG$moral[df.exG$moral=='moral'] <- 'good' 
-#df.exG$moral[df.exG$moral=='immoral'] <- 'bad'
-df.C_sum <- summarySEwithin(df.exG,measurevar = 'RT',withinvars = c('Subject','Task','Morality','Identity'),idvar = 'Subject')
+source('Initial_exgaussian.r')  # run the initilization code
+library(retimes)     # load the package for ex-gaussian
 
+########## load and clear data ########################################
+df.exG <- utils::read.csv("MS_categ_exG.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) 
 
 # render the numeric column
 cols.num <- c("RT","ACC")
@@ -29,27 +29,13 @@ sapply(df.exG,class)
 
 rm(cols.num) # remove temporary variables
 
-##########begin analysis#############################################
+########## begin analysis#############################################
+nSub <- length(unique(df.exG$Subject))             # number of subjects, save for later for loop
+nTask <- length(unique(df.exG$Task))               # number of tasks, save for later for loop
+nIdentity <- length(unique(df.exG$Identity))       # number of identies, save for later for loop
+nMorality <- length(unique(df.exG$Morality))       # number of moral levels, save for later for loop
 
-##  extract the trials with correct response
-#datT.validRT <- df.exG[df.exG$response == 1 & df.exG$rt > 0.2,]  # RT > 200ms for accurate trials
-
-# rename the colnames
-#colnames(datT.validRT) <- c('Subject','Task','Morality','Identity','RT','ACC')
-
-## analyzing the distribution parameters for correct trials
-
-RTsubId <- unique(df.exG$Subject)  # all unique subject's ID
-RTtask <- unique(df.exG$Task)        # all unique tasks
-RTidentity <- unique(df.exG$Identity)# all unique Identities, key independent varialbe
-RTMorality <- unique(df.exG$Morality)# all unique Moral valence level, key independent variable
-
-nSub <- length(RTsubId)          # number of subjects, save for later for loop
-nTask <- length(RTtask)          # number of tasks, save for later for loop
-nIdentity <- length(RTidentity)  # number of identies, save for later for loop
-nMorality <- length(RTMorality)  # number of moral levels, save for later for loop
-
-rowNum <- nSub*nTask*nIdentity*nMorality # predefine the number of rows for saving data
+rowNum <- nSub*nTask*nIdentity*nMorality           # predefine the number of rows for saving data
 
 # define the colnames and rows for the results dataframe
 trialNum <- rep(-1,rowNum)
@@ -115,47 +101,30 @@ for (ii in 1:nSub){
         }
 }
 
-#rm(RTidentity,RTMorality,RTsubId,RTtask,index,exGassparams) # remove the temporary variables
-
 # remove invalid data in results of params
 results.params_valid <- results.params[results.params$trialNum > 36,]
 valid_condition <- count(results.params_valid,'subId') # check if there some invalid data 
-results.params_final <- results.params_valid[-which(results.params_valid$subId %in% valid_condition[valid_condition$freq < 8,]$subId),]
-
-# add one factor to params data
-# results.params$condition[results.params$Identity == "self" & results.params$Morality == "moral"] <- "moralself"
-# results.params$condition[results.params$Identity == "self" & results.params$Morality == "immoral"] <- "immoralself"
-# results.params$condition[results.params$Identity == "other" & results.params$Morality == "moral"] <- "moralother"
-# results.params$condition[results.params$Identity == "other" & results.params$Morality == "immoral"] <- "immoralother"
-# results.params$condition <- factor(results.params$condition, levels=c("moralself", "immoralself","moralother","immoralother")) # specify the order of x-axis
-# results.params$Task <- factor(results.params$Task, levels=c("identity", "morality")) # specify the order of x-axis
-#results.params$Task <- factor(results.params$Task, levels=c("self", "moral","importance")) # specify the order of x-axis
-
-# params1  <- results.params_valid[results.params_valid$Task != "importance",] # separate dataset for firs two tasks
-# params2 <- results.params[results.params$Task == "importance",] # dataset for impor
-
-params1 <- results.params_final
+params1 <- results.params_valid[-which(results.params_valid$subId %in% valid_condition[valid_condition$freq < 8,]$subId),]
 
 # save to csv
 write.csv(params1,'ExGaussian_params_2.csv',row.names = FALSE)
-#params1 <- read.csv('ExGaussian_params.csv',header = TRUE, sep = ',', stringsAsFactors=FALSE)
 
 # transfer to wide-format
 # mu
-params_wide_mu <- dcast(params1,subId ~ Task + Identity + Morality, value.var = "Pmu")
+params_wide_mu <- reshape2::dcast(params1,subId ~ Task + Identity + Morality, value.var = "Pmu")
 # sigma
-params_wide_sigma <- dcast(params1,subId ~ Task + Identity + Morality, value.var = "Psigma")
+params_wide_sigma <- reshape2::dcast(params1,subId ~ Task + Identity + Morality, value.var = "Psigma")
 # tau
-params_wide_tau <- dcast(params1,subId ~ Task + Identity + Morality, value.var = "Ptau")
+params_wide_tau <- reshape2::dcast(params1,subId ~ Task + Identity + Morality, value.var = "Ptau")
 # save the data
 write.csv(params_wide_mu,'ExGaussian_params_wide_mu.csv',row.names = FALSE)
 write.csv(params_wide_sigma,'ExGaussian_params_wide_sigma.csv',row.names = FALSE)
 write.csv(params_wide_tau,'ExGaussian_params_wide_tau.csv',row.names = FALSE)
 
 # analysis of params
-Pmu_anova <- ezANOVA(params1,dv = Pmu, wid = subId, within=.(Task,Morality,Identity), type=3)
-Psigma_anova <- ezANOVA(params1,dv = Psigma, wid = subId, within=.(Task,Morality,Identity), type=3)
-Ptau_anova <- ezANOVA(params1,dv = Ptau, wid = subId, within=.(Task,Morality,Identity), type=3)
+Pmu_anova    <- ez::ezANOVA(params1,dv = Pmu, wid = subId, within=.(Task,Morality,Identity), type=3)
+Psigma_anova <- ez::ezANOVA(params1,dv = Psigma, wid = subId, within=.(Task,Morality,Identity), type=3)
+Ptau_anova   <- ez::ezANOVA(params1,dv = Ptau, wid = subId, within=.(Task,Morality,Identity), type=3)
 
 # calculate the summary data for each parameter
 Pmu.sum1 <- summarySEwithin(params1,measurevar = 'Pmu',withinvars = c('Task','Identity','Morality'),idvar = 'subId')
@@ -177,7 +146,7 @@ params_sigma_noTask <- summarySEwithin(params1,measurevar = 'Psigma',withinvars 
 params_wide_sigma_noTask <- dcast(params_sigma_noTask,subId ~ Identity + Morality, value.var = "Psigma")
 write.csv(params_wide_sigma_noTask,'ExGaussian_params_wide_sigma_noTask.csv',row.names = FALSE)
 
-Psigma_anova_noTask <- ezANOVA(params_sigma_noTask,dv = Psigma, wid = subId, within=.(Morality,Identity), type=3)
+Psigma_anova_noTask <- reshape2::ezANOVA(params_sigma_noTask,dv = Psigma, wid = subId, within=.(Morality,Identity), type=3)
 Psigma_anova_noTask.sum <- summarySEwithin(params1,measurevar = 'Psigma',withinvars = c('Identity','Morality'),idvar = 'subId')
 Psigma_anova_noTask.sum$Identity <- factor(Psigma_anova_noTask.sum$Identity,levels = c('Self','Other'))
 Psigma_anova_noTask.sum$Morality <- factor(Psigma_anova_noTask.sum$Morality,levels = c('Good','Bad'))

@@ -271,45 +271,42 @@ hddm.analyze.plot_posterior_nodes([t_GoodSelf_id,t_BadSelf_id, t_GoodOther_id, t
 plt.savefig('exp7_T_vzt_id_t.pdf') 
 
 print("P(v_M_GoodSelf > v_M_BadSelf ) = ", (v_GoodSelf_val.trace() > v_BadSelf_val.trace()).mean())       # 0.8383
-print("P(v_M_GoodSelf > v_M_GoodOther ) = ", (v_GoodSelf_val.trace() > v_GoodOther_val.trace()).mean())   # 0.8427
-print("P(v_M_GoodSelf > v_M_BadOther ) = ", (v_GoodSelf_val.trace() > v_BadOther_val.trace()).mean())     # 0.7854
-print("P(v_M_BadSelf > v_M_BadOther ) = ", (v_BadSelf_val.trace() > v_BadOther_val.trace()).mean())       # 0.4202
 print("P(v_M_GoodOther > v_M_BadOther ) = ", (v_GoodOther_val.trace() > v_BadOther_val.trace()).mean())   # 0.4204
-print("P(v_M_BadSelf > v_M_GoodOther ) = ", (v_BadSelf_val.trace() > v_GoodOther_val.trace()).mean())     # 0.5027
+print("P(v_M_GoodSelf > v_M_GoodOther ) = ", (v_GoodSelf_val.trace() > v_GoodOther_val.trace()).mean())   # 0.8427
+print("P(v_M_BadSelf > v_M_BadOther ) = ", (v_BadSelf_val.trace() > v_BadOther_val.trace()).mean())       # 0.4202
+#print("P(v_M_BadSelf > v_M_GoodOther ) = ", (v_BadSelf_val.trace() > v_GoodOther_val.trace()).mean())     # 
+#print("P(v_M_GoodSelf > v_M_BadOther ) = ", (v_GoodSelf_val.trace() > v_BadOther_val.trace()).mean())     # 
 
 print("P(v_I_GoodSelf > v_I_BadSelf ) = ", (v_GoodSelf_id.trace() > v_BadSelf_id.trace()).mean())         # 0.9788
-print("P(v_I_GoodSelf > v_I_GoodOther ) = ", (v_GoodSelf_id.trace() > v_GoodOther_id.trace()).mean())     # 0.9898
-print("P(v_I_GoodSelf > v_I_BadOther ) = ", (v_GoodSelf_id.trace() > v_BadOther_id.trace()).mean())       # 0.9103
-print("P(v_I_BadSelf > v_I_BadOther ) = ", (v_BadSelf_id.trace() > v_BadOther_id.trace()).mean())         # 0.247
 print("P(v_I_GoodOther > v_I_BadOther ) = ", (v_GoodOther_id.trace() > v_BadOther_id.trace()).mean())     # 0.164
-print("P(v_I_BadSelf > v_I_GoodOther ) = ", (v_BadSelf_id.trace() > v_GoodOther_id.trace()).mean())       # 0.6113
+print("P(v_I_GoodSelf > v_I_GoodOther ) = ", (v_GoodSelf_id.trace() > v_GoodOther_id.trace()).mean())     # 0.9898
+print("P(v_I_BadSelf > v_I_BadOther ) = ", (v_BadSelf_id.trace() > v_BadOther_id.trace()).mean())         # 0.247
+#print("P(v_I_BadSelf > v_I_GoodOther ) = ", (v_BadSelf_id.trace() > v_GoodOther_id.trace()).mean())       # 
+#print("P(v_I_GoodSelf > v_I_BadOther ) = ", (v_GoodSelf_id.trace() > v_BadOther_id.trace()).mean())       # 
 
 # compare the initial bias 
-print("P(z_M_GoodSelf > z_M_BadSelf ) = ", (z_GoodSelf_val.trace() > z_BadSelf_val.trace()).mean())       # 0.232
-print("P(z_M_GoodSelf > z_M_GoodOther ) = ", (z_GoodSelf_val.trace() > z_GoodOther_val.trace()).mean())         # 0.2284 
-print("P(z_M_GoodSelf > z_M_BadOther ) = ", (z_GoodSelf_val.trace() > z_BadOther_val.trace()).mean())     # 0.607 
-print("P(z_M_BadSelf > z_M_BadOther ) = ", (z_BadSelf_val.trace() > z_BadOther_val.trace()).mean()) # 0.8645 
-print("P(z_M_GoodOther > z_M_BadOther ) = ", (z_GoodOther_val.trace() > z_BadOther_val.trace()).mean())   # 0.8404 
-print("P(z_M_BadSelf > z_M_GoodOther ) = ", (z_BadSelf_val.trace() > z_GoodOther_val.trace()).mean())     # 0.5014 
+print("P(z_M_GoodSelf > z_M_BadSelf ) = ", (z_GoodSelf_val.trace() > z_BadSelf_val.trace()).mean())       # 0.4588
+print("P(z_M_GoodOther > z_M_BadOther ) = ", (z_GoodOther_val.trace() > z_BadOther_val.trace()).mean())   # 0.9024
+print("P(z_M_GoodSelf > z_M_GoodOther ) = ", (z_GoodSelf_val.trace() > z_GoodOther_val.trace()).mean())   # 0.2213 
+print("P(z_M_BadSelf > z_M_BadOther ) = ", (z_BadSelf_val.trace() > z_BadOther_val.trace()).mean())       # 0.7647 
  
-print("P(z_I_GoodSelf < z_I_BadSelf ) = ", (z_GoodSelf_id.trace() < z_BadSelf_id.trace()).mean())         # 0.9927
-print("P(z_I_GoodSelf < z_I_GoodOther ) = ", (z_GoodSelf_id.trace() < z_GoodOther_id.trace()).mean())           # 0.997 
-print("P(z_I_GoodSelf < z_I_BadOther ) = ", (z_GoodSelf_id.trace() < z_BadOther_id.trace()).mean())       # 0.9901 
-print("P(z_I_BadSelf > z_I_BadOther ) = ", (z_BadSelf_id.trace() > z_BadOther_id.trace()).mean())   # 0.5839
-print("P(z_I_GoodOther > z_I_BadOther ) = ", (z_GoodOther_id.trace() > z_BadOther_id.trace()).mean())     # 0.6817
-print("P(z_I_BadSelf > z_I_GoodOther ) = ", (z_BadSelf_id.trace() > z_GoodOther_id.trace()).mean())       # 0.4158
+print("P(z_I_GoodSelf < z_I_BadSelf ) = ", (z_GoodSelf_id.trace() < z_BadSelf_id.trace()).mean())         # 0.989
+print("P(z_I_GoodOther > z_I_BadOther ) = ", (z_GoodOther_id.trace() > z_BadOther_id.trace()).mean())     # 0.521
+print("P(z_I_GoodSelf < z_I_GoodOther ) = ", (z_GoodSelf_id.trace() < z_GoodOther_id.trace()).mean())     # 0.982 
+print("P(z_I_BadSelf > z_I_BadOther ) = ", (z_BadSelf_id.trace() > z_BadOther_id.trace()).mean())         # 0.6298
+#print("P(z_I_BadSelf > z_I_GoodOther ) = ", (z_BadSelf_id.trace() > z_GoodOther_id.trace()).mean())       # 
 
 # compare the non-decision time
-print("P(t_M_GoodSelf > t_M_BadSelf ) = ", (t_GoodSelf_val.trace() > t_BadSelf_val.trace()).mean())       # 0.1693 
-print("P(t_M_GoodSelf > t_M_GoodOther ) = ", (t_GoodSelf_val.trace() > t_GoodOther_val.trace()).mean())         # 0.3952
-print("P(t_M_GoodSelf > t_M_BadOther ) = ", (t_GoodSelf_val.trace() > t_BadOther_val.trace()).mean())     # 0.1235 
-print("P(t_M_BadSelf > t_M_BadOther ) = ", (t_BadSelf_val.trace() > t_BadOther_val.trace()).mean()) # 0.4326
-print("P(t_M_GoodOther > t_M_BadOther ) = ", (t_GoodOther_val.trace() > t_BadOther_val.trace()).mean())   # 0.1937 
-print("P(t_M_BadSelf > t_M_GoodOther ) = ", (t_BadSelf_val.trace() > t_GoodOther_val.trace()).mean())     # 0.7527
+print("P(t_M_GoodSelf > t_M_BadSelf ) = ", (t_GoodSelf_val.trace() > t_BadSelf_val.trace()).mean())       # 0.241 
+print("P(t_M_GoodOther > t_M_BadOther ) = ", (t_GoodOther_val.trace() > t_BadOther_val.trace()).mean())   # 0.483 
+print("P(t_M_GoodSelf > t_M_GoodOther ) = ", (t_GoodSelf_val.trace() > t_GoodOther_val.trace()).mean())   # 0.2061
+#print("P(t_M_GoodSelf > t_M_BadOther ) = ", (t_GoodSelf_val.trace() > t_BadOther_val.trace()).mean())    #  
+print("P(t_M_BadSelf > t_M_BadOther ) = ", (t_BadSelf_val.trace() > t_BadOther_val.trace()).mean())       # 0.4284
+#print("P(t_M_BadSelf > t_M_GoodOther ) = ", (t_BadSelf_val.trace() > t_GoodOther_val.trace()).mean())     # 0.7527
  
-print("P(t_I_GoodSelf > t_I_BadSelf ) = ", (t_GoodSelf_id.trace() > t_BadSelf_id.trace()).mean())         # 0.5858
-print("P(t_I_GoodSelf > t_I_GoodOther ) = ", (t_GoodSelf_id.trace() > t_GoodOther_id.trace()).mean())           # 0.383 
-print("P(t_I_GoodSelf > t_I_BadOther ) = ", (t_GoodSelf_id.trace() > t_BadOther_id.trace()).mean())       # 0.2253 
-print("P(t_I_BadSelf > t_I_BadOther ) = ", (t_BadSelf_id.trace() > t_BadOther_id.trace()).mean())   # 0.1704 
-print("P(t_I_GoodOther > t_I_BadOther ) = ", (t_GoodOther_id.trace() > t_BadOther_id.trace()).mean())     # 0.3312 
-print("P(t_I_BadSelf > t_I_GoodOther ) = ", (t_BadSelf_id.trace() > t_GoodOther_id.trace()).mean())       # 0.3036 
+print("P(t_I_GoodSelf > t_I_BadSelf ) = ", (t_GoodSelf_id.trace() > t_BadSelf_id.trace()).mean())         # 0.773
+print("P(t_I_GoodOther > t_I_BadOther ) = ", (t_GoodOther_id.trace() > t_BadOther_id.trace()).mean())     # 0.385 
+print("P(t_I_GoodSelf > t_I_GoodOther ) = ", (t_GoodSelf_id.trace() > t_GoodOther_id.trace()).mean())     # 0.646 
+#print("P(t_I_GoodSelf > t_I_BadOther ) = ", (t_GoodSelf_id.trace() > t_BadOther_id.trace()).mean())      #  
+print("P(t_I_BadSelf > t_I_BadOther ) = ", (t_BadSelf_id.trace() > t_BadOther_id.trace()).mean())         # 0.250 
+#print("P(t_I_BadSelf > t_I_GoodOther ) = ", (t_BadSelf_id.trace() > t_GoodOther_id.trace()).mean())      # 

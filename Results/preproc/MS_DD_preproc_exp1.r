@@ -42,10 +42,10 @@ curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the direct
 setwd(curDir)
 source('Initial.r')  # initializing (clear global environment; load packages and functions)
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
-rootDir <- gsub('.{7}$', '', curDir)                      # get the parental folder
-traDir <- paste(rootDir,'traditional_analysis',sep = '')  # folder for traditional analsysi
-ddmDir <- paste(rootDir,'hddm',sep = '')                  # folder for DDM analysis
-exgDir <- paste(rootDir,'exGaussian',sep = '')            # folder for ExGaussian analysis
+rootDir <- gsub('.{7}$', '', curDir)                            # get the parental folder
+traDir <- paste(rootDir,'traditional_analysis',sep = '')        # folder for traditional analsysi
+ddmDir <- paste(rootDir,'hddm',sep = '')                        # folder for DDM analysis
+exgDir <- paste(rootDir,'exGaussian',sep = '')                  # folder for ExGaussian analysis
 
 # ---------------------------------------------------------------------------------------
 # ---------- 2. Loading data and clean the data        ----------------------------------
