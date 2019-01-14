@@ -37,7 +37,6 @@
 # ---------- 1. Initializing and prepare               ----------------------------------
 # ---------------------------------------------------------------------------------------
 
-
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
 setwd(curDir)
 source('Initial.r')  # initializing (clear global environment; load packages and functions)
@@ -54,22 +53,30 @@ exgDir <- paste(rootDir,'exGaussian',sep = '')                  # folder for ExG
 df.M.raw <- read.csv("MS_matchTask_raw.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for matching task
 df.C.raw <- read.csv("MS_categTask_raw.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) # data for categorization task
 
-subTotl <- unique(df.M.raw$Subject)
+#subTotl <- unique(df.M.raw$Subject)
 
 # make the variables in a specified order
-df.M.raw$Morality <- factor(df.M.raw$Morality, levels=c("Good","Bad"))    
-df.M.raw$Identity <- factor(df.M.raw$Identity, levels=c("Self","Other"))  
-df.M.raw$Match    <- factor(df.M.raw$Match,    levels=c("match","nonmatch"))
-df.C.raw$Morality <- factor(df.C.raw$Morality, levels=c("Good","Bad"))    
-df.C.raw$Identity <- factor(df.C.raw$Identity, levels=c("Self","Other"))
+df.M.raw <- df.M.raw %>%
+   dplyr::rename(ACC = Accuracy, Subject = SubjectID) %>%                                         # rename to ACC   
+   dplyr::mutate(Morality = ifelse(Morality == "moral", 'Good','Bad')) %>%   # change condition name
+   dplyr::mutate(Identity = ifelse(Identity == "self", 'Self','Other')) %>%  # change condition name
+   dplyr::mutate(Morality = factor(Morality, levels = c("Good","Bad")),      # to factor
+                 Identity = factor(Identity, levels=c("Self","Other")),
+                 Match    = factor(Match,    levels=c("match","nonmatch")))
+
+df.C.raw <- df.C.raw %>%
+   dplyr::filter(Task == 'self' | Task == 'moral') %>%  # exclude trials, criterio 1: no importance-based trials
+   dplyr::rename(ACC = Accuracy, Subject = SubjectID) %>%                                         # rename to ACC   
+   dplyr::mutate(Morality = ifelse(Morality == "moral", 'Good','Bad')) %>%   # change condition name
+   dplyr::mutate(Identity = ifelse(Identity == "self", 'Self','Other')) %>%  # change condition name
+   dplyr::mutate(Task     = ifelse(Task     == "self", 'Id','Val')) %>%          # change condition name
+   dplyr::mutate(Morality = factor(Morality, levels = c("Good","Bad")),      # to factor
+                 Identity = factor(Identity, levels=c("Self","Other")))
 
 # Exclude Subject, criterion 1: procedure failure
 excldSub1 <- c("7","8","2027","7035")
 df.M <- df.M.raw[!(df.M.raw$Subject %in% excldSub1),]
 df.C <- df.C.raw[!(df.C.raw$Subject %in% excldSub1),]
-
-# exclude trials, criterio 1: no importance-based trials
-df.C <- df.C[df.C$Task != 'importance',]  # exclude the results from importance task, should be 17856 rows
 
 # exclude trials, criterio 2: practicing trials in matching task (first 48 trials)
 subNo <- unique(df.M$Subject)
@@ -89,10 +96,11 @@ rm(subNo,df.M.fm,df.tmp) # remove the intermedia variables
 
 # exlude subject criterion 2: less than 50% overall accuracy
 # re-code trials without response as incorrect
+## NOTE: this was not done in previous analysis, resulting the wronly excluded participants in registration
 df.M.tmp <- df.M
 df.M.tmp$ACC[df.M.tmp$ACC == -1] <- 0
 df.C.tmp <- df.C
-df.C.tmp$ACC[df.C.tmp$ACC == -1] <- 0 # this was not done in previous analysis, resulting the wronly excluded participants in registration
+df.C.tmp$ACC[df.C.tmp$ACC == -1] <- 0 
 
 # calculate the overall accuracy for matching task
 df.M.acc.g <-  df.M.tmp %>%
@@ -179,10 +187,20 @@ ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1)
 # Note: we didn't remove the correct response less than 200 ms
 
 df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
-      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-      dplyr::filter(Match == 'match') %>%
-      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+   dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+   dplyr::filter(Match == 'match') %>%
+   dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+
+#df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
+#      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+#      dplyr::filter(Match == 'match') %>%
+#      dplyr::select(Subject,Morality,Identity,RT,Match, ResponseKey, matchKey,ACC) %>%  # select column
+#      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, stim = Match, response = ResponseKey, rt = RT) %>% # rename column
+#      dplyr::mutate(stim = ifelse(stim == "match", 1, 0),
+#                    response = ifelse(response == matchKey, 1, 0)) %>%
+#      dplyr::select(subj_idx, val, id, stim, response, rt)
+   
 
 df.M.hddm_nm <- df.M.valid %>%
       dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
@@ -190,25 +208,34 @@ df.M.hddm_nm <- df.M.valid %>%
       dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
       dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
-df.C.hddm_val <- df.C.valid %>%
-      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-      dplyr::filter(Task == 'Val') %>%                     # select the valence-based task
-      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+##################################################
+### preparing the data for Stimuli-code hddm  ####
+##################################################
+# for valence based, stim: moral = 1, immoral = 0; response: moralKey = 1; immoralKey = 0
+df.C.hddm_val_stim <- df.C.valid %>%
+   dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+   dplyr::filter(Task == 'Val') %>%                     # select the valence-based task
+   dplyr::mutate(response = ifelse((trialType == "moral" & ACC ==1) | (trialType == "immoral" & ACC ==0), 1, 0)) %>%
+   dplyr::select(Subject,Morality,Identity,trialType, response, RT) %>%  # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, stim = trialType) %>% # rename column
+   dplyr::mutate(stim = ifelse(stim == "moral",1, 0))
 
-df.C.hddm_id <- df.C.valid %>%
-      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-      dplyr::filter(Task == 'Id') %>%                      # select the valence-based task
-      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+# for Id based, stim: self = 1, other = 0; response: selfKey = 1; otherKey = 0
+df.C.hddm_id_stim <- df.C.valid %>%
+   dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+   dplyr::filter(Task == 'Id') %>%                      # select the valence-based task
+   dplyr::mutate(response = ifelse((trialType=="self" & ACC==1) | (trialType=="other" & ACC==0), 1, 0)) %>%
+   dplyr::select(Subject,Morality,Identity,trialType, response, RT) %>%  # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, stim = trialType) %>% # rename column
+   dplyr::mutate(stim = ifelse(stim == "self",1, 0))
 
 setwd(ddmDir)
 write.csv(df.M.hddm_m,'MS_match_hddm.csv',row.names = F)
 write.csv(df.M.hddm_nm,'MS_mismatch_hddm.csv',row.names = F)
-write.csv(df.C.hddm_val,'MS_categ_val_hddm.csv',row.names = F)
-write.csv(df.C.hddm_id,'MS_categ_id_hddm.csv',row.names = F)
+write.csv(df.C.hddm_val_stim,'MS_categ_val_hddm_stim.csv',row.names = F)
+write.csv(df.C.hddm_id_stim,'MS_categ_id_hddm_stim.csv',row.names = F)
 setwd(curDir)
-rm('df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id')
+rm('df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val_stim','df.C.hddm_id_stim')
 
 ###########################################################
 ######## get the data file for exGaussian analysis  #######
