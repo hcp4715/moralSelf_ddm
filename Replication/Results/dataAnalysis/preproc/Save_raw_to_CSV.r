@@ -80,8 +80,8 @@ df.L$Sex[df.L$Sex == '2'] <- 'female'
 df.T$Sex[df.T$Sex == '1'] <- 'male'
 df.T$Sex[df.T$Sex == '2'] <- 'female'
 
-df.L1 <- df.L[,c("Subject", "Age", "Sex", "Match", "Morality", "Identity", "ACC","RT")]
-df.T1 <- df.T[,c("Subject", "Age", "Sex", "Task", "Morality", "Identity", "ACC","RT")]
+#df.L1 <- df.L[,c("Subject", "Age", "Sex", "Match", "Morality", "Identity", "ACC","RT")]
+#df.T1 <- df.T[,c("Subject", "Age", "Sex", "Task", "Morality", "Identity", "ACC","RT")]
 
-write.csv(df.L1,'MS_rep_matchingTask_raw.csv',row.names = F)
-write.csv(df.T1,'MS_rep_categTask_raw.csv',row.names = F)
+write.csv(df.L,'MS_rep_matchingTask_raw.csv',row.names = F)
+write.csv(df.T,'MS_rep_categTask_raw.csv',row.names = F)

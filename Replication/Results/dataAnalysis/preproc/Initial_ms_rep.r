@@ -16,9 +16,8 @@ pkgTest <- function(x)
         }
 }
 
-pkgNeeded <- (c("tidyverse","ggplot2", "reshape2","ez", "bootES","MBESS", 
-                "BayesFactor","psych","corrplot",'plyr','ggstatsplot',"readr",
-                "tidyr","Hmisc","RColorBrewer"))
+pkgNeeded <- (c("tidyverse","ggplot2","ez", "bootES","MBESS", 
+                "psych","corrplot","readr", "Hmisc","RColorBrewer"))
 
 lapply(pkgNeeded,pkgTest)
 rm('pkgNeeded') # remove the variable 'pkgNeeded';
@@ -47,23 +46,6 @@ apatheme = theme_bw()+
               axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
               axis.line.x = element_line(color='black', size = 1),   # increase the size of font
               axis.line.y = element_line(color='black', size = 1))   # increase the size of font
-
-#raincloud_theme <-  theme_bw() + 
-#      theme(panel.grid.major = element_blank(),
-#            panel.grid.minor = element_blank(),
-#            panel.background = element_blank(),
-#            panel.border = element_blank(),
-#            text=element_text(family='Times'), # text = element_text(size = 10),
-#      axis.title.x = element_text(size = 16),
-#      axis.title.y = element_text(size = 16),
-#      axis.text = element_text(size = 14),
-#      axis.text.x = element_text(angle = 45, vjust = 0.5),
-#      legend.title=element_text(size=16,colour = 'black'),
-#      legend.text=element_text(size=16,colour = 'black'),
-#      legend.position = "right",
-#      plot.title = element_text(lineheight=.8, face="bold", size = 16,colour = 'black'),
-#      axis.line.x = element_line(colour = 'black', size=0.5, linetype='solid'),
-#      axis.line.y = element_line(colour = 'black', size=0.5, linetype='solid'))
 
 # define the d prime function
 dprime <- function(hit,fa) {
