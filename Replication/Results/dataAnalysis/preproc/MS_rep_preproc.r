@@ -43,7 +43,7 @@ source('Initial_ms_rep.r')  # initializing (clear global environment; load packa
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
 rootDir <- gsub('.{7}$', '', curDir)                            # get the parental folder
 traDir <- paste(rootDir,'traditional_analysis',sep = '')        # folder for traditional analsysi
-ddmDir <- paste(rootDir,'hddm',sep = '')                        # folder for DDM analysis
+ddmDir <- paste(rootDir,'hddmMod',sep = '')                        # folder for DDM analysis
 exgDir <- paste(rootDir,'exGaussian',sep = '')                  # folder for ExGaussian analysis
 
 # ---------------------------------------------------------------------------------------
@@ -126,13 +126,8 @@ excldSub3_C <- df.C %>%
    
 
 # all participants excluded
-excldSub_M   <- c(excldSub1_M, excldSub2_M,excldSub3_M)
-excldSub_C   <- c(excldSub1_C, excldSub2_C,excldSub3_C)
-
-# particiapnts with valid data
-# valdSub_M <- setdiff(subjlistM, excldSub_M)
-# valdSub_C <- setdiff(subjlistC, excldSub_C)
-
+excldSub_M   <- c(excldSub1_M, excldSub2_M,excldSub3_M) # 7302, 7303
+excldSub_C   <- c(excldSub1_C, excldSub2_C,excldSub3_C) # 7302, 7303, 7338
 
 # select valid data for further analysis
 df.M1.valid <- df.M %>%
@@ -143,47 +138,47 @@ df.C1.valid <- df.C %>%
    dplyr::mutate(ACC = ifelse(ACC == 1, 1, 0))  %>%  # no response as wrong
    dplyr::filter(Subject,!Subject %in% excldSub_C)   # exclude the invalid subjects
 
-# df.C1.valid <- df.C1.valid[!(df.C1.valid$Subject %in% excld.sub.T),]
-
 # check the number of participants are correct
 length(unique(df.M1.valid$Subject)) + length(excldSub_M) == length(unique(df.M$Subject))
 length(unique(df.C1.valid$Subject)) + length(excldSub_C) == length(unique(df.C$Subject))
 
 
 # excluded correct trials with < 200ms RT
-excld.trials.M <- df.M1.valid[df.M1.valid$RT <= 200 & df.M1.valid$ACC == 1,]
-df.M1.V        <- df.M1.valid[!(df.M1.valid$RT <= 200 & df.M1.valid$ACC == 1),]  # valid trial data for match task
-excld.trials.C <- df.C1.valid[df.C1.valid$RT <= 200 & df.C1.valid$ACC == 1,]
-df.C1.V        <- df.C1.valid[!(df.C1.valid$RT <= 200 & df.C1.valid$ACC == 1),]  # valid trial data for categorization task
-nrow(excld.trials.C) + nrow(df.C1.V) == nrow(df.C1.valid) # if true, everything is ok
+ratio.excld.trials.M <- nrow(df.M1.valid[df.M1.valid$RT*1000 <= 200 & df.M1.valid$ACC == 1,])/nrow(df.M1.valid)  # ratio of invalid trials
+ratio.excld.trials.C <- nrow(df.C1.valid[df.C1.valid$RT*1000 <= 200 & df.C1.valid$ACC == 1,])/nrow(df.C1.valid)
+
+df.M1.valid <- df.M1.valid %>% dplyr::filter(!(RT <= 0.2 & ACC==1)) # filter invalid trials
+df.C1.valid <- df.C1.valid %>% dplyr::filter(!(RT <= 0.2 & ACC==1)) # filter invalid trials
 
 ## Basic information of the data ####
-df.M1.T.basic <- df.M1[!duplicated(df.M1$Subject), 2:5]
-numT.subj     <- nrow(df.M1.T.basic)
-numT.female   <- sum(df.M1.T.basic$Sex == 'female');
-numT.male     <- sum(df.M1.T.basic$Sex == 'male');
-ageT.mean     <- round(mean(df.M1.T.basic$Age),2);
-ageT.std      <- round(sd(df.M1.T.basic$Age),2);
-# num.excld.sub <- length(unique(excldSub))
-# num.excld.sub.T <- length(unique(excld.sub.T))
+df.M1.T.basic <- df.M %>%
+   dplyr::select(Subject, Age, Sex) %>%
+   dplyr::distinct(Subject, Age, Sex) %>%
+   dplyr::summarise(subj_N = length(Subject),
+                    female_N = sum(Sex == 'female'),
+                    male_N = sum(Sex == 'male'),
+                    Age_mean = round(mean(Age),2),
+                    Age_sd   = round(sd(Age),2))
 
 # valide data for matching task
-df.M1.V.basic <- df.M1.V[!duplicated(df.M1.V$Subject), 2:5]
-numV.female   <- sum(df.M1.V.basic$Sex == 'female');
-numV.male     <- sum(df.M1.V.basic$Sex == 'male');
-ageV.mean     <- round(mean(df.M1.V.basic$Age),2);
-ageV.std      <- round(sd(df.M1.V.basic$Age),2);
-ratio.excld.trials.M <- nrow(excld.trials.M)/nrow(df.M1.valid)
-num.excld.sub_M <- length(unique(valdSub_M))
+df.M1.V.basic <- df.M1.valid %>%
+   dplyr::select(Subject, Age, Sex) %>%
+   dplyr::distinct(Subject, Age, Sex) %>%
+   dplyr::summarise(subj_N = length(Subject),
+                    female_N = sum(Sex == 'female'),
+                    male_N = sum(Sex == 'male'),
+                    Age_mean = round(mean(Age),2),
+                    Age_sd   = round(sd(Age),2))
 
 # valid data for categorization task
-df.C1.V.basic <- df.C1.V[!duplicated(df.C1.V$Subject), 2:5]
-numV.female.C <- sum(df.C1.V.basic$Sex == 'female');
-numV.male.C <- sum(df.C1.V.basic$Sex == 'male');
-ageV.mean.C <- round(mean(df.C1.V.basic$Age),2);
-ageV.std.C <- round(sd(df.C1.V.basic$Age),2);
-ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1.valid)
-num.excld.sub_C <- length(unique(valdSub_C))
+df.C1.V.basic <- df.C1.valid %>%
+   dplyr::select(Subject, Age, Sex) %>%
+   dplyr::distinct(Subject, Age, Sex) %>%
+   dplyr::summarise(subj_N = length(Subject),
+                    female_N = sum(Sex == 'female'),
+                    male_N = sum(Sex == 'male'),
+                    Age_mean = round(mean(Age),2),
+                    Age_sd   = round(sd(Age),2))
 
 ###########################################################
 ########   get the data file for hddm analysis      #######
@@ -191,48 +186,42 @@ num.excld.sub_C <- length(unique(valdSub_C))
 # exclusion trials, criterion: trials without response or wrong key
 # Note: we didn't remove the correct response less than 200 ms
 
-df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
+df.M.hddm_m <- df.M %>%                                 # start from the valid data, RT in seconds.
+   dplyr::filter(Subject,!Subject %in% excldSub_M) %>%
    dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
    dplyr::filter(Match == 'match') %>%
    dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
    dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
-#df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
-#      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-#      dplyr::filter(Match == 'match') %>%
-#      dplyr::select(Subject,Morality,Identity,RT,Match, ResponseKey, matchKey,ACC) %>%  # select column
-#      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, stim = Match, response = ResponseKey, rt = RT) %>% # rename column
-#      dplyr::mutate(stim = ifelse(stim == "match", 1, 0),
-#                    response = ifelse(response == matchKey, 1, 0)) %>%
-#      dplyr::select(subj_idx, val, id, stim, response, rt)
-   
-
-df.M.hddm_nm <- df.M.valid %>%
-      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-      dplyr::filter(Match == 'nonmatch') %>%
-      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+df.M.hddm_nm <- df.M %>%
+   dplyr::filter(Subject,!Subject %in% excldSub_M) %>%
+   dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+   dplyr::filter(Match == 'mismatch') %>%
+   dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
 
 ##################################################
 ### preparing the data for Stimuli-code hddm  ####
 ##################################################
 # for valence based, stim: moral = 1, immoral = 0; response: moralKey = 1; immoralKey = 0
-df.C.hddm_val_stim <- df.C.valid %>%
+df.C.hddm_val_stim <- df.C %>%
+   dplyr::filter(Subject,!Subject %in% excldSub_C) %>%
    dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
    dplyr::filter(Task == 'Val') %>%                     # select the valence-based task
-   dplyr::mutate(response = ifelse((trialType == "moral" & ACC ==1) | (trialType == "immoral" & ACC ==0), 1, 0)) %>%
-   dplyr::select(Subject,Morality,Identity,trialType, response, RT) %>%  # select column
-   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, stim = trialType) %>% # rename column
-   dplyr::mutate(stim = ifelse(stim == "moral",1, 0))
+   dplyr::mutate(response = ifelse((Morality == "Good" & ACC ==1) | (Morality == "Bad" & ACC ==0), 1, 0)) %>%
+   dplyr::select(Subject,Morality,Identity,Shape, response, RT) %>%  # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, stim = Shape) %>% # rename column
+   dplyr::mutate(stim = ifelse(stim == "moralSelf" | stim == "moralOther" ,1, 0))
 
 # for Id based, stim: self = 1, other = 0; response: selfKey = 1; otherKey = 0
-df.C.hddm_id_stim <- df.C.valid %>%
+df.C.hddm_id_stim <- df.C%>%
+   dplyr::filter(Subject,!Subject %in% excldSub_C) %>%
    dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
    dplyr::filter(Task == 'Id') %>%                      # select the valence-based task
-   dplyr::mutate(response = ifelse((trialType=="self" & ACC==1) | (trialType=="other" & ACC==0), 1, 0)) %>%
-   dplyr::select(Subject,Morality,Identity,trialType, response, RT) %>%  # select column
-   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, stim = trialType) %>% # rename column
-   dplyr::mutate(stim = ifelse(stim == "self",1, 0))
+   dplyr::mutate(response = ifelse((Identity =="Self" & ACC==1) | (Identity =="Other" & ACC==0), 1, 0)) %>%
+   dplyr::select(Subject,Morality,Identity,Shape, response, RT) %>%  # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, stim = Shape) %>% # rename column
+   dplyr::mutate(stim = ifelse(stim == "moralSelf" | stim == "immoralSelf",1, 0))
 
 setwd(ddmDir)
 write.csv(df.M.hddm_m,'MS_match_hddm.csv',row.names = F)
@@ -242,15 +231,6 @@ write.csv(df.C.hddm_id_stim,'MS_categ_id_hddm_stim.csv',row.names = F)
 setwd(curDir)
 rm('df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val_stim','df.C.hddm_id_stim')
 
-###########################################################
-######## get the data file for exGaussian analysis  #######
-###########################################################
-df.C.exG <- df.C.valid %>%
-      dplyr::filter(ACC == 1 & RT > .2)    # only for correct and valid trials
-
-setwd(exgDir)
-write.csv(df.C.exG,'MS_categ_exG.csv',row.names = F)
-rm(df.C.exG)
 
 # ---------------------------------------------------------------------------------------
 # -------- 3. Matching task: prepare the Accuracy, d-prime and RT -----------------------
