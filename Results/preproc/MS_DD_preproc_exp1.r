@@ -39,7 +39,7 @@
 
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
 setwd(curDir)
-source('Initial.r')  # initializing (clear global environment; load packages and functions)
+source('Initial_exp7.r')  # initializing (clear global environment; load packages and functions)
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
 rootDir <- gsub('.{7}$', '', curDir)                            # get the parental folder
 traDir <- paste(rootDir,'traditional_analysis',sep = '')        # folder for traditional analsysi
@@ -186,27 +186,20 @@ ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1)
 # exclusion trials, criterion: trials without response or wrong key
 # Note: we didn't remove the correct response less than 200 ms
 
-df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
-   dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
+df.M.hddm_m <- df.M.valid %>%                            # start from the valid data, RT in seconds.
+   dplyr::filter(ACC == 1 | ACC == 0) %>%                # exclude trials without response or with wrong keys
    dplyr::filter(Match == 'match') %>%
-   dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-   dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+   dplyr::select(Subject,Morality,Identity,RT,ACC) %>%   # select column
+   dplyr::rename(subj_idx = Subject, val = Morality,     # rename column
+                 id = Identity, rt = RT, response = ACC) # rename column
 
-#df.M.hddm_m <- df.M.valid %>%                          # start from the valid data, RT in seconds.
-#      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-#      dplyr::filter(Match == 'match') %>%
-#      dplyr::select(Subject,Morality,Identity,RT,Match, ResponseKey, matchKey,ACC) %>%  # select column
-#      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, stim = Match, response = ResponseKey, rt = RT) %>% # rename column
-#      dplyr::mutate(stim = ifelse(stim == "match", 1, 0),
-#                    response = ifelse(response == matchKey, 1, 0)) %>%
-#      dplyr::select(subj_idx, val, id, stim, response, rt)
-   
 
 df.M.hddm_nm <- df.M.valid %>%
-      dplyr::filter(ACC == 1 | ACC == 0) %>%               # exclude trials without response or with wrong keys
-      dplyr::filter(Match == 'nonmatch') %>%
-      dplyr::select(Subject,Morality,Identity,RT,ACC) %>%  # select column
-      dplyr::rename(subj_idx = Subject, val = Morality, id = Identity, rt = RT, response = ACC) # rename column
+   dplyr::filter(ACC == 1 | ACC == 0) %>%                # exclude trials without response or with wrong keys
+   dplyr::filter(Match == 'nonmatch') %>%
+   dplyr::select(Subject,Morality,Identity,RT,ACC) %>%   # select column
+   dplyr::rename(subj_idx = Subject, val = Morality, 
+                 id = Identity, rt = RT, response = ACC) # rename column
 
 ##################################################
 ### preparing the data for Stimuli-code hddm  ####
@@ -255,13 +248,14 @@ rm(df.C.exG)
 ###############   ACC    ###########
 ####################################
 df.M1.V.acc  <- df.M1.V %>%
-      dplyr::group_by(Subject, Match, Morality, Identity)  %>% 
-      dplyr::summarise(N = length(ACC),
-                       countN = sum(ACC),
-                       ACC = sum(ACC)/length(ACC))
+   dplyr::group_by(Subject, Match, Morality, Identity)  %>% 
+   dplyr::summarise(N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC)) %>%
+   dplyr::ungroup()
 
 # transform to wide-format
-df.M1.V.acc_w <- dcast(df.M1.V.acc, Subject ~ Match + Morality + Identity,value.var = "ACC")
+df.M1.V.acc_w <- reshape2::dcast(df.M1.V.acc, Subject ~ Match + Morality + Identity,value.var = "ACC")
 
 # rename the column number
 colnames(df.M1.V.acc_w)[2:9] <- paste("ACC", colnames(df.M1.V.acc_w[,2:9]), sep = "_")
@@ -312,10 +306,11 @@ df.M1.V.SDT_w$dprime <- mapply(dprime,df.M1.V.SDT_w$hitR,df.M1.V.SDT_w$faR)
 
 # transfor from long format to wide format
 df.M1.V.SDT_ww <- dcast(df.M1.V.SDT_w, Subject + Age + Gender ~ Morality + Identity ,value.var = "dprime")
+
 # rename the column number
 colnames(df.M1.V.SDT_ww)[4:7] <- paste("d", colnames(df.M1.V.SDT_ww[,4:7]), sep = "_")
 
-df.M1.V.SDT_l <- df.M1.V.SDT_w[,c(1:5,12)]
+df.M1.V.SDT_l <- df.M1.V.SDT_w[,c(1:5,12)] # re-order columns
 
 ####################################
 ############      RT     ###########
@@ -349,16 +344,18 @@ df.M1.V.sum_w <- df.M1.V.sum_w[,c(colnames(df.M1.V.sum_w)[c(1,10:11,2:9,12:23)])
 #####  effects in matching  ########
 ####################################
 # calculate the effect of self-ref and valence
-df.M1.v.sum_eff_w <- df.M1.V.sum_w[,1:3]
-df.M1.v.sum_eff_w$d_goodslf_goodoth <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Good_Other
-df.M1.v.sum_eff_w$d_goodslf_badslf  <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Bad_Self
-df.M1.v.sum_eff_w$d_goodoth_badoth  <- df.M1.V.sum_w$d_Good_Other - df.M1.V.sum_w$d_Bad_Other
-df.M1.v.sum_eff_w$d_badslf_badoth   <- df.M1.V.sum_w$d_Bad_Self - df.M1.V.sum_w$d_Bad_Other
-
-df.M1.v.sum_eff_w$RT_goodslf_goodoth <- df.M1.V.sum_w$RT_match_Good_Other -  df.M1.V.sum_w$RT_match_Good_Self
-df.M1.v.sum_eff_w$RT_goodslf_badslf  <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1.V.sum_w$RT_match_Good_Self
-df.M1.v.sum_eff_w$RT_goodoth_badoth  <- df.M1.V.sum_w$RT_match_Bad_Other -  df.M1.V.sum_w$RT_match_Good_Other
-df.M1.v.sum_eff_w$RT_badslf_badoth   <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1.V.sum_w$RT_match_Bad_Other
+df.M1.v.sum_eff_w <- df.M1.V.sum_w %>%
+   dplyr::mutate(d_goodslf_goodoth = d_Good_Self - d_Good_Other,
+                 d_goodslf_badslf  = d_Good_Self - d_Bad_Self,
+                 d_goodoth_badoth  = d_Good_Other - d_Bad_Other,
+                 d_badslf_badoth   = d_Bad_Self - d_Bad_Other,
+                 RT_goodslf_goodoth = RT_match_Good_Other - RT_match_Good_Self,
+                 RT_goodslf_badslf  = RT_match_Bad_Self -  RT_match_Good_Self,
+                 RT_goodoth_badoth  = RT_match_Bad_Other - RT_match_Good_Other,
+                 RT_badslf_badoth   = RT_match_Bad_Self -  RT_match_Bad_Other) %>%
+   dplyr::select(Subject, Age, Gender,
+                 d_goodslf_goodoth,  d_goodslf_badslf,  d_goodoth_badoth,  d_badslf_badoth,
+                 RT_goodslf_goodoth, RT_goodslf_badslf, RT_goodoth_badoth, RT_badslf_badoth)
 
 # write files
 setwd(traDir)
@@ -382,7 +379,7 @@ df.C1.V.acc <- plyr::ddply(df.C1.V,.(Subject,Age, Gender, Task,Morality,Identity
                            ACC = sum(ACC)/length(ACC))
 
 # wide-format
-df.C1.V.acc_w  <- dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity ,value.var = "ACC")
+df.C1.V.acc_w  <- reshape2::dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity ,value.var = "ACC")
 # rename the column number
 colnames(df.C1.V.acc_w)[2:9] <- paste("ACC", colnames(df.C1.V.acc_w[,2:9]), sep = "_")
 
@@ -392,11 +389,11 @@ df.C1.V.acc_noTask  <-  plyr::ddply(df.C1.V,.(Subject, Morality, Identity), summ
                                     countN = sum(ACC),
                                     ACC = sum(ACC)/length(ACC))
 
-df.C1.V.acc_noTask_w <- dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
+df.C1.V.acc_noTask_w <- reshape2::dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
 # rename the column number
 colnames(df.C1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.C1.V.acc_noTask_w[,2:5]), sep = "_")
 
-# calculate the mean differences(?)
+# calculate the mean differences, might be useful to correlation with questionnarie data
 df.C1.V.acc_noTask_w$good_bad_slf <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Self
 df.C1.V.acc_noTask_w$good_bad_oth <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Bad_Other
 df.C1.V.acc_noTask_w$slf_oth_good <- df.C1.V.acc_noTask_w$ACC_Good_Self - df.C1.V.acc_noTask_w$ACC_Good_Other
