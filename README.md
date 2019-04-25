@@ -9,23 +9,17 @@ This open repo includ scripts for the procedure and analysis script and data for
 ================
 
 ### structure of the current folder:
-|- 1_protocol
 
-|- 2_pilot_study
+1_protocol
 
-|- |---Procedure
-
-|- |---|---procedure_final    # matlab code for procedure
-
-|- |---Results
-
-|- |---|---1_preproc          # R code for preprocessing data and plots
-
-|- |---|---2_trad_analysis    # ANOVA results in JASP
-
-|- |---|---3_exGaussian       # ex-Gaussian analysis of categorization task
-
-|- |---|---4_hddm             # hddm analysis
+2_pilot_study
+-Procedure
+ -procedure_final    # matlab code for procedure
+-Results
+ -1_preproc          # R code for preprocessing data and plots
+ -2_trad_analysis    # ANOVA results in JASP
+ -3_exGaussian       # ex-Gaussian analysis of categorization task
+ -4_hddm             # hddm analysis
 
 |- 3_confirm_study
 
@@ -48,7 +42,7 @@ This open repo includ scripts for the procedure and analysis script and data for
 
 ### Study 1
 
-Preprocessing:
+**Preprocessing:**
 
 clean rawdata -> preproc_pilot.r -> summary data for JASP analysis
 
