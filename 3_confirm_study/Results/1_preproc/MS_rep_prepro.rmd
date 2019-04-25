@@ -1,0 +1,535 @@
+---
+title: "Preprocessing_&_Plot_for_Moral_Categ_Replication"
+author: "hcp"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: word_document
+---
+<style type="text/css">
+
+body{ /* Normal  */
+   font-family: Times     
+   font-size: 12px;
+}
+td {  /* Table  */
+   font-size: 8px;
+}
+h1 { /* Header 1 */
+ font-size: 28px;
+}
+h2 { /* Header 2 */
+ font-size: 22px;
+}
+h3 { /* Header 3 */
+ font-size: 18px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 10px;
+}
+pre { /* Code block */
+  font-size: 10px
+}
+</style>
+
+
+This script is used for quality control and preprocessing of the replication data.
+
+
+```{r Initializing, include=FALSE,,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+source('Initial.r')
+
+# set the directories
+curDir <- getwd()   # directory for preprocessing
+rootDir <- gsub('.{7}$', '', curDir)
+rawDir <- paste(curDir,'/data/',sep = '')
+traDir <- paste(rootDir,'tradAnal',sep = '')
+ddmDir <- paste(rootDir,'hddmMod',sep = '')
+```
+
+```{r loadingData_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# read these files and combine them into one file, get the raw data for matching task
+df.M <- read.csv('MS_rep_matchingTask_raw.csv', header=TRUE, sep=",",stringsAsFactors=F)
+df.C <- read.csv('MS_rep_categTask_raw.csv', header=TRUE, sep=",",stringsAsFactors=F)
+```
+
+```{r clean the data_e7,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# clean data for trad. analysis
+df.M1 <- df.M
+df.C1 <- df.C
+df.M1$RT <- df.M1$RT * 1000 # transfer from seconds to min seconds
+df.C1$RT <- df.C1$RT * 1000 # careful about the scale of time when using HDDM or ex-Gaussian
+
+# no response equal to wrong
+df.M1$ACC[df.M1$ACC != 1] <- 0
+df.C1$ACC[df.C1$ACC != 1] <- 0
+
+# exclude participant (1st round)
+excldSub1_M  <- c()     # subject ID of those who failed matching task
+excldSub1_C  <- c(7338) # subject 7338 excluded because Accuracy of one condition is zero
+
+df.M1.trials <-  plyr::ddply(df.M1,.(Subject, Match, Identity,Morality), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC))
+subjlistM <- unique(df.M1.trials$Subject)
+
+# exclude particiapnts (2nd round: incorrect trial number)
+excldSub2_M <- c()
+for (ii in 1:length(subjlistM)){
+  tmp <- subset(df.M1.trials,Subject == subjlistM[ii])
+  if(sum(tmp$N != 75)){ # if the number of trials in matching task correct 
+    excldSub2_M[ii] <- subjlistM[ii]
+    print(paste0("ERROR: the trials number of subject ", subjlistM[ii] , 
+                 " in matching task is not correct"))
+}}
+
+df.C1.trials <-  plyr::ddply(df.C1,.(Subject, Task, Identity,Morality), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC))
+
+subjlistC <- unique(df.C1.trials$Subject)
+excldSub2_C <- c()
+for (jj in 1:length(subjlistC)){
+  tmp <- subset(df.C1.trials,Subject == subjlistC[jj])
+  if(sum(tmp$N != 90)){ # if the number of trials in matching task correct 
+    excldSub2_C[jj] <- subjlistC[jj]
+    print(paste0("ERROR: the trials number of subject ", subjlistC[jj] , 
+                 " in categ task is not correct"))
+  }}
+
+# exclude participants (3rd round: < 0.5 overall accuracy)
+df.M1.acc.g <-  plyr::ddply(df.M1,.(Subject), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+# calculate the overall accuracy for categorziation task
+df.C1.acc.g <-  plyr::ddply(df.C1,.(Subject), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+excldSub3_M <- df.M1.acc.g$Subject[df.M1.acc.g$ACC < 0.5]      # less 50% accuracy in matching task
+excldSub3_C <- df.C1.acc.g$Subject[df.C1.acc.g$ACC < 0.5]      # less than 50% accuracy in categorization task
+
+# all participants excluded
+excldSub_M   <- c(excldSub1_M, excldSub2_M,excldSub3_M)
+excldSub_M <- excldSub_M[!duplicated(excldSub_M)]   # total excluded for matching task
+
+excldSub_C   <- c(excldSub1_C, excldSub2_C,excldSub3_C)
+excldSub_C <- excldSub_C[!duplicated(excldSub_C)]   # total excluded for matching task
+
+# particiapnts with valid data
+valdSub_M <- setdiff(subjlistM, excldSub_M)
+valdSub_C <- setdiff(subjlistC, excldSub_C)
+
+
+# select valid data for further analysis
+df.M1.valid <- df.M1[!(df.M1$Subject %in% excldSub_M),]   # exclude the invalid subjects
+df.C1.valid <- df.C1[!(df.C1$Subject %in% excldSub_C),]
+# df.C1.valid <- df.C1.valid[!(df.C1.valid$Subject %in% excld.sub.T),]
+
+# check the number of participants are correct
+length(valdSub_M) + length(excldSub_M) == length(unique(df.M1$Subject))
+length(valdSub_C) + length(excldSub_C) == length(unique(df.C1$Subject))
+
+# excluded correct trials with < 200ms RT
+excld.trials.M <- df.M1.valid[df.M1.valid$RT <= 200 & df.M1.valid$ACC == 1,]
+df.M1.V        <- df.M1.valid[!(df.M1.valid$RT <= 200 & df.M1.valid$ACC == 1),]  # valid trial data for match task
+excld.trials.C <- df.C1.valid[df.C1.valid$RT <= 200 & df.C1.valid$ACC == 1,]
+df.C1.V        <- df.C1.valid[!(df.C1.valid$RT <= 200 & df.C1.valid$ACC == 1),]  # valid trial data for categorization task
+nrow(excld.trials.C) + nrow(df.C1.V) == nrow(df.C1.valid) # if true, everything is ok
+
+## Basic information of the data ####
+df.M1.T.basic <- df.M1[!duplicated(df.M1$Subject), 2:5]
+numT.subj     <- nrow(df.M1.T.basic)
+numT.female   <- sum(df.M1.T.basic$Sex == 'female');
+numT.male     <- sum(df.M1.T.basic$Sex == 'male');
+ageT.mean     <- round(mean(df.M1.T.basic$Age),2);
+ageT.std      <- round(sd(df.M1.T.basic$Age),2);
+# num.excld.sub <- length(unique(excldSub))
+# num.excld.sub.T <- length(unique(excld.sub.T))
+
+# valide data for matching task
+df.M1.V.basic <- df.M1.V[!duplicated(df.M1.V$Subject), 2:5]
+numV.female   <- sum(df.M1.V.basic$Sex == 'female');
+numV.male     <- sum(df.M1.V.basic$Sex == 'male');
+ageV.mean     <- round(mean(df.M1.V.basic$Age),2);
+ageV.std      <- round(sd(df.M1.V.basic$Age),2);
+ratio.excld.trials.M <- nrow(excld.trials.M)/nrow(df.M1.valid)
+num.excld.sub_M <- length(unique(valdSub_M))
+
+# valid data for categorization task
+df.C1.V.basic <- df.C1.V[!duplicated(df.C1.V$Subject), 2:5]
+numV.female.C <- sum(df.C1.V.basic$Sex == 'female');
+numV.male.C <- sum(df.C1.V.basic$Sex == 'male');
+ageV.mean.C <- round(mean(df.C1.V.basic$Age),2);
+ageV.std.C <- round(sd(df.C1.V.basic$Age),2);
+ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1.valid)
+num.excld.sub_C <- length(unique(valdSub_C))
+
+# get the data file for hddm analysis
+df.M.ddm.v <- df.M[!(df.M$Subject %in% excldSub_M),]   # exclude the invalid subjects
+df.C.ddm.v <- df.C[!(df.C$Subject %in% excldSub_C),]
+
+df.M.hddm <- subset(df.M.ddm.v, ACC ==1 | ACC == 0)  # remove non-response trials or pressing wrong key
+df.C.hddm <- subset(df.C.ddm.v, ACC ==1 | ACC == 0) 
+
+df.M.hddm_m <- subset(df.M.hddm, Match == 'match') # select data
+df.M.hddm_m <- df.M.hddm_m[,c('Subject','Morality','Identity','RT','ACC')] # select column
+colnames(df.M.hddm_m) <- c("subj_idx","val",'id','rt','response')     # change column name
+
+df.M.hddm_nm <- subset(df.M.hddm, Match == 'mismatch')
+df.M.hddm_nm <- df.M.hddm_nm[,c('Subject','Morality','Identity','RT','ACC')]
+colnames(df.M.hddm_nm) <- c("subj_idx","val",'id','rt','response')
+
+df.C.hddm_val <- subset(df.C.hddm, Task == 'Val')
+df.C.hddm_val <- df.C.hddm_val[,c('Subject','Morality','Identity','RT','ACC')]
+colnames(df.C.hddm_val) <- c("subj_idx","val",'id','rt','response')
+
+df.C.hddm_id <- subset(df.C.hddm, Task == 'Id')
+df.C.hddm_id <- df.C.hddm_id[,c('Subject','Morality','Identity','RT','ACC')]
+colnames(df.C.hddm_id) <- c("subj_idx","val",'id','rt','response')
+
+setwd(ddmDir)
+write.csv(df.M.hddm_m,'MS_rep_match_hddm.csv',row.names = F)
+write.csv(df.M.hddm_nm,'MS_rep_mismatch_hddm.csv',row.names = F)
+write.csv(df.C.hddm_val,'MS_rep_categ_val_hddm.csv',row.names = F)
+write.csv(df.C.hddm_id,'MS_rep_categ_id_hddm.csv',row.names = F)
+rm('df.M.hddm','df.C.hddm','df.M.hddm_m','df.M.hddm_nm','df.C.hddm_val','df.C.hddm_id','df.M.ddm.v','df.C.ddm.v')
+setwd(curDir)
+
+```
+## Participants
+Total participants: `r numT.subj` (`r numT.female` female, age: `r ageT.mean` $\pm$ `r ageT.std`)
+
+Excluded because of wrong trials number: 
+
+matching task: `r excldSub1_M` ; 
+
+categ. task: `r excldSub1_C`.
+
+Excluded because the overall accuracy is lower than 50%: 
+matching task: `r excldSub2_M` ; 
+
+categ. task: `r excldSub2_C`.
+
+Remaining participant: 
+
+matching task`r length(valdSub_M)`; categorization task: (`r length(valdSub_C)`)
+
+
+```{r preproc_match,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+### ACC ####
+df.M1.V.acc  <-  plyr::ddply(df.M1.V,.(Subject, Match, Morality, Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+df.M1.V.acc_w <- dcast(df.M1.V.acc, Subject ~ Match + Morality + Identity,value.var = "ACC")
+
+# rename the column number
+colnames(df.M1.V.acc_w)[2:9] <- paste("ACC", colnames(df.M1.V.acc_w[,2:9]), sep = "_")
+
+# d prime #### 
+df.M1.V$sdt <- NA
+for (i in 1:nrow(df.M1.V)){
+        if (df.M1.V$ACC[i] == 1 & df.M1.V$Match[i] == "match"){
+                df.M1.V$sdt[i] <- "hit"
+        } else if (df.M1.V$ACC[i] == 1 & df.M1.V$Match[i] == "mismatch"){
+                df.M1.V$sdt[i] <- "CR"
+        } else if (df.M1.V$ACC[i] == 0 & df.M1.V$Match[i] == "match"){
+                df.M1.V$sdt[i] <- "miss"
+        } else if (df.M1.V$ACC[i] == 0 & df.M1.V$Match[i] == "mismatch"){
+                df.M1.V$sdt[i] <- "FA"
+        }
+}
+
+# calculate the number of each for each condition
+df.M1.V.SDT <-  plyr::ddply(df.M1.V,.(Subject,Age, Sex, Morality,Identity,sdt), summarise,
+                     N = length(sdt))
+
+
+# long format to wide
+df.M1.V.SDT_w <- dcast(df.M1.V.SDT, Subject + Age + Sex+ Morality + Identity  ~ sdt,value.var = "N")
+df.M1.V.SDT_w$miss[is.na(df.M1.V.SDT_w$miss)] <- 0
+df.M1.V.SDT_w$FA[is.na(df.M1.V.SDT_w$FA)] <- 0
+df.M1.V.SDT_w$hitR <- df.M1.V.SDT_w$hit/(df.M1.V.SDT_w$hit + df.M1.V.SDT_w$miss)
+df.M1.V.SDT_w$faR <- df.M1.V.SDT_w$FA/(df.M1.V.SDT_w$FA + df.M1.V.SDT_w$CR)
+
+# standardized way to deal with the extreme values
+for (i in 1:nrow(df.M1.V.SDT_w)){
+        if (df.M1.V.SDT_w$hitR[i] == 1){
+                df.M1.V.SDT_w$hitR[i] <- 1 - 1/(2*(df.M1.V.SDT_w$hit[i] + df.M1.V.SDT_w$miss[i]))
+        }
+}
+
+for (i in 1:nrow(df.M1.V.SDT_w)){
+        if (df.M1.V.SDT_w$faR[i] == 0){
+                df.M1.V.SDT_w$faR[i] <- 1/(2*(df.M1.V.SDT_w$FA[i] + df.M1.V.SDT_w$CR[i]))
+        }
+}
+
+# calculate the d prime for each condition
+df.M1.V.SDT_w$dprime <- mapply(dprime,df.M1.V.SDT_w$hitR,df.M1.V.SDT_w$faR)
+df.M1.V.SDT_ww   <- dcast(df.M1.V.SDT_w, Subject + Sex + Age ~ Morality + Identity ,value.var = "dprime")
+
+df.M1.V.SDT_l <- df.M1.V.SDT_w[,c(1:5,12)]
+
+# rename the column number
+colnames(df.M1.V.SDT_ww)[4:7] <- paste("d", colnames(df.M1.V.SDT_ww[,4:7]), sep = "_")
+
+## doing the analysis for RT ####
+df.M1.V.RT <- df.M1.V[df.M1.V$ACC == 1,]  # exclued inaccurate data
+df.M1.V.RT.subj <- summarySEwithin(df.M1.V.RT,measurevar = 'RT', withinvar = c('Subject','Match','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+df.M1.V.RT.subj_w <- dcast(df.M1.V.RT.subj, Subject ~ Match + Morality + Identity ,value.var = "RT") 
+
+# rename the columns of RT data
+colnames(df.M1.V.RT.subj_w)[2:9] <- paste("RT", colnames(df.M1.V.RT.subj_w[,2:9]), sep = "_")
+
+## saving data ####
+# merge the dprime and RT data and save
+df.M1.V.sum_w <- merge(df.M1.V.acc_w,  df.M1.V.SDT_ww,by = "Subject")
+df.M1.V.sum_w <- merge(df.M1.V.sum_w,df.M1.V.RT.subj_w,by = 'Subject')
+
+# merge the RT and ACC data (long-format)
+df.M1.V.sum_rt_acc_l <- merge(df.M1.V.acc,df.M1.V.RT.subj,by = c("Subject","Match","Morality",'Identity'))
+df.M1.V.sum_rt_acc_l <- df.M1.V.sum_rt_acc_l[order(df.M1.V.sum_rt_acc_l$Subject),]
+
+df.M1.V.sum_rt_acc_l <- df.M1.V.sum_rt_acc_l[,c("Subject","Match","Morality",'Identity',"N.x","countN","ACC","RT")]
+colnames(df.M1.V.sum_rt_acc_l) <- c("Subject","Match","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
+
+# order the columns
+df.M1.V.sum_w <- df.M1.V.sum_w[,c(colnames(df.M1.V.sum_w)[c(1,10:11,2:9,12:23)])]
+
+# calculate the effect of self-ref and valence
+df.M1.v.sum_eff_w <- df.M1.V.sum_w[,1:3]
+df.M1.v.sum_eff_w$d_goodslf_goodoth <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Good_Other
+df.M1.v.sum_eff_w$d_goodslf_badslf   <- df.M1.V.sum_w$d_Good_Self - df.M1.V.sum_w$d_Bad_Self
+df.M1.v.sum_eff_w$d_goodoth_badoth   <- df.M1.V.sum_w$d_Good_Other - df.M1.V.sum_w$d_Bad_Other
+df.M1.v.sum_eff_w$d_badslf_badoth   <- df.M1.V.sum_w$d_Bad_Self - df.M1.V.sum_w$d_Bad_Other
+
+df.M1.v.sum_eff_w$RT_goodslf_goodoth <- df.M1.V.sum_w$RT_match_Good_Other -  df.M1.V.sum_w$RT_match_Good_Self
+df.M1.v.sum_eff_w$RT_goodslf_badslf  <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1.V.sum_w$RT_match_Good_Self
+df.M1.v.sum_eff_w$RT_goodoth_badoth <- df.M1.V.sum_w$RT_match_Bad_Other -  df.M1.V.sum_w$RT_match_Good_Other
+df.M1.v.sum_eff_w$RT_badslf_badoth  <- df.M1.V.sum_w$RT_match_Bad_Self -  df.M1.V.sum_w$RT_match_Bad_Other
+
+
+# write files
+setwd(traDir)
+write.csv(df.M1.V.sum_w,'MS_rep_match_behav_wide.csv',row.names = F)
+write.csv(df.M1.V.SDT_l,'MS_rep_match__dprime_long.csv',row.names = F)
+write.csv(df.M1.V.sum_rt_acc_l,'MS_rep_match__rt_acc_long.csv',row.names = F)
+setwd(curDir)
+
+```
+
+```{r preproc_categ,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+### ACC ####
+df.C1.V.acc  <-  plyr::ddply(df.C1.V,.(Subject, Task, Morality, Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+df.C1.V.acc_w <- dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity,value.var = "ACC")
+
+# rename the column number
+colnames(df.C1.V.acc_w)[2:9] <- paste("ACC", colnames(df.C1.V.acc_w[,2:9]), sep = "_")
+
+# combing data from diff task for analyzing the interaction btw val and id
+df.C1.V.acc_noTask  <-  plyr::ddply(df.C1.V,.(Subject, Morality, Identity), summarise,
+                    N = length(ACC),
+                    countN = sum(ACC),
+                    ACC = sum(ACC)/length(ACC))
+
+df.C1.V.acc_noTask_w <- dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
+
+# rename the column number
+colnames(df.C1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.C1.V.acc_noTask_w[,2:5]), sep = "_")
+
+
+## doing the analysis for RT ####
+df.C1.V.RT <- df.C1.V[df.C1.V$ACC == 1,]  # exclued inaccurate data
+df.C1.V.RT.subj <- summarySEwithin(df.C1.V.RT,measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+df.C1.V.RT.subj_w <- dcast(df.C1.V.RT.subj, Subject ~ Task + Morality + Identity ,value.var = "RT") 
+
+# rename the columns of RT data
+colnames(df.C1.V.RT.subj_w)[2:9] <- paste("RT", colnames(df.C1.V.RT.subj_w[,2:9]), sep = "_")
+
+# combining data form different task for analyszing interaction of val and id
+df.C1.V.RT.subj_noTask <- summarySEwithin(df.C1.V.RT,measurevar = 'RT', withinvar = c('Subject','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+df.C1.V.RT.subj_noTask_w <- dcast(df.C1.V.RT.subj_noTask, Subject ~ Morality + Identity ,value.var = "RT") 
+
+# rename the columns of RT data
+colnames(df.C1.V.RT.subj_noTask_w)[2:5] <- paste("RT", colnames(df.C1.V.RT.subj_noTask_w[,2:5]), sep = "_")
+
+## saving data ####
+# merge the accuracy and RT data and save
+df.C1.V.sum_w <- merge(df.C1.V.acc_w,  df.C1.V.RT.subj_w,by = "Subject")
+df.C1.V.sum_noTask_w <- merge(df.C1.V.acc_noTask_w,  df.C1.V.RT.subj_noTask_w,by = "Subject")
+
+## calculated effects ####
+# self-reference effect
+df.C1.V.sum_w$RT_Val_Good_selfEffect <- df.C1.V.sum_w$RT_Val_Good_Other - df.C1.V.sum_w$RT_Val_Good_Self
+df.C1.V.sum_w$RT_Val_Bad_selfEffect  <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Val_Bad_Self
+df.C1.V.sum_w$RT_Id_Good_selfEffect  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.V.sum_w$RT_Id_Bad_selfEffect   <- df.C1.V.sum_w$RT_Id_Bad_Other - df.C1.V.sum_w$RT_Id_Bad_Self
+# valence effect
+df.C1.V.sum_w$RT_Val_Self_valEffect  <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Good_Self
+df.C1.V.sum_w$RT_Val_Other_valEffect <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Val_Good_Other
+df.C1.V.sum_w$RT_Id_Self_valEffect   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.V.sum_w$RT_Id_Other_valEffect  <- df.C1.V.sum_w$RT_Id_Bad_Other - df.C1.V.sum_w$RT_Id_Good_Other
+# task effect
+df.C1.V.sum_w$RT_Good_Self_taskEffect  <- df.C1.V.sum_w$RT_Val_Good_Self - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.V.sum_w$RT_Bad_Self_taskEffect   <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Id_Bad_Self
+df.C1.V.sum_w$RT_Good_Other_taskEffect <- df.C1.V.sum_w$RT_Val_Good_Self - df.C1.V.sum_w$RT_Id_Good_Other
+df.C1.V.sum_w$RT_Bad_Other_taskEffect  <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Id_Bad_Other
+
+# calculate the effect of self-ref and valence
+df.C1.v.sum_eff_w <- data.frame(df.C1.V.sum_w[,c('Subject')])
+colnames(df.C1.v.sum_eff_w) <- 'Subject'
+df.C1.v.sum_eff_w$Val_RT_goodslf_goodoth <- df.C1.V.sum_w$RT_Val_Good_Other - df.C1.V.sum_w$RT_Val_Good_Self
+df.C1.v.sum_eff_w$Val_RT_goodslf_badslf  <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Good_Self
+df.C1.v.sum_eff_w$Val_RT_goodoth_badoth <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Val_Good_Other
+df.C1.v.sum_eff_w$Val_RT_badslf_badoth <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Bad_Other
+
+df.C1.v.sum_eff_w$Id_RT_goodslf_goodoth  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.v.sum_eff_w$Id_RT_goodslf_badslf   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
+df.C1.v.sum_eff_w$Id_RT_goodoth_badoth <- df.C1.V.sum_w$RT_Id_Bad_Other - df.C1.V.sum_w$RT_Id_Good_Other
+df.C1.v.sum_eff_w$Id_RT_badslf_badoth <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Bad_Other
+
+df.C1.v.sum_eff_w$Val_ACC_goodslf_goodoth <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Good_Other
+df.C1.v.sum_eff_w$Val_ACC_goodslf_badslf <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Bad_Self
+df.C1.v.sum_eff_w$Val_ACC_goodoth_badoth <- df.C1.V.sum_w$ACC_Val_Good_Other - df.C1.V.sum_w$ACC_Val_Bad_Other
+df.C1.v.sum_eff_w$Val_ACC_badslf_badoth <- df.C1.V.sum_w$ACC_Val_Bad_Self - df.C1.V.sum_w$ACC_Val_Bad_Other
+
+df.C1.v.sum_eff_w$Id_ACC_goodslf_goodoth  <- df.C1.V.sum_w$ACC_Id_Good_Self - df.C1.V.sum_w$ACC_Id_Good_Other
+df.C1.v.sum_eff_w$Id_ACC_goodslf_badslf   <- df.C1.V.sum_w$ACC_Id_Good_Self - df.C1.V.sum_w$ACC_Id_Bad_Self
+df.C1.v.sum_eff_w$Id_ACC_goodoth_badoth <- df.C1.V.sum_w$ACC_Id_Good_Other - df.C1.V.sum_w$ACC_Id_Bad_Other
+df.C1.v.sum_eff_w$Id_ACC_badslf_badoth <- df.C1.V.sum_w$ACC_Id_Bad_Self - df.C1.V.sum_w$ACC_Id_Bad_Other
+
+# merge the effect file
+df.v.sum_eff_all_w <- merge(df.M1.v.sum_eff_w,df.C1.v.sum_eff_w,by="Subject")
+
+# merge the RT and ACC data (long-format) ####
+df.C1.V.sum_rt_acc_l <- merge(df.C1.V.acc,df.C1.V.RT.subj,by = c("Subject","Task","Morality",'Identity'))
+df.C1.V.sum_rt_acc_l <- df.C1.V.sum_rt_acc_l[order(df.C1.V.sum_rt_acc_l$Subject),]
+
+df.C1.V.sum_rt_acc_l <- df.C1.V.sum_rt_acc_l[,c("Subject","Task","Morality",'Identity',"N.x","countN","ACC","RT")]
+colnames(df.C1.V.sum_rt_acc_l) <- c("Subject","Task","Morality",'Identity',"Ntrials","corrTrials","ACC","RT")
+
+# order the columns
+#df.C1.V.sum_w <- df.C1.V.sum_w[,c(colnames(df.C1.V.sum_w)[c(1,10:11,2:9,12:23)])]
+
+# write files to an upper-lelel folder
+setwd(traDir)
+write.csv(df.C1.V.sum_w,'MS_rep_categ_behav_wide.csv',row.names = F)
+write.csv(df.C1.V.sum_noTask_w,'MS_rep_categ_behav_noTask_wide.csv',row.names = F)
+write.csv(df.C1.V.sum_rt_acc_l,'MS_rep_categ__rt_acc_long.csv',row.names = F)
+write.csv(df.v.sum_eff_all_w,'MS_rep_cross_taskeffect_wide.csv',row.names = F)
+setwd(curDir)
+
+# plot four scatter point.
+# p1: goodself-goodother (d in matching and acc in id-based)
+cor_p1 <- ggplot(df.v.sum_eff_all_w, aes(d_goodslf_goodoth, Id_ACC_goodslf_goodoth))+ 
+          geom_point() + 
+          labs(x = "Matching task (d prime)", y = "Identity-base Categorization task (accuracy)") +
+          geom_smooth(method="lm")
+
+# p2: goodself-goodother (RT in matching and RT in id-based)
+# p3: badself-badother (d in matching and acc in id-based)
+# p4: badself-badother (RT in matching and RT in id-based)
+
+```
+
+```{r preproc questionnair,echo=FALSE,results='hide',warning=FALSE, message=FALSE}
+# load the data
+df.quest1 <- read.csv("exp7_rep_Q4.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) %>%
+      filter(session == 1)
+df.quest2 <- read.csv("exp7_rep_Q5.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE) %>%
+      filter(session == 1)
+df.quest <- merge(df.quest1,df.quest2,by = "subjID")
+# calculate the reliability of each questionnair
+# get the name and key for each scale
+slfEsteemNames <- c( "slfEsteem_1", "slfEsteem_2", "slfEsteem_3", "slfEsteem_4", "slfEsteem_5",
+                     "slfEsteem_6", "slfEsteem_7", "slfEsteem_8", "slfEsteem_9", "slfEsteem_10")
+slfEsteemKeys  <- c(1,2,-3,4,-5,6,7,-8,-9,-10)        # for current dataset
+slfEsteemKeys2 <- c( "slfEsteem_1", "slfEsteem_2", "-slfEsteem_3", "slfEsteem_4", "-slfEsteem_5",
+                     "slfEsteem_6", "slfEsteem_7", "-slfEsteem_8", "-slfEsteem_9", "-slfEsteem_10")
+slfEsteemAlpha <- psych::alpha(df.quest[,slfEsteemNames],keys = slfEsteemKeys) # alpha
+print(slfEsteemAlpha$total[2]) # 0.8593
+slfEsteemOmega <- psych::omega(df.quest[,slfEsteemNames]) # omega 0.7455 0.9341
+print(c(slfEsteemOmega$omega_h,slfEsteemOmega$omega.tot))
+
+# calculate the score for the trait self-esteem
+slfEsteemScore <- psych::scoreItems(slfEsteemKeys2,df.quest[,slfEsteemNames], totals = F, min = 1, max = 4)
+df.quest$slfEsteem <- slfEsteemScore$scores
+
+# calculate for moral identity
+moralIdNames <- c("MoralId_1","MoralId_2","MoralId_3","MoralId_4","MoralId_5","MoralId_6",
+                  "MoralId_7","MoralId_8","MoralId_9","MoralId_10","MoralId_11","MoralId_12",
+                  "MoralId_13","MoralId_14","MoralId_15")
+moralIdKeys <- c(1,2,3,4,-5,6,7,8,9,10,11,12,13,14,15)
+
+moralIdAlpha <- psych::alpha(df.quest[,moralIdNames],keys = moralIdKeys) # alpha
+print(moralIdAlpha$total[2]) # 0.9178
+moralIdOmega <- psych::omega(df.quest[,moralIdNames]) # omega 0.7583 0.9454
+print(c(moralIdOmega$omega_h,moralIdOmega$omega.tot))
+
+moralIdinNames <- c("MoralId_1","MoralId_2","MoralId_5","MoralId_8","MoralId_10",
+                    "MoralId_11","MoralId_12", "MoralId_13","MoralId_14")
+moralIdinKeys <- c(1,2,-3,4,5,6,7,8,9)
+moralIdinKeys2 <- c("MoralId_1","MoralId_2","-MoralId_5","MoralId_8","MoralId_10",
+                    "MoralId_11","MoralId_12", "MoralId_13","MoralId_14")
+moralIdinAlpha <- psych::alpha(df.quest[,moralIdinNames],keys = moralIdinKeys) # alpha
+print(moralIdinAlpha$total[2]) # 0.8884
+moralIdinOmega <- psych::omega(df.quest[,moralIdinNames]) # omega 0.7115 0.939
+print(c(moralIdinOmega$omega_h,moralIdinOmega$omega.tot))
+
+# caculate the score for internal moral identity
+moralIdinScore <- psych::scoreItems(moralIdinKeys2,df.quest[,moralIdinNames], totals = F, min = -2, max = 2)
+df.quest$moralIdinScore <- moralIdinScore$scores
+
+
+moralIdexNames <- c("MoralId_3","MoralId_4","MoralId_6",
+                  "MoralId_7","MoralId_9","MoralId_15")
+moralIdexKeys <- c(1,2,3,4,5,6)
+moralIdexAlpha <- psych::alpha(df.quest[,moralIdexNames],keys = moralIdexKeys) # alpha
+print(moralIdexAlpha$total[2]) # 0.844
+moralIdexOmega <- psych::omega(df.quest[,moralIdexNames]) # omega 0.684 0.91
+print(c(moralIdexOmega$omega_h,moralIdexOmega$omega.tot))
+
+# calculate the score for external moral identity
+moralIdexScore <- psych::scoreItems(moralIdexNames,df.quest[,moralIdexNames], totals = F, min = -2, max = 2)
+df.quest$moralIdexScore <- moralIdexScore$scores
+
+# find the intersection between behavioral data and questionnarie data.
+tmp <- merge(df.v.sum_eff_all_w,df.quest[,c("subjID","slfEsteem","moralIdinScore","moralIdexScore")],by.x = "Subject",by.y = "subjID",all = TRUE)
+tmp <- tmp[complete.cases(tmp),]
+
+# write files to an upper-level folder
+setwd(traDir)
+write.csv(tmp,'MS_cross_taskeffect_wide_w_scale.csv',row.names = F)
+setwd(curDir)
+
+# load data from exp1
+crossf_effect_scale_1 <- read.csv("D:\\HCP_cloud\\Exps\\P1_Pos_Self\\Exp_Behav_Moral_Asso\\Exp_7_share\\Results\\Traditional_Analysis\\MS_cross_taskeffect_wide_w_scale.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
+colnames(tmp) == colnames(crossf_effect_scale_1)
+colnames(tmp)[colnames(tmp) == 'Sex'] <- 'Gender'
+tmp <- tmp[,colnames(crossf_effect_scale_1)]
+new_tmp <- rbind(crossf_effect_scale_1,tmp)
+# write files to an upper-level folder
+setwd(traDir)
+write.csv(new_tmp,'MS_effect_w_scales_all.csv',row.names = F)
+setwd(curDir)
+```
+
+```{r plot_match_data,echo=FALSE,warning=FALSE, message=FALSE}
+#MSplots(saveDir = traDir, curDir = curDir, task = 'match',type = 'RT', inData = df.M1.V.sum_rt_acc_l)
+Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7_rep', df.M1.V.SDT_l,df.M1.V.sum_rt_acc_l)
+      
+```
+
+```{r plot_categ_val_data,echo=FALSE,warning=FALSE, message=FALSE}
+CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7_rep', task = 'id', df.C1.V.sum_rt_acc_l)
+CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7_rep', task = 'val', df.C1.V.sum_rt_acc_l)
+```
