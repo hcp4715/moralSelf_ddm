@@ -16,7 +16,7 @@ pkgTest <- function(x)
         }
 }
 
-pkgNeeded <- (c("tidyverse","ggplot2","ez", "bootES","MBESS", 
+pkgNeeded <- (c("plyr","tidyverse","ggplot2","ez", "bootES","MBESS", 
                 "psych","corrplot","readr", "Hmisc","RColorBrewer"))
 
 lapply(pkgNeeded,pkgTest)

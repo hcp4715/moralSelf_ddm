@@ -10,6 +10,19 @@ This open repo includ scripts for the procedure and analysis script and data for
 
 ### structure of the current folder:
 
+$ tree
+.
+├── dir1
+│   ├── file11.ext
+│   └── file12.ext
+├── dir2
+│   ├── file21.ext
+│   ├── file22.ext
+│   └── file23.ext
+├── dir3
+├── file_in_root.ext
+└── README.md
+
 |---1_protocol
 
 |---2_pilot_study
@@ -61,17 +74,17 @@ Input:
 
 Output:
 
-- MS_match_behav_wide.csv          # for trad analysis in JAPS
+- MS_match_behav_wide.csv          # for trad analysis in JASP
 
 - MS_match__rt_acc_long.csv
 
 - MS_match__dprime_long.csv
 
-- MS_categ_behav_wide.csv          # for trad analysis in JAPS
+- MS_categ_behav_wide.csv          # for trad analysis in JASP
 
 - MS_categ__rt_acc_long.csv
 
-- MS_categ_behav_noTask_wide.csv   # for trad analysis in JAPS
+- MS_categ_behav_noTask_wide.csv   # for trad analysis in JASP
 
 - MS_categ__rt_acc_noTask_long.csv
 
@@ -141,7 +154,9 @@ These output csv files were then taken as input for JASP, get the following stat
 
 **HDDM analysis**
 
-Note: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here. 
+Note 1: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here. 
+
+Note 2: install and run HDDM is not always straight forward, especially if HDDM is the first python package you ever use. I've written a brief tutorial about how to install and run HDDM on my blog, using the current data and script as example. Please check here:......
 
 data (input) -> HDDM analysis (python & juypter notebook script)
 
@@ -170,7 +185,78 @@ Input:
 
 ### Confirmative Study: a preregistered study
 
-Data and script are included in the folder Replication
+The confirmative study basically has the similar scripts
 
-Procedure: exp7_rep_proc
-results and anlaysis: exp7_rep_results
+**Preprocessing:**
+
+clean rawdata -> MS_rep_preproc.r -> summary data for JASP analysis
+
+Input:
+
+- MS_rep_matchingTask_raw.csv
+
+- MS_rep_categTask_raw.csv
+
+Main output:
+
+- MS_match_behav_wide.csv          # in 2_trad_analysis, for trad analysis in JASP
+
+- MS_categ_behav_wide.csv          # in 2_trad_analysis, for trad analysis in JASP
+
+- MS_cross_taskeffect_wide.csv     # in 2_trad_analysis, for cross task correlation analysis
+
+- MS_match_hddm_stim.csv           # in 3_hddm, for HDDM analysis
+
+- MS_categ_id_hddm_stim.csv        # in 3_hddm, for HDDM analysis
+
+- MS_categ_val_hddm_stim           # in 3_hddm, for HDDM analysis
+
+- plots                            # in 2_trad_analysis
+
+**Tranditional analysis (NHST & BF)**
+
+Using the wide-format output from preprocessing as the input to JASP
+
+Input:
+
+- MS_match_behav_wide.csv
+
+- MS_categ_behav_wide.csv
+
+- MS_categ_behav_noTask_wide.csv
+
+Output:
+
+- MS_match_behav_wide.jasp
+
+- MS_categ_behav_wide.jasp
+
+- MS_categ_behav_noTask_wide.jasp
+
+**HDDM analysis**
+
+Note: We reported the results from hddm analysis with response-coding approach, but I also remained the python script for accuracy-coding. 
+
+data (input) -> HDDM analysis (python & juypter notebook script)
+
+Scripts:
+
+- Exp_MS_HDDM_match.py
+
+- Exp_MS_HDDM_categ.py
+
+- Exp_categ_stim.ipynb
+
+Input:
+
+- MS_match_hddm.csv          # for accuracy-coding modeling
+
+- MS_mismatch_hddm.csv       # for accuracy-coding modeling
+
+- MS_categ_id_hddm.csv       # for accuracy-coding modeling
+
+- MS_categ_val_hddm.csv      # for accuracy-coding modeling
+
+- MS_categ_val_hddm_stim.csv # for response-coding modeling
+
+- MS_categ_id_hddm_stim.csv  # for response-coding modeling

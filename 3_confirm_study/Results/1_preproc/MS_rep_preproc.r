@@ -1,18 +1,18 @@
-### This script is used to preprocessing the data of the moral self experiment (DDM), experiment 1. 
+### This script is used to preprocessing the data of the moral self experiment (DDM), experiment 2. 
 #
 ### Hu, C-P., Lan, Y., Macrae, N., & Sui. J. (2019) 
 ### Script author: Chuan-Peng Hu
 ### Email = hcp4715@gmail.com       twitter= @hcp4715
 #
 ### Input: 
-###      MS_matchTask_raw.csv -- raw data of matching task;
-###      MS_categTask_raw.csv -- raw data of categorization task;
+###      MS_rep_matchTask_raw.csv -- raw data of matching task;
+###      MS_rep_categTask_raw.csv -- raw data of categorization task;
 #
 ### Output:
-###     df.M.hddm_m.csv  -- clean data of matching trials from matchign task, for HDDM analysis;
-###     df.M.hddm_nm.csv -- clean data of nonmatching trials from matchign task, for HDDM analysis;
-###     df.C.hddm_val    -- clean data of valence-based categorization trials, for HDDM analysis;
-###     df.C.hddm_id     -- clean data of identity-based categorization trials, for HDDM analysis;
+###     df.M.hddm_m_stim.csv.csv  -- clean data of matching trials from matchign task, for HDDM analysis;
+###     df.M.hddm_nm_stim.csv.csv -- clean data of nonmatching trials from matchign task, for HDDM analysis;
+###     df.C.hddm_val_stim.csv    -- clean data of valence-based categorization trials, for HDDM analysis;
+###     df.C.hddm_id_stim.csv     -- clean data of identity-based categorization trials, for HDDM analysis;
 # 
 ###     MS_categ_behav_wide.csv        -- cleaned summary results (wide-format) of categorization task for 
 ###                                             statistical analysis in JASP
@@ -29,8 +29,7 @@
 # ---------- 2. Loading data and clean the data -----------------------------------------
 # ---------- 3. Matching task: prepare the Accuracy, d-prime and RT ---------------------
 # ---------- 4. Categorization task: prepare the Accuracy and RT ------------------------
-# ---------- 5. Questionnaire: prepare and save  ----------------------------------------
-# ---------- 6. Plots -------------------------------------------------------
+# ---------- 5. Plots -------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------------------
@@ -41,10 +40,9 @@ curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the direct
 setwd(curDir)
 source('Initial_ms_rep.r')  # initializing (clear global environment; load packages and functions)
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
-rootDir <- gsub('.{7}$', '', curDir)                            # get the parental folder
-traDir <- paste(rootDir,'traditional_analysis',sep = '')        # folder for traditional analsysi
-ddmDir <- paste(rootDir,'hddmMod',sep = '')                        # folder for DDM analysis
-exgDir <- paste(rootDir,'exGaussian',sep = '')                  # folder for ExGaussian analysis
+rootDir <- gsub('.{9}$', '', curDir)                            # get the parental folder
+traDir  <- paste(rootDir,'2_trad_analysis',sep = '')        # folder for traditional analsysi
+ddmDir  <- paste(rootDir,'3_hddm',sep = '')                        # folder for DDM analysis
 
 # ---------------------------------------------------------------------------------------
 # ---------- 2. Loading data and clean the data        ----------------------------------
@@ -181,7 +179,7 @@ df.C1.V.basic <- df.C1.V %>%
                     Age_sd   = round(sd(Age),2))
 
 ###########################################################
-########   get the data file for hddm analysis      #######
+########   prep the data file for hddm analysis     #######
 ###########################################################
 # exclusion trials, criterion: trials without response or wrong key
 # Note: we didn't remove the correct response less than 200 ms
@@ -333,7 +331,7 @@ df.M1.V.RT.subj_w <- reshape2::dcast(df.M1.V.RT.subj, Subject ~ Match + Morality
 colnames(df.M1.V.RT.subj_w)[2:9] <- paste("RT", colnames(df.M1.V.RT.subj_w[,2:9]), sep = "_")
 
 ## saving data ####
-# merge the dprime and RT data and save
+# merge the dprime and RT data and save (wide-format)
 df.M1.V.sum_w <- merge(df.M1.V.acc_w,  df.M1.V.SDT_ww,by = "Subject")
 df.M1.V.sum_w <- merge(df.M1.V.sum_w,df.M1.V.RT.subj_w,by = 'Subject')
 
@@ -348,9 +346,8 @@ colnames(df.M1.V.sum_rt_acc_l) <- c("Subject","Match","Morality",'Identity',"Ntr
 df.M1.V.sum_w <- df.M1.V.sum_w[,c(colnames(df.M1.V.sum_w)[c(1,10:11,2:9,12:23)])]
 
 ### plot the density of d prime and rt
-# Create a scatterplot with density margin plots
-
-
+# Create a scatterplot with density margin plots 
+# Note, this part of the code is just for exploration, not presented in the manuscript
 
 ## prepare the data
 df.M1.V.SDT_l$Cond <- paste(df.M1.V.SDT_l$Morality,df.M1.V.SDT_l$Identity,sep = '_')
@@ -460,7 +457,7 @@ scatterP<-
 gridExtra::grid.arrange(xDense, blankPlot, scatterP, yDense, ncol=2, nrow=2, widths=c(4, 1.4), heights=c(1.4, 4))
 
 # SAVE combined plots as PDF
-pdf("Figure1_RT_drpime.pdf",pagecentre=T, width=15,height=12 ,paper = "special")
+pdf("Figure_RT_drpime_density_explore.pdf",pagecentre=T, width=15,height=12 ,paper = "special")
 gridExtra::grid.arrange(xDense, blankPlot, scatterP, yDense, ncol=2, nrow=2, widths=c(4, 1.4), heights=c(1.4, 4))
 dev.off()
 
@@ -502,7 +499,7 @@ df.C1.V.acc <- plyr::ddply(df.C1.V,.(Subject,Age, Sex, Task,Morality,Identity), 
                            ACC = sum(ACC)/length(ACC))
 
 # wide-format
-df.C1.V.acc_w  <- dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity ,value.var = "ACC")
+df.C1.V.acc_w  <- reshape2::dcast(df.C1.V.acc, Subject ~ Task + Morality + Identity ,value.var = "ACC")
 # rename the column number
 colnames(df.C1.V.acc_w)[2:9] <- paste("ACC", colnames(df.C1.V.acc_w[,2:9]), sep = "_")
 
@@ -512,7 +509,7 @@ df.C1.V.acc_noTask  <-  plyr::ddply(df.C1.V,.(Subject, Morality, Identity), summ
                                     countN = sum(ACC),
                                     ACC = sum(ACC)/length(ACC))
 
-df.C1.V.acc_noTask_w <- dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
+df.C1.V.acc_noTask_w <- reshape2::dcast(df.C1.V.acc_noTask, Subject ~ Morality + Identity,value.var = "ACC")
 # rename the column number
 colnames(df.C1.V.acc_noTask_w)[2:5] <- paste("ACC", colnames(df.C1.V.acc_noTask_w[,2:5]), sep = "_")
 
@@ -528,14 +525,14 @@ df.C1.V.acc_noTask_w$slf_oth_bad  <- df.C1.V.acc_noTask_w$ACC_Bad_Self - df.C1.V
 
 df.C1.V.RT <- df.C1.V[df.C1.V$ACC == 1,]  # exclued inaccurate data
 df.C1.V.RT.subj <- summarySEwithin(df.C1.V.RT,measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
-df.C1.V.RT.subj_w <- dcast(df.C1.V.RT.subj, Subject ~ Task + Morality + Identity ,value.var = "RT") 
+df.C1.V.RT.subj_w <- reshape2::dcast(df.C1.V.RT.subj, Subject ~ Task + Morality + Identity ,value.var = "RT") 
 
 # rename the columns of RT data
 colnames(df.C1.V.RT.subj_w)[2:9] <- paste("RT", colnames(df.C1.V.RT.subj_w[,2:9]), sep = "_")
 
 # combining data form different task for analyszing interaction of val and id
 df.C1.V.RT.subj_noTask <- summarySEwithin(df.C1.V.RT,measurevar = 'RT', withinvar = c('Subject','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
-df.C1.V.RT.subj_noTask_w <- dcast(df.C1.V.RT.subj_noTask, Subject ~ Morality + Identity ,value.var = "RT") 
+df.C1.V.RT.subj_noTask_w <- reshape2::dcast(df.C1.V.RT.subj_noTask, Subject ~ Morality + Identity ,value.var = "RT") 
 
 # rename the columns of RT data
 colnames(df.C1.V.RT.subj_noTask_w)[2:5] <- paste("RT", colnames(df.C1.V.RT.subj_noTask_w[,2:5]), sep = "_")
@@ -553,23 +550,23 @@ df.C1.v.sum_eff_w <- data.frame(df.C1.V.sum_w[,c('Subject')])
 colnames(df.C1.v.sum_eff_w) <- 'Subject'
 df.C1.v.sum_eff_w$Val_RT_goodslf_goodoth <- df.C1.V.sum_w$RT_Val_Good_Other - df.C1.V.sum_w$RT_Val_Good_Self
 df.C1.v.sum_eff_w$Val_RT_goodslf_badslf  <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Good_Self
-df.C1.v.sum_eff_w$Val_RT_goodoth_badoth <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Val_Good_Other
-df.C1.v.sum_eff_w$Val_RT_badslf_badoth <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Bad_Other
+df.C1.v.sum_eff_w$Val_RT_goodoth_badoth  <- df.C1.V.sum_w$RT_Val_Bad_Other - df.C1.V.sum_w$RT_Val_Good_Other
+df.C1.v.sum_eff_w$Val_RT_badslf_badoth   <- df.C1.V.sum_w$RT_Val_Bad_Self - df.C1.V.sum_w$RT_Val_Bad_Other
 
 df.C1.v.sum_eff_w$Id_RT_goodslf_goodoth  <- df.C1.V.sum_w$RT_Id_Good_Other - df.C1.V.sum_w$RT_Id_Good_Self
 df.C1.v.sum_eff_w$Id_RT_goodslf_badslf   <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Good_Self
-df.C1.v.sum_eff_w$Id_RT_goodoth_badoth <- df.C1.V.sum_w$RT_Id_Bad_Other - df.C1.V.sum_w$RT_Id_Good_Other
-df.C1.v.sum_eff_w$Id_RT_badslf_badoth <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Bad_Other
+df.C1.v.sum_eff_w$Id_RT_goodoth_badoth   <- df.C1.V.sum_w$RT_Id_Bad_Other - df.C1.V.sum_w$RT_Id_Good_Other
+df.C1.v.sum_eff_w$Id_RT_badslf_badoth    <- df.C1.V.sum_w$RT_Id_Bad_Self - df.C1.V.sum_w$RT_Id_Bad_Other
 
 df.C1.v.sum_eff_w$Val_ACC_goodslf_goodoth <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Good_Other
-df.C1.v.sum_eff_w$Val_ACC_goodslf_badslf <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Bad_Self
-df.C1.v.sum_eff_w$Val_ACC_goodoth_badoth <- df.C1.V.sum_w$ACC_Val_Good_Other - df.C1.V.sum_w$ACC_Val_Bad_Other
-df.C1.v.sum_eff_w$Val_ACC_badslf_badoth <- df.C1.V.sum_w$ACC_Val_Bad_Self - df.C1.V.sum_w$ACC_Val_Bad_Other
+df.C1.v.sum_eff_w$Val_ACC_goodslf_badslf  <- df.C1.V.sum_w$ACC_Val_Good_Self - df.C1.V.sum_w$ACC_Val_Bad_Self
+df.C1.v.sum_eff_w$Val_ACC_goodoth_badoth  <- df.C1.V.sum_w$ACC_Val_Good_Other - df.C1.V.sum_w$ACC_Val_Bad_Other
+df.C1.v.sum_eff_w$Val_ACC_badslf_badoth   <- df.C1.V.sum_w$ACC_Val_Bad_Self - df.C1.V.sum_w$ACC_Val_Bad_Other
 
 df.C1.v.sum_eff_w$Id_ACC_goodslf_goodoth  <- df.C1.V.sum_w$ACC_Id_Good_Self - df.C1.V.sum_w$ACC_Id_Good_Other
 df.C1.v.sum_eff_w$Id_ACC_goodslf_badslf   <- df.C1.V.sum_w$ACC_Id_Good_Self - df.C1.V.sum_w$ACC_Id_Bad_Self
-df.C1.v.sum_eff_w$Id_ACC_goodoth_badoth <- df.C1.V.sum_w$ACC_Id_Good_Other - df.C1.V.sum_w$ACC_Id_Bad_Other
-df.C1.v.sum_eff_w$Id_ACC_badslf_badoth <- df.C1.V.sum_w$ACC_Id_Bad_Self - df.C1.V.sum_w$ACC_Id_Bad_Other
+df.C1.v.sum_eff_w$Id_ACC_goodoth_badoth   <- df.C1.V.sum_w$ACC_Id_Good_Other - df.C1.V.sum_w$ACC_Id_Bad_Other
+df.C1.v.sum_eff_w$Id_ACC_badslf_badoth    <- df.C1.V.sum_w$ACC_Id_Bad_Self - df.C1.V.sum_w$ACC_Id_Bad_Other
 
 # merge the effect file
 df.v.sum_eff_all_w <- merge(df.M1.v.sum_eff_w,df.C1.v.sum_eff_w,by="Subject")
@@ -597,90 +594,28 @@ write.csv(df.C1.V.sum_rt_acc_noTask_l,'MS_categ__rt_acc_noTask_long.csv',row.nam
 write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
 
-# ---------------------------------------------------------------------------------------
-# ------------ 5. Questionnaire: prepare and save  --------------------------------------
-# ---------------------------------------------------------------------------------------
-
-# load the data
-df.quest <- read.csv("exp7_survey_monkey_raw_c.csv",header = TRUE, sep = ',', stringsAsFactors=FALSE)
-
-# calculate the reliability of each questionnair
-# get the name and key for each scale
-slfEsteemNames <- c( "slfEsteem_1", "slfEsteem_2", "slfEsteem_3", "slfEsteem_4", "slfEsteem_5",
-                     "slfEsteem_6", "slfEsteem_7", "slfEsteem_8", "slfEsteem_9", "slfEsteem_10")
-slfEsteemKeys  <- c(1,2,-3,4,-5,6,7,-8,-9,-10)        # for current dataset
-slfEsteemKeys2 <- c( "slfEsteem_1", "slfEsteem_2", "-slfEsteem_3", "slfEsteem_4", "-slfEsteem_5",
-                     "slfEsteem_6", "slfEsteem_7", "-slfEsteem_8", "-slfEsteem_9", "-slfEsteem_10")
-slfEsteemAlpha <- psych::alpha(df.quest[,slfEsteemNames],keys = slfEsteemKeys) # alpha
-print(slfEsteemAlpha$total[2])
-slfEsteemOmega <- psych::omega(df.quest[,slfEsteemNames]) # omega
-print(c(slfEsteemOmega$omega_h,slfEsteemOmega$omega.tot))
-
-# calculate the score for the trait self-esteem
-slfEsteemScore <- psych::scoreItems(slfEsteemKeys2,df.quest[,slfEsteemNames], totals = F, min = 1, max = 4)
-df.quest$slfEsteem <- slfEsteemScore$scores
-
-# calculate for moral identity
-moralIdNames <- c("MoralId_1","MoralId_2","MoralId_3","MoralId_4","MoralId_5","MoralId_6",
-                  "MoralId_7","MoralId_8","MoralId_9","MoralId_10","MoralId_11","MoralId_12",
-                  "MoralId_13","MoralId_14","MoralId_15")
-moralIdKeys <- c(1,2,3,4,-5,6,7,8,9,10,11,12,13,14,15)
-
-moralIdAlpha <- psych::alpha(df.quest[,moralIdNames],keys = moralIdKeys) # alpha
-print(moralIdAlpha$total[2])
-moralIdOmega <- psych::omega(df.quest[,moralIdNames]) # omega
-print(c(moralIdOmega$omega_h,moralIdOmega$omega.tot))
-
-moralIdinNames <- c("MoralId_1","MoralId_2","MoralId_5","MoralId_8","MoralId_10",
-                    "MoralId_11","MoralId_12", "MoralId_13","MoralId_14")
-moralIdinKeys <- c(1,2,-3,4,5,6,7,8,9)
-moralIdinKeys2 <- c("MoralId_1","MoralId_2","-MoralId_5","MoralId_8","MoralId_10",
-                    "MoralId_11","MoralId_12", "MoralId_13","MoralId_14")
-moralIdinAlpha <- psych::alpha(df.quest[,moralIdinNames],keys = moralIdinKeys) # alpha
-print(moralIdinAlpha$total[2])
-moralIdinOmega <- psych::omega(df.quest[,moralIdinNames]) # omega
-print(c(moralIdinOmega$omega_h,moralIdinOmega$omega.tot))
-
-# caculate the score for internal moral identity
-moralIdinScore <- psych::scoreItems(moralIdinKeys2,df.quest[,moralIdinNames], totals = F, min = -2, max = 2)
-df.quest$moralIdinScore <- moralIdinScore$scores
-
-moralIdexNames <- c("MoralId_3","MoralId_4","MoralId_6",
-                    "MoralId_7","MoralId_9","MoralId_15")
-moralIdexKeys <- c(1,2,3,4,5,6)
-moralIdexAlpha <- psych::alpha(df.quest[,moralIdexNames],keys = moralIdexKeys) # alpha
-print(moralIdexAlpha$total[2])
-moralIdexOmega <- psych::omega(df.quest[,moralIdexNames]) # omega
-print(c(moralIdexOmega$omega_h,moralIdexOmega$omega.tot))
-
-# calculate the score for external moral identity
-moralIdexScore <- psych::scoreItems(moralIdexNames,df.quest[,moralIdexNames], totals = F, min = -2, max = 2)
-df.quest$moralIdexScore <- moralIdexScore$scores
-
-# find the intersection between behavioral data and questionnarie data.
-tmp <- merge(df.v.sum_eff_all_w,df.quest[,c("subjID","slfEsteem","moralIdinScore","moralIdexScore")],by.x = "Subject",by.y = "subjID",all = TRUE)
-tmp <- tmp[complete.cases(tmp),]
-
-# write files to an upper-level folder
-setwd(traDir)
-write.csv(tmp,'MS_cross_taskeffect_wide_w_scale.csv',row.names = F)
-setwd(curDir)
 
 # ---------------------------------------------------------------------------------------
-# ------------ 6. Plots  ----------------------------------------------------------------
+# ------------ 5. Plots  ----------------------------------------------------------------
 # ---------------------------------------------------------------------------------------
 # plots here are made by pre-defined functions in initial.r:
-#     "Mplots" -- plot for matching task
+#     "Mplots"  -- plot for matching task
 #     "CAplots" -- plot for categorization task
 ## Matching task, plots are save to 'saveDir'
-Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.C1.V.sum_rt_acc_l)
+
+# first convert time to ms
+df.M1.V.sum_rt_acc_l$RT <- df.M1.V.sum_rt_acc_l$RT*1000
+df.C1.V.sum_rt_acc_l$RT <- df.C1.V.sum_rt_acc_l$RT*1000
+df.C1.V.sum_rt_acc_noTask_l$RT <- df.C1.V.sum_rt_acc_noTask_l$RT*1000
+
+Mplots(saveDir = traDir, curDir = curDir, expName = 'conf', df.M1.V.SDT_l,df.M1.V.sum_rt_acc_l)
 
 # plot id-based data
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', df.C1.V.sum_rt_acc_l)
+CAplots(saveDir = traDir, curDir = curDir,expName = 'conf', task = 'id', df.C1.V.sum_rt_acc_l)
 
 # plot val-based data
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'val', df.C1.V.sum_rt_acc_l)
+CAplots(saveDir = traDir, curDir = curDir,expName = 'conf', task = 'val', df.C1.V.sum_rt_acc_l)
 
 # plot the categorization task (collapsed different tasks)
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
+CAplots(saveDir = traDir, curDir = curDir,expName = 'conf', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
 
