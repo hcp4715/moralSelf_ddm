@@ -108,6 +108,7 @@ Output:
 - MS_categ_behav_noTask_wide.jasp
 
 **Ex-Gaussian analysis**
+
 data (input) -> ex-Gaussaion analysis (R script) -> parameters estimation for each participant (output csv files) -> JASP
 
 script: Ex_Gaussian_analysis.R (dependency: Initial_exgaussian.r). Read the comments in the R script, it include more than just what presented in the results part ;-).
@@ -139,8 +140,32 @@ These output csv files were then taken as input for JASP, get the following stat
 - ExGaussian_params_wide_sigma_noTask.jasp
 
 **HDDM analysis**
+
+Note: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here. 
+
 data (input) -> HDDM analysis (python & juypter notebook script)
 
+Scripts:
+
+- Exp_MS_HDDM_match.py
+
+- Exp_MS_HDDM_categ.py
+
+- Exp_categ_stim.ipynb
+
+Input:
+
+- MS_match_hddm.csv          # for accuracy-coding modeling
+
+- MS_mismatch_hddm.csv       # for accuracy-coding modeling
+
+- MS_categ_id_hddm.csv       # for accuracy-coding modeling
+
+- MS_categ_val_hddm.csv      # for accuracy-coding modeling
+
+- MS_categ_val_hddm_stim.csv # for response-coding modeling
+
+- MS_categ_id_hddm_stim.csv  # for response-coding modeling
 
 
 ### Confirmative Study: a preregistered study
