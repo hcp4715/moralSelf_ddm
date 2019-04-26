@@ -10,18 +10,24 @@ This open repo includ scripts for the procedure and analysis script and data for
 
 ### structure of the current folder:
 
-$ tree
-.
-├── dir1
-│   ├── file11.ext
-│   └── file12.ext
-├── dir2
-│   ├── file21.ext
-│   ├── file22.ext
-│   └── file23.ext
-├── dir3
-├── file_in_root.ext
-└── README.md
+```
+project
+│   README.md
+│   file001.txt    
+│
+└───folder1
+│   │   file011.txt
+│   │   file012.txt
+│   │
+│   └───subfolder1
+│       │   file111.txt
+│       │   file112.txt
+│       │   ...
+│   
+└───folder2
+    │   file021.txt
+    │   file022.txt
+```
 
 |---1_protocol
 
