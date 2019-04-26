@@ -1,12 +1,12 @@
 # Good me Bad me
 
-================
+================================================================================================
 
 This is the project files for Chuan-Peng Hu et al (in prep).
 
 This open repo includ scripts for the procedure and analysis script and data for two experiments.
 
-================
+================================================================================================
 
 ### structure of the current folder:
 
@@ -15,7 +15,8 @@ moralSelf_ddm
 │   README.md
 │
 └───1_protocol
-│   │    MoralSelf_pilot_design.docx
+│   │   MoralSelf_pilot_design.docx
+│   │
 └───2_pilot_study
 │   │
 │   └───Procedure
@@ -33,6 +34,8 @@ moralSelf_ddm
 │       └───4_hddm             # hddm analysis
 │
 └───3_confirm_study
+│   │   MS_rep_categ_sample_size.jasp  # jasp used for determine whether or not stop collecting data
+│   │   README.md
 │   │
 │   └───Pre-registration
 │   │
