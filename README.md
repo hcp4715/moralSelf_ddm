@@ -11,60 +11,47 @@ This open repo includ scripts for the procedure and analysis script and data for
 ### structure of the current folder:
 
 ```
-project
+moralSelf_ddm
 │   README.md
-│   file001.txt    
 │
-└───folder1
-│   │   file011.txt
-│   │   file012.txt
+└───1_protocol
+│   │    MoralSelf_pilot_design.docx
+└───2_pilot_study
 │   │
-│   └───subfolder1
-│       │   file111.txt
-│       │   file112.txt
-│       │   ...
-│   
-└───folder2
-    │   file021.txt
-    │   file022.txt
+│   └───Procedure
+│   │   │
+│   │   └───procedure_final    # matlab code for procedure
+│   │   
+│   └───Results
+│       │
+│       └───1_preproc          # R code for preprocessing data and plots
+│       │
+│       └───2_trad_analysis    # ANOVA results in JASP
+│       │
+│       └───3_exGaussian       # ex-Gaussian analysis of categorization task
+│       │
+│       └───4_hddm             # hddm analysis
+│
+└───3_confirm_study
+│   │
+│   └───Pre-registration
+│   │
+│   └───Procedure
+│   │   │
+│   │   └───confirmStudy_proc  # matlab code for procedure
+│   │   
+│   └───Results
+│       │
+│       └───1_preproc          # R code for preprocessing data and plots
+│       │
+│       └───2_trad_analysis    # ANOVA results in JASP
+│       │
+│       └───3_hddm             # hddm analysis
+│
+└───4_manuscript
+        MoralSelf_pilot_design.docx
+
 ```
-
-|---1_protocol
-
-|---2_pilot_study
-
-|---|---Procedure
-
-|---|---|---procedure_final    # matlab code for procedure
-
-|---|---Results
-
-|---|---|---1_preproc          # R code for preprocessing data and plots
-
-|---|---|---2_trad_analysis    # ANOVA results in JASP
-
-|---|---|---3_exGaussian       # ex-Gaussian analysis of categorization task
-
-|---|---|---4_hddm             # hddm analysis
-
-|---3_confirm_study
-
-|---|---Pre-registration
-
-|---|---Procedure
-
-|---|---|---confirmStudy_proc # matlab code for procedure
-
-|---|---Results
-
-|---|---|---1_preproc         # R code for preprocessing data
-
-|---|---|---2_trad_analysis   # ANOVA results in JASP
-
-|---|---|---3_hddm            # hddm analysis (in jupyter notebook)
-
-|---4_manuscript
-
 
 ### Pilot Study
 
