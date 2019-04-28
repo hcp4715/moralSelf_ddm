@@ -8,7 +8,6 @@
 *.psd
 *.pdf
 *.db
-*.csv
 *.xlsx
 *.xls
 *.out
@@ -23,6 +22,3 @@
 *.RData
 *.Rhistory
 *.Rproj
-/pilot_1_match_flex_trial_number/*
-/pilot_2_match_fixed_trial_number/*
-/Protocol/*

@@ -1,12 +1,12 @@
 # Good me Bad me
 
-================================================================================================
+================================================================================
 
 This is the project files for Chuan-Peng Hu et al (in prep).
 
 This open repo includ scripts for the procedure and analysis script and data for two experiments.
 
-================================================================================================
+================================================================================
 
 ### structure of the current folder:
 
@@ -70,29 +70,21 @@ Input:
 
 Output:
 
-- MS_match_behav_wide.csv          # for trad analysis in JASP
+- MS_match_behav_wide.csv          # in folder "2_trad_analysis", for trad analysis in JASP
 
-- MS_match__rt_acc_long.csv
+- MS_categ_behav_wide.csv          # in folder "2_trad_analysis", for trad analysis in JASP
 
-- MS_match__dprime_long.csv
+- MS_categ_behav_noTask_wide.csv   # in folder "2_trad_analysis", for trad analysis in JASP
 
-- MS_categ_behav_wide.csv          # for trad analysis in JASP
+- MS_categ_exG.csv                 # in folder "3_exGaussian"", for ex-Gaussian analysis
 
-- MS_categ__rt_acc_long.csv
+- MS_match_hddm.csv                # in folder "4_hddm", for HDDM analysis
 
-- MS_categ_behav_noTask_wide.csv   # for trad analysis in JASP
+- MS_mismatch_hddm.csv             # in folder "4_hddm", for HDDM analysis
 
-- MS_categ__rt_acc_noTask_long.csv
+- MS_categ_id_hddm_stim.csv        # in folder "4_hddm", for HDDM analysis
 
-- MS_categ_exG.csv                 # for ex-Gaussian analysis
-
-- MS_match_hddm.csv                # for HDDM analysis
-
-- MS_mismatch_hddm.csv             # for HDDM analysis
-
-- MS_categ_id_hddm_stim.csv        # for HDDM analysis
-
-- MS_categ_val_hddm_stim           # for HDDM analysis
+- MS_categ_val_hddm_stim           # in folder "4_hddm", for HDDM analysis
 
 - plots
 
@@ -128,8 +120,6 @@ Input:
 
 Output:
 
-- exGaussian_params_long.csv  (all parameters in long format)
-
 - exGaussian_params_mu_w.csv    (parameter mu in wide format)
 
 - exGaussian_params_sigma_w.csv (parameter sigma in wide format)
@@ -150,9 +140,9 @@ These output csv files were then taken as input for JASP, get the following stat
 
 **HDDM analysis**
 
-Note 1: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here. 
+Note 1: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here.
 
-Note 2: install and run HDDM is not always straight forward, especially if HDDM is the first python package you ever use. I've written a brief tutorial about how to install and run HDDM on my blog, using the current data and script as example. Please check here:......
+Note 2: install and run HDDM is not always straight forward, especially if HDDM is the first python package you ever use. I've written a brief tutorial about how to install and run HDDM on my blog, using the current data and script as example. Please check here: http://www.huchuanpeng.com/2019/04/29/how-to-install-and-use-hddm/.
 
 data (input) -> HDDM analysis (python & juypter notebook script)
 
@@ -177,7 +167,6 @@ Input:
 - MS_categ_val_hddm_stim.csv # for response-coding modeling
 
 - MS_categ_id_hddm_stim.csv  # for response-coding modeling
-
 
 ### Confirmative Study: a preregistered study
 
