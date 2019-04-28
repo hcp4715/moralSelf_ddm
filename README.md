@@ -1,12 +1,12 @@
 # Good me Bad me
 
-================================================================================================
+================================================================================
 
 This is the project files for Chuan-Peng Hu et al (in prep).
 
 This open repo includ scripts for the procedure and analysis script and data for two experiments.
 
-================================================================================================
+================================================================================
 
 ### structure of the current folder:
 
@@ -150,9 +150,9 @@ These output csv files were then taken as input for JASP, get the following stat
 
 **HDDM analysis**
 
-Note 1: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here. 
+Note 1: results from these analysis were not reported in the manuscript, but the results and code were nonetheless presented here.
 
-Note 2: install and run HDDM is not always straight forward, especially if HDDM is the first python package you ever use. I've written a brief tutorial about how to install and run HDDM on my blog, using the current data and script as example. Please check here:......
+Note 2: install and run HDDM is not always straight forward, especially if HDDM is the first python package you ever use. I've written a brief tutorial about how to install and run HDDM on my blog, using the current data and script as example. Please check here: http://www.huchuanpeng.com/2019/04/29/how-to-install-and-use-hddm/.
 
 data (input) -> HDDM analysis (python & juypter notebook script)
 

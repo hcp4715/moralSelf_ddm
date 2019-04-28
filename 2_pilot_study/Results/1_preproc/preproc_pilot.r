@@ -361,7 +361,7 @@ df.M1.v.sum_eff_w <- df.M1.V.sum_w %>%
 setwd(traDir)
 write.csv(df.M1.V.sum_w,'MS_match_behav_wide.csv',row.names = F)
 write.csv(df.M1.V.SDT_l,'MS_match__dprime_long.csv',row.names = F)
-write.csv(df.M1.V.sum_rt_acc_l,'MS_match__rt_acc_long.csv',row.names = F)
+# write.csv(df.M1.V.sum_rt_acc_l,'MS_match__rt_acc_long.csv',row.names = F) # long-format data
 setwd(curDir)
 
 
@@ -469,8 +469,8 @@ colnames(df.C1.V.sum_rt_acc_noTask_l) <- c("Subject","Morality",'Identity',"Ntri
 setwd(traDir)
 write.csv(df.C1.V.sum_w,'MS_categ_behav_wide.csv',row.names = F)
 write.csv(df.C1.V.sum_noTask_w,'MS_categ_behav_noTask_wide.csv',row.names = F)
-write.csv(df.C1.V.sum_rt_acc_l,'MS_categ__rt_acc_long.csv',row.names = F)
-write.csv(df.C1.V.sum_rt_acc_noTask_l,'MS_categ__rt_acc_noTask_long.csv',row.names = F)
+#write.csv(df.C1.V.sum_rt_acc_l,'MS_categ__rt_acc_long.csv',row.names = F)
+#write.csv(df.C1.V.sum_rt_acc_noTask_l,'MS_categ__rt_acc_noTask_long.csv',row.names = F)
 write.csv(df.v.sum_eff_all_w,'MS_cross_taskeffect_wide.csv',row.names = F)
 setwd(curDir)
 
@@ -550,14 +550,15 @@ setwd(curDir)
 #     "Mplots" -- plot for matching task
 #     "CAplots" -- plot for categorization task
 ## Matching task, plots are save to 'saveDir'
-Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.C1.V.sum_rt_acc_l)
 
-# plot id-based data
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', df.C1.V.sum_rt_acc_l)
+#Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.C1.V.sum_rt_acc_l)
 
-# plot val-based data
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'val', df.C1.V.sum_rt_acc_l)
+### plot id-based data
+#CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', df.C1.V.sum_rt_acc_l)
 
-# plot the categorization task (collapsed different tasks)
-CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
+### plot val-based data
+#CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'val', df.C1.V.sum_rt_acc_l)
+
+### plot the categorization task (collapsed different tasks)
+#CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
 
