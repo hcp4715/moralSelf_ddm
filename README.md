@@ -2,7 +2,7 @@
 
 ================================================================================
 
-This is the project files for Chuan-Peng Hu et al (in prep).
+This is the project files for Chuan-Peng Hu et al (2019):https://psyarxiv.com/9fczh/.
 
 This open repo includ scripts for the procedure and analysis script and data for two experiments.
 
@@ -14,10 +14,7 @@ This open repo includ scripts for the procedure and analysis script and data for
 moralSelf_ddm
 │   README.md
 │
-└───1_protocol
-│   │   MoralSelf_pilot_design.docx
-│   │
-└───2_pilot_study
+└───1_pilot_study
 │   │
 │   └───Procedure
 │   │   │
@@ -31,9 +28,9 @@ moralSelf_ddm
 │       │
 │       └───3_exGaussian       # ex-Gaussian analysis of categorization task
 │       │
-│       └───4_hddm             # hddm analysis
+│       └───4_hddm             # hddm analysis in python
 │
-└───3_confirm_study
+└───2_confirm_study
 │   │   MS_rep_categ_sample_size.jasp  # jasp used for determine whether or not stop collecting data
 │   │   README.md
 │   │
@@ -49,10 +46,11 @@ moralSelf_ddm
 │       │
 │       └───2_trad_analysis    # ANOVA results in JASP
 │       │
-│       └───3_hddm             # hddm analysis
+│       └───3_hddm             # hddm analysis in python and jupyter notebook
 │
-└───4_manuscript
+└───3_manuscript
         MoralSelf_pilot_design.docx
+        ...
 
 ```
 
@@ -220,7 +218,7 @@ Output:
 
 **HDDM analysis**
 
-Note: We reported the results from hddm analysis with response-coding approach, but I also remained the python script for accuracy-coding. 
+Note: We reported the results from hddm analysis with sitmulus coding approach, but I also remained the python script for accuracy-coding. 
 
 data (input) -> HDDM analysis (python & juypter notebook script)
 
