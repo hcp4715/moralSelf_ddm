@@ -16,9 +16,8 @@ pkgTest <- function(x)
         }
 }
 
-pkgNeeded <- (c("tidyverse","ggplot2", "reshape2","ez", "bootES","MBESS", 
-                "BayesFactor","psych","corrplot",'plyr','ggstatsplot',"readr",
-                "tidyr","Hmisc","RColorBrewer"))
+pkgNeeded <- (c("tidyverse","ggplot2", "reshape2", "bootES","MBESS", 
+                "BayesFactor",'plyr','psych','ggstatsplot',"readr","Hmisc","RColorBrewer"))
 
 lapply(pkgNeeded,pkgTest)
 rm('pkgNeeded') # remove the variable 'pkgNeeded';
@@ -46,7 +45,9 @@ apatheme = theme_bw()+
               axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
               axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
               axis.line.x = element_line(color='black', size = 1),   # increase the size of font
-              axis.line.y = element_line(color='black', size = 1))   # increase the size of font
+              axis.line.y = element_line(color='black', size = 1),   # increase the size of font
+              strip.text = element_text (size = 16, color = 'black') # size of text in strips, face = "bold"
+)
 
 #raincloud_theme <-  theme_bw() + 
 #      theme(panel.grid.major = element_blank(),

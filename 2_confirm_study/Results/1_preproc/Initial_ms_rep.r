@@ -22,6 +22,10 @@ pkgNeeded <- (c("plyr","tidyverse","ggplot2","ez", "bootES","MBESS",
 lapply(pkgNeeded,pkgTest)
 rm('pkgNeeded') # remove the variable 'pkgNeeded';
 
+#devtools::install_github("zeehio/facetscales")
+#library(scales)
+#library(facetscales)
+
 # run the geo_flat_violin.r, which is from:https://gist.githubusercontent.com/
 # benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R
 source("geom_flat_violin.R")

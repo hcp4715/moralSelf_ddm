@@ -41,10 +41,10 @@ curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the direct
 setwd(curDir)
 source('Initial_exp7.r')  # initializing (clear global environment; load packages and functions)
 curDir  <- dirname(rstudioapi::getSourceEditorContext()$path)   # get the directory for preprocessing
-rootDir <- gsub('.{7}$', '', curDir)                            # get the parental folder
-traDir <- paste(rootDir,'traditional_analysis',sep = '')        # folder for traditional analsysi
-ddmDir <- paste(rootDir,'hddm',sep = '')                        # folder for DDM analysis
-exgDir <- paste(rootDir,'exGaussian',sep = '')                  # folder for ExGaussian analysis
+rootDir <- gsub('.{9}$', '', curDir)                            # get the parental folder, remove last 9 characters
+traDir <- paste(rootDir,'2_trad_analysis',sep = '')             # folder for traditional analysis
+ddmDir <- paste(rootDir,'4_hddm',sep = '')                        # folder for DDM analysis
+exgDir <- paste(rootDir,'3_exGaussian',sep = '')                  # folder for ExGaussian analysis
 
 # ---------------------------------------------------------------------------------------
 # ---------- 2. Loading data and clean the data        ----------------------------------
@@ -126,12 +126,14 @@ df.C.valid <- df.C.valid[!(df.C.valid$Subject %in% excldSub2.C),] # one particip
 rm(df.M,df.C,df.M.tmp,df.C.tmp)
 
 # clean data for traditional analysis
-df.M1 <- df.M.valid
-df.C1 <- df.C.valid
+df.M1 <- df.M.valid          # percentage of trials without response: 0.039799
+df.C1 <- df.C.valid          # percentage of trials without response: 0.029514
 df.M1$RT <- df.M1$RT * 1000 # transfer from seconds to min seconds
 df.C1$RT <- df.C1$RT * 1000 # careful about the scale of time when using HDDM or ex-Gaussian
 
 # no response equal to wrong
+sum(df.M1$ACC == -1)/length(df.M1$ACC)
+sum(df.C1$ACC == -1)/length(df.C1$ACC)
 df.M1$ACC[df.M1$ACC == -1] <- 0
 df.C1$ACC[df.C1$ACC == -1] <- 0
 
@@ -178,7 +180,6 @@ df.C1.V.basic.info <- df.C1.V %>%
                        SDAge   = round(sd(Age),2))
 
 ratio.excld.trials.C <- nrow(excld.trials.C)/nrow(df.C1)
-
 
 ###########################################################
 ########   get the data file for hddm analysis      #######
@@ -278,7 +279,11 @@ for (i in 1:nrow(df.M1.V)){
 }
 
 # calculate the number of each for each condition
-df.M1.V.SDT <- plyr::ddply(df.M1.V,.(Subject,Age, Gender, Morality, Identity,sdt), summarise, N = length(sdt))
+#df.M1.V.SDT <- plyr::ddply(df.M1.V,.(Subject,Age, Gender, Morality, Identity,sdt), summarise, N = length(sdt))
+df.M1.V.SDT <- df.M1.V %>%
+   dplyr::group_by(Subject,Age, Gender, Morality, Identity,sdt) %>%
+   dplyr::summarise(N = length(sdt)) %>%
+   dplyr::ungroup()
 df.M1.V.SDT <- df.M1.V.SDT[complete.cases(df.M1.V.SDT$sdt),] # exclude NA, which represents no-response trials
 
 # long format to wide
@@ -302,7 +307,7 @@ for (i in 1:nrow(df.M1.V.SDT_w)){
 }
 
 # calculate the d prime for each condition
-df.M1.V.SDT_w$dprime <- mapply(dprime,df.M1.V.SDT_w$hitR,df.M1.V.SDT_w$faR)
+df.M1.V.SDT_w$dprime <- mapply(dprime, df.M1.V.SDT_w$hitR, df.M1.V.SDT_w$faR)
 
 # transfor from long format to wide format
 df.M1.V.SDT_ww <- dcast(df.M1.V.SDT_w, Subject + Age + Gender ~ Morality + Identity ,value.var = "dprime")
@@ -551,6 +556,99 @@ setwd(curDir)
 #     "CAplots" -- plot for categorization task
 ## Matching task, plots are save to 'saveDir'
 
+# plot for match
+df.M1.plot <- df.M1.V.sum_rt_acc_l %>%
+   dplyr::filter(Match == 'match') %>%  # select matching data for plotting only.
+   dplyr::full_join(., df.M1.V.SDT_l) %>%  
+   tidyr::pivot_longer(., cols = c(RT, dprime), 
+                       names_to = 'DVs', 
+                       values_to = "value") %>% # to longer format
+   dplyr::mutate(DVs = factor(DVs, levels = c('RT', 'dprime')),
+                 # create an extra column for ploting the individual data cross different conditions.
+                 Conds = mosaic::derivedFactor("0.88" = (Identity == "Self" & Morality == 'Good'), 
+                                              "1.12" = (Identity == "Other" & Morality == 'Good'), 
+                                              "1.88" = (Identity == "Self" & Morality == 'Bad'),
+                                              "2.12" = (Identity == "Other" & Morality == 'Bad'), 
+                                              method ="first", .default = NA),
+                 Conds = as.numeric(as.character(Conds)))
+   
+
+df.M1.sum_p <- summarySE(df.M1.plot, measurevar = "value", groupvars = c("Identity", 'Morality',"DVs")) %>%
+   dplyr::mutate(Mrl_num = ifelse(Morality == 'Good', 1, 2))
+
+pd1 <- position_dodge(0.5)
+pd2 <- position_jitterdodge(jitter.width = .1, dodge.width = .5)
+
+# New facet label names for panel variable
+# https://stackoverflow.com/questions/34040376/cannot-italicize-facet-labels-with-labeller-label-parsed
+levels(df.M1.plot$DVs ) <- c("RT"=expression(paste("Reaction ", "times (ms)")),
+                             "dprime"=expression(paste(italic("d"), ' prime')))
+levels(df.M1.sum_p$DVs ) <- c("RT"=expression(paste("Reaction ", "times (ms)")),
+                             "dprime"=expression(paste(italic("d"), ' prime')))
+
+p_df_M1_sum <- df.M1.plot%>%
+   ggplot(., aes(x = Morality, y = value, fill = Identity)) +
+   #geom_boxplot(outlier.shape = NA, alpha = .5, width = .1, position = pd1)+
+   #geom_flat_violin(aes(fill = group), position = position_nudge(x = .1, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA)+
+   geom_point(aes(x = Conds, y = value, group = Subject),   # plot individual points
+              colour = "#000000",
+              size = 3, shape = 20, alpha = 0.1)+
+   geom_line(aes(x = Conds, y = value, group = Subject),         # link individual's points by transparent grey lines
+             linetype = 1, size = 0.8, colour = "#000000", alpha = 0.06) +   
+   geom_line(data = df.M1.sum_p, aes(x = as.numeric(Mrl_num), # plot the group means  
+                                      y = value, 
+                                      group = Identity, 
+                                      colour = Identity), 
+             linetype = 1, position = pd1, size = 2)+
+   geom_point(data = df.M1.sum_p, aes(x = as.numeric(Mrl_num), # group mean
+                                       y = value, 
+                                       group = Identity, 
+                                       colour = Identity), 
+              shape = 18, position = pd1, size = 8) +
+   geom_errorbar(data = df.M1.sum_p, aes(x = as.numeric(Mrl_num),  # group error bar.
+                                          y = value, group = Identity, 
+                                          colour = Identity,
+                                          ymin = value- 1.96*se, 
+                                          ymax = value+ 1.96*se), 
+                 width = .05, position = pd1, size = 2, alpha = 0.75) +
+   scale_colour_brewer(palette = "Dark2")+
+   scale_x_continuous(breaks=c(1, 2),
+                    labels=c("Good", "Bad"))+
+   scale_fill_brewer(palette = "Dark2")+
+   ggtitle("A. Matching task") +
+   #theme_classic(base_size = 16) +
+   theme_bw()+
+   theme(panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.background = element_blank(),
+         panel.border = element_blank(),
+         text=element_text(family='Times'),
+         legend.title=element_blank(),
+         legend.text = element_text(size =16),
+         #legend.position='top',
+         #plot.title = element_text(size = 18, margin=margin(0,0,30,0)),
+         plot.title = element_text(lineheight=.8, face="bold", size = 18, margin=margin(0,0,20,0)),
+         axis.text = element_text (size = 16, color = 'black'),
+         #              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
+         axis.title = element_text (size = 16),
+         #axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
+         #axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
+         axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.line.x = element_line(color='black', size = 1),   # increase the size of font
+         axis.line.y = element_line(color='black', size = 1),   # increase the size of font
+         strip.text = element_text (size = 16, color = 'black'), # size of text in strips, face = "bold"
+         panel.spacing = unit(3, "lines")
+   ) +
+   facet_wrap( ~ DVs,
+               scales = "free_y", nrow = 1,
+               labeller = label_parsed) 
+
+pdf('Fig2_A_R1.pdf',  height = 6, width = 9)
+p_df_M1_sum
+dev.off()
+
+
 #Mplots(saveDir = traDir, curDir = curDir, expName = 'exp7', df.M1.V.SDT_l,df.C1.V.sum_rt_acc_l)
 
 ### plot id-based data
@@ -561,4 +659,163 @@ setwd(curDir)
 
 ### plot the categorization task (collapsed different tasks)
 #CAplots(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
+#df.C1.V.sum_rt_acc_noTask_l
 
+df.C1.plot <- df.C1.V.sum_rt_acc_noTask_l %>%
+   #dplyr::filter(Match == 'match') %>%  # select matching data for plotting only.
+   #dplyr::full_join(., df.M1.V.SDT_l) %>%  
+   tidyr::pivot_longer(., cols = c(RT, ACC), 
+                       names_to = 'DVs', 
+                       values_to = "value") %>% # to longer format
+   dplyr::mutate(DVs = factor(DVs, levels = c('RT', 'ACC')),
+                 # create an extra column for ploting the individual data cross different conditions.
+                 Conds = mosaic::derivedFactor("0.88" = (Identity == "Self" & Morality == 'Good'), 
+                                               "1.12" = (Identity == "Other" & Morality == 'Good'), 
+                                               "1.88" = (Identity == "Self" & Morality == 'Bad'),
+                                               "2.12" = (Identity == "Other" & Morality == 'Bad'), 
+                                               method ="first", .default = NA),
+                 Conds = as.numeric(as.character(Conds)))
+
+
+df.C1.sum_p <- summarySE(df.C1.plot, measurevar = "value", groupvars = c("Identity", 'Morality',"DVs")) %>%
+   dplyr::mutate(Mrl_num = ifelse(Morality == 'Good', 1, 2))
+
+levels(df.C1.plot$DVs ) <- c("RT"= expression("Reaction times (ms)"),
+                             "ACC"= expression("Accuracy"))
+levels(df.C1.sum_p$DVs ) <- c("RT"= expression("Reaction times (ms)"),
+                              "ACC"= expression("Accuracy"))
+
+
+p_df_C1_sum <- df.C1.plot%>%
+   ggplot(., aes(x = Morality, y = value, fill = Identity)) +
+   #geom_point(aes(x = Morality, y = value, colour = Identity),   # plot individual points
+   #           position = pd1, 
+   #           size = 3, shape = 20, alpha = 0.4)+
+   geom_point(aes(x = Conds, y = value, group = Subject),   # plot individual points
+              colour = "#000000",
+              size = 3, shape = 20, alpha = 0.1)+
+   geom_line(aes(x = Conds, y = value, group = Subject),         # link individual's points by transparent grey lines
+             linetype = 1, size = 0.8, colour = "#000000", alpha = 0.06) +   
+   geom_line(data = df.C1.sum_p, aes(x = as.numeric(Mrl_num), # plot the group means  
+                                     y = value, 
+                                     group = Identity, 
+                                     colour = Identity), 
+             linetype = 1, position = pd1, size = 2)+
+   geom_point(data = df.C1.sum_p, aes(x = as.numeric(Mrl_num), # group mean
+                                      y = value, 
+                                      group = Identity, 
+                                      colour = Identity), 
+              shape = 18, position = pd1, size = 8) +
+   geom_errorbar(data = df.C1.sum_p, aes(x = as.numeric(Mrl_num),  # group error bar.
+                                         y = value, group = Identity, 
+                                         colour = Identity,
+                                         ymin = value- 1.96*se, 
+                                         ymax = value+ 1.96*se), 
+                 width = .05, position = pd1, size = 2, alpha = 0.75) +
+   scale_x_continuous(breaks=c(1, 2),
+                      labels=c("Good", "Bad"))+
+   scale_colour_brewer(palette = "Dark2")+
+   scale_fill_brewer(palette = "Dark2")+
+   ggtitle("B. Categorization task (combined)") +
+   #theme_classic(base_size = 16) +
+   theme_bw()+
+   theme(panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank(),
+         panel.background = element_blank(),
+         panel.border = element_blank(),
+         text=element_text(family='Times'),
+         legend.title=element_blank(),
+         legend.text = element_text(size =16),
+         #legend.position='top',
+         #plot.title = element_text(size = 18, margin=margin(0,0,30,0)),
+         plot.title = element_text(lineheight=.8, face="bold", size = 18, margin=margin(0,0,20,0)),
+         axis.text = element_text (size = 16, color = 'black'),
+         #              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
+         axis.title = element_text (size = 16),
+         #axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
+         #axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
+         axis.title.x = element_blank(),
+         axis.title.y = element_blank(),
+         axis.line.x = element_line(color='black', size = 1),   # increase the size of font
+         axis.line.y = element_line(color='black', size = 1),   # increase the size of font
+         strip.text = element_text (size = 16, color = 'black'), # size of text in strips, face = "bold"
+         panel.spacing = unit(3, "lines")
+   ) +
+   facet_wrap( ~ DVs,
+               scales = "free_y", nrow = 1) 
+
+pdf('Fig2_B_R1.pdf',  height = 6, width = 9)
+p_df_C1_sum
+dev.off()
+
+# ---------------------------------------------------------------------------------------
+# ------------ 7. Additional analysis  --------------------------------------------------
+# ---------------------------------------------------------------------------------------
+
+# In this additional analysis, we separatey the first half and second half of the categorization trials
+# to check the effect of practices.
+
+df.C1_a <- df.C1 %>% dplyr::filter(Bin < 4)  # first half
+df.C1_b <- df.C1 %>% dplyr::filter(Bin > 3)  # second half
+
+df.C1 <- df.C1 %>%
+   dplyr::mutate(Finger = ifelse(ResponseKey == "Y" | ResponseKey == "H", "left", 
+                                 ifelse(ResponseKey == "U" | ResponseKey == "J", "right", NA))) %>%
+   dplyr::mutate(Finger = ifelse(ACC == 1 | (ACC = 0 & ResponseKey = NA), Finger, 
+                                 ifelse(ACC = 0 & ResponseKey = 'left', 'right',
+                                        ifelse(ACC = 0 & ResponseKey ='right', 'left'))))
+
+# calculating the ACC 
+df.C1_a.acc <- df.C1_a %>%
+   dplyr::group_by(Subject,Age, Gender, Task,Morality,Identity) %>%
+   dplyr::summarise(N = length(ACC),
+                    corrN = sum(ACC),
+                    meanACC = sum(ACC)/length(ACC)) %>%                                    # calculate the counts for each 
+   dplyr::ungroup() %>%
+   dplyr::mutate(Morality = factor(Morality, levels = c("Good","Bad")),
+                 Identity = factor(Identity, levels = c("Self","Other")))
+
+afex::aov_ez("Subject", "meanACC", df.C1_a.acc, within = c('Task',"Morality", "Identity"))
+
+df.C1_b.acc <- df.C1_b %>%
+   dplyr::group_by(Subject,Age, Gender, Task,Morality,Identity) %>%
+   dplyr::summarise(N = length(ACC),
+                    corrN = sum(ACC),
+                    meanACC = sum(ACC)/length(ACC)) %>%                                    # calculate the counts for each 
+   dplyr::ungroup() %>%
+   dplyr::mutate(Morality = factor(Morality, levels = c("Good","Bad")),
+                 Identity = factor(Identity, levels = c("Self","Other")))
+
+afex::aov_ez("Subject", "meanACC", df.C1_b.acc, within = c('Task',"Morality", "Identity"))
+
+df.C1_a.RT <- df.C1_a %>%
+   dplyr::filter(ACC == 1)  # exclued inaccurate data
+
+df.C1_a.RT.subj <- summarySEwithin(df.C1_a.RT, measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+
+afex::aov_ez("Subject", "RT", df.C1_a.RT.subj, within = c('Task',"Morality", "Identity"))
+
+df.C1_b.RT <- df.C1_b %>%
+   dplyr::filter(ACC == 1)  # exclued inaccurate data
+
+df.C1_b.RT.subj <- summarySEwithin(df.C1_b.RT, measurevar = 'RT', withinvar = c('Subject','Task','Morality','Identity'), idvar = 'Subject',na.rm = TRUE)
+afex::aov_ez("Subject", "RT", df.C1_b.RT.subj, within = c('Task',"Morality", "Identity"))
+
+df.C1_a.V.sum_rt_acc_l <- merge(df.C1_a.acc, df.C1_a.RT.subj,by = c("Subject","Task","Morality",'Identity'))
+df.C1_a.V.sum_rt_acc_l <- df.C1_a.V.sum_rt_acc_l[order(df.C1_a.V.sum_rt_acc_l$Subject),]
+df.C1_a.V.sum_rt_acc_l <- df.C1_a.V.sum_rt_acc_l %>%
+   dplyr::rename(ACC = meanACC)
+
+df.C1_b.V.sum_rt_acc_l <- merge(df.C1_b.acc, df.C1_b.RT.subj,by = c("Subject","Task","Morality",'Identity'))
+df.C1_b.V.sum_rt_acc_l <- df.C1_b.V.sum_rt_acc_l[order(df.C1_b.V.sum_rt_acc_l$Subject),]
+df.C1_b.V.sum_rt_acc_l <- df.C1_b.V.sum_rt_acc_l %>%
+   dplyr::rename(ACC = meanACC)
+
+### plot id-based data
+CAplots(saveDir = curDir, curDir = curDir,expName = 'conf_b', task = 'id', df.C1_b.V.sum_rt_acc_l)
+
+### plot val-based data
+CAplots(saveDir = curDir, curDir = curDir,expName = 'conf_b', task = 'val', df.C1_b.V.sum_rt_acc_l)
+
+### plot the categorization task (collapsed different tasks)
+#CAplots(saveDir = curDir, curDir = curDir,expName = 'conf_a', task = 'categ', df.C1_a.V.sum_rt_acc_l)
