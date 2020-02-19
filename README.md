@@ -28,7 +28,7 @@ moralSelf_ddm
 │       │
 │       └───3_exGaussian       # ex-Gaussian analysis of categorization task
 │       │
-│       └───4_hddm             # hddm analysis in python
+│       └───4_hddm             # hddm analysis, only python scripts (.py, .ipynb)
 │
 └───2_confirm_study
 │   │   MS_rep_categ_sample_size.jasp  # jasp used for determine whether or not stop collecting data
@@ -224,11 +224,9 @@ data (input) -> HDDM analysis (python & juypter notebook script)
 
 Scripts:
 
-- Exp_MS_HDDM_match.py
+- HDDM_MS_Rep_match_stim.ipynb
 
-- Exp_MS_HDDM_categ.py
-
-- Exp_categ_stim.ipynb
+- HDDM_MS_Rep_categ_stim.ipynb
 
 Input:
 

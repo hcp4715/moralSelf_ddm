@@ -16,8 +16,8 @@ pkgTest <- function(x)
         }
 }
 
-pkgNeeded <- (c("plyr","tidyverse","ggplot2","ez", "bootES","MBESS", 
-                "psych","corrplot","readr", "Hmisc","RColorBrewer"))
+pkgNeeded <- (c("plyr","tidyverse","ggplot2","bootES", 
+                "corrplot","readr", "Hmisc","RColorBrewer"))
 
 lapply(pkgNeeded,pkgTest)
 rm('pkgNeeded') # remove the variable 'pkgNeeded';
@@ -28,28 +28,11 @@ rm('pkgNeeded') # remove the variable 'pkgNeeded';
 
 # run the geo_flat_violin.r, which is from:https://gist.githubusercontent.com/
 # benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R
-source("geom_flat_violin.R")
+# source("geom_flat_violin.R")
 
 # Save some time and stor APA format-related code in an object so you can easily
 # use it in multiple plots
 windowsFonts(Times=windowsFont("TT Times New Roman")) # explicit mapping to "times"
-apatheme = theme_bw()+
-        theme(panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              panel.background = element_blank(),
-              panel.border = element_blank(),
-              text=element_text(family='Times'),
-              legend.title=element_blank(),
-              legend.text = element_text(size =16),
-              #legend.position='top',
-              plot.title = element_text(lineheight=.8, face="bold", size = 16),
-              axis.text = element_text (size = 16, color = 'black'),
-#              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
-              axis.title = element_text (size = 16),
-              axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
-              axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
-              axis.line.x = element_line(color='black', size = 1),   # increase the size of font
-              axis.line.y = element_line(color='black', size = 1))   # increase the size of font
 
 # define the d prime function
 dprime <- function(hit,fa) {
@@ -223,136 +206,3 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
         }
 }
 #
-
-
-########### define a function for the plots ##########
-#### For categorization task
-CAplots <- function(saveDir = traDir, curDir = curDir,expName = 'exp7', task = 'id', inData){
-      inData$Identity <- factor(inData$Identity,levels = c("Self","Other"))
-      inData$Morality <- factor(inData$Morality,levels = c("Good","Bad"))
-      #inData$Morality[inData$Morality == "Good"] <- 1
-      #inData$Morality[inData$Morality == "Bad"]  <- 2
-      if(task == 'val'){              # valence-based categorization
-            ACCdata <- inData %>%
-                  select(Subject,Task,Morality,Identity,ACC) %>% 
-                  filter(Task == "Val")
-            rtData <- inData %>%
-                  select(Subject,Task,Morality,Identity,RT) %>% 
-                  filter(Task == "Val")
-            
-          } else if (task == 'id'){   # id-based categorization
-            ACCdata <- inData %>%
-                  select(Subject,Task,Morality,Identity,ACC) %>% 
-                  filter(Task == "Id")
-            rtData <- inData %>%
-                  select(Subject,Task,Morality,Identity,RT) %>% 
-                  filter(Task == "Id")
-          }else{                         #  combined for experiment 1
-            ACCdata <- inData %>%
-                  select(Subject,Morality,Identity,ACC)
-            rtData <- inData %>%
-                  select(Subject,Morality,Identity,RT)
-            
-      }
-
-    P.acc <- ggplot(ACCdata,aes(x = Morality, 
-                                y = ACC, fill = Identity))+
-          geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
-                           adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
-          geom_dotplot(aes(x = Morality,y = ACC, color = Identity), 
-                       binaxis='y', binwidth = 0.0125, stackdir='center', dotsize= 0.5,position = position_dodge(0.15)) +
-          geom_boxplot(aes(x = Morality,  y = ACC,fill = Identity),outlier.shape = NA,
-                       alpha = 0.5, width = 0.1,  color = "black",
-                       position = position_dodge(0.15))+ 
-          scale_color_brewer(palette = "Dark2")+
-          scale_fill_brewer(palette = "Dark2")+
-          ylab("Accuracy")+
-          #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
-          scale_y_continuous(expand = c(0, 0), limits = c(0,1))+
-          apatheme
-    
-    fileName = paste0('p_',expName,'_',task,'_ACC','.pdf')
-    ggsave(fileName, P.acc, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
-    
-    
-    P.rt <- ggplot(rtData,aes(x = Morality, y = RT, fill = Identity))+
-          geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
-                           adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
-          #geom_point(aes(x = as.numeric(Morality)-0.15,y = RT, color = Identity), 
-          #           position = position_jitter(width = 0.02),size = 1, shape = 20)+
-          geom_dotplot(aes(x = Morality,y = RT, color = Identity), 
-                       binaxis='y', binwidth = 8, stackdir='center', dotsize= 0.5,position = position_dodge(0.15)) + 
-          geom_boxplot(aes(x = Morality,  y = RT,fill = Identity),outlier.shape = NA,
-                       alpha = 0.5, width = 0.1,  color = "black",
-                       position = position_dodge(0.15))+ 
-          scale_color_brewer(palette = "Dark2")+
-          scale_fill_brewer(palette = "Dark2")+
-          ylab("Reaction Times")+
-          #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
-          scale_y_continuous(expand = c(0, 0),limits = c(200,1000))+
-          apatheme
-    
-    fileName = paste0('p_',expName,'_',task,'_RT','.pdf')
-    ggsave(fileName, P.rt, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
-    
-    fileName = paste0('p_',expName,'_',task,'.tiff')
-    setwd(saveDir)
-    tiff(fileName, width = 9, height = 6, units = 'in', res = 300)
-    p_dprime_match <- multiplot(P.rt,P.acc,cols = 2)
-    dev.off()
-    setwd(curDir)
-    return(multiplot(P.rt,P.acc,cols = 2))
-}
- 
-#### For Match task
-Mplots <- function(saveDir = traDir, curDir = curDir, expName = 'exp7', dData,rtData){
-      dData$Identity <- factor(dData$Identity,levels = c("Self","Other"))
-      dData$Morality <- factor(dData$Morality,levels = c("Good","Bad"))
-      rtData$Identity <- factor(rtData$Identity,levels = c("Self","Other"))
-      rtData$Morality <- factor(rtData$Morality,levels = c("Good","Bad"))
-
-      P.dprime <- ggplot(dData,aes(x = Morality, y = dprime, fill = Identity)) +
-            geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
-                             adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
-            geom_dotplot(aes(x = Morality,y = dprime, color = Identity), 
-                         binaxis='y', binwidth = 0.1, stackdir='center', dotsize= 0.5,
-                         position = position_dodge(0.15)) +
-            geom_boxplot(aes(x = Morality,  y = dprime,fill = Identity),outlier.shape = NA,
-                         alpha = 0.5, width = 0.1,  color = "black",
-                         position = position_dodge(0.15)) + 
-            scale_color_brewer(palette = "Dark2") +
-            scale_fill_brewer(palette = "Dark2") +
-            ylab("d prime") +
-           # scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
-            scale_y_continuous(expand = c(0, 0), limits = c(-1,5)) +
-            apatheme
-      fileName = paste0('p_',expName,'_match_dprime','.pdf')
-      ggsave(fileName, P.dprime, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
-      
-      P.rt <- ggplot(rtData,aes(x = Morality, y = RT, fill = Identity))+
-            geom_flat_violin(aes(fill = Identity),position = position_nudge(x = 0.1, y = 0),
-                             adjust = 1.5, trim = FALSE, alpha = 0.5,color = NA) +
-            #geom_point(aes(x = as.numeric(Morality)-0.15,y = RT, color = Identity), 
-            #           position = position_jitter(width = 0.02),size = 1, shape = 20)+
-            geom_dotplot(aes(x = Morality,y = RT, color = Identity), 
-                         binaxis='y', binwidth = 8, stackdir='center', dotsize= 0.5,position = position_dodge(0.15)) + 
-            geom_boxplot(aes(x = Morality,  y = RT,fill = Identity),outlier.shape = NA,
-                         alpha = 0.5, width = 0.1,  color = "black",
-                         position = position_dodge(0.15))+ 
-            scale_color_brewer(palette = "Dark2")+
-            scale_fill_brewer(palette = "Dark2")+
-            ylab("Reaction Times")+
-            #scale_x_discrete(breaks = c(1,2),labels = c("Good","Bad")) +
-            scale_y_continuous(expand = c(0, 0),limits = c(200,1000))+
-            apatheme
-      fileName = paste0('p_',expName,'_match_RT','.pdf')
-      ggsave(fileName, P.rt, scale = 1,height = 6, width = 6, dpi = 300, family = "Times",path = saveDir)
-  
-      fileName = paste0('p_',expName,'_match_','.tiff')
-      setwd(saveDir)
-      tiff(fileName, width = 12, height = 6, units = 'in', res = 300)
-      p_dprime_match <- multiplot(P.rt,P.dprime,cols = 2)
-      dev.off()
-      setwd(curDir)
-      return(multiplot(P.rt,P.dprime,cols = 2))
-}

@@ -482,16 +482,6 @@ setwd(curDir)
 # ---------------------------------------------------------------------------------------
 # ------------ 5. Plots  ----------------------------------------------------------------
 # ---------------------------------------------------------------------------------------
-# plots here are made by pre-defined functions in initial.r:
-#     "Mplots"  -- plot for matching task
-#     "CAplots" -- plot for categorization task
-## Matching task, plots are save to 'saveDir'
-
-### first convert time to ms
-#df.M1.V.sum_rt_acc_l$RT <- df.M1.V.sum_rt_acc_l$RT*1000
-#df.C1.V.sum_rt_acc_l$RT <- df.C1.V.sum_rt_acc_l$RT*1000
-#df.C1.V.sum_rt_acc_noTask_l$RT <- df.C1.V.sum_rt_acc_noTask_l$RT*1000
-
 # plot for match
 df.M1.plot <- df.M1.V.sum_rt_acc_l %>%
    dplyr::mutate(RT = RT*1000) %>%
@@ -515,12 +505,12 @@ df.M1.sum_p <- summarySE(df.M1.plot, measurevar = "value", groupvars = c("Identi
    dplyr::mutate(Mrl_num = ifelse(Morality == 'Good', 1, 2))
 
 pd1 <- position_dodge(0.5)
-#pd2 <- position_jitterdodge(jitter.width = .1, dodge.width = .5)
 scaleFUN <- function(x) sprintf("%.2f", x)
 scales_y <- list(
    RT = scale_y_continuous(limits = c(400, 900)),
    dprime = scale_y_continuous(labels=scaleFUN)
 )
+
 # New facet label names for panel variable
 # https://stackoverflow.com/questions/34040376/cannot-italicize-facet-labels-with-labeller-label-parsed
 levels(df.M1.plot$DVs ) <- c("RT"=expression(paste("Reaction ", "times (ms)")),
@@ -530,8 +520,6 @@ levels(df.M1.sum_p$DVs ) <- c("RT"=expression(paste("Reaction ", "times (ms)")),
 
 p_df_M1_sum <- df.M1.plot%>%
    ggplot(., aes(x = Morality, y = value, fill = Identity)) +
-   #geom_boxplot(outlier.shape = NA, alpha = .5, width = .1, position = pd1)+
-   #geom_flat_violin(aes(fill = group), position = position_nudge(x = .1, y = 0), adjust = 1.5, trim = FALSE, alpha = .5, colour = NA)+
    geom_point(aes(x = Conds, y = value, group = Subject),   # plot individual points
               colour = "#000000",
               size = 3, shape = 20, alpha = 0.1)+
@@ -558,7 +546,6 @@ p_df_M1_sum <- df.M1.plot%>%
                       labels=c("Good", "Bad"))+
    scale_fill_brewer(palette = "Dark2")+
    ggtitle("A. Matching task") +
-   #theme_classic(base_size = 16) +
    theme_bw()+
    theme(panel.grid.major = element_blank(),
          panel.grid.minor = element_blank(),
@@ -567,36 +554,25 @@ p_df_M1_sum <- df.M1.plot%>%
          text=element_text(family='Times'),
          legend.title=element_blank(),
          legend.text = element_text(size =16),
-         #legend.position='top',
-         #plot.title = element_text(size = 18, margin=margin(0,0,30,0)),
          plot.title = element_text(lineheight=.8, face="bold", size = 18, margin=margin(0,0,20,0)),
          axis.text = element_text (size = 16, color = 'black'),
-         #              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
          axis.title = element_text (size = 16),
-         #axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
-         #axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
          axis.title.x = element_blank(),
          axis.title.y = element_blank(),
-         axis.line.x = element_line(color='black', size = 1),   # increase the size of font
-         axis.line.y = element_line(color='black', size = 1),   # increase the size of font
+         axis.line.x = element_line(color='black', size = 1),    # increase the size of font
+         axis.line.y = element_line(color='black', size = 1),    # increase the size of font
          strip.text = element_text (size = 16, color = 'black'), # size of text in strips, face = "bold"
          panel.spacing = unit(3, "lines")
    ) +
-   #facet_grid_sc(cols = vars(DVs), scales = list(y = scales_y))
    facet_wrap( ~ DVs,
                scales = "free_y", nrow = 1,
-               labeller = label_parsed) #+
-   #scale_y_continuous(labels=scaleFUN)
+               labeller = label_parsed)
 
 pdf('Fig3_A_R1.pdf',  height = 6, width = 9)
 p_df_M1_sum
 dev.off()
 
-
-#Mplots(saveDir = traDir, curDir = curDir, expName = 'conf', df.M1.V.SDT_l,df.M1.V.sum_rt_acc_l)
-
 ### plot id-based data
-#CAplots(saveDir = traDir, curDir = curDir,expName = 'conf', task = 'id', df.C1.V.sum_rt_acc_l)
 df.C1_Id.plot <- df.C1.V.sum_rt_acc_l %>%
    dplyr::mutate(RT = RT*1000) %>%
    dplyr::filter(Task == 'Id') %>%  # select matching data for plotting only.
@@ -604,7 +580,8 @@ df.C1_Id.plot <- df.C1.V.sum_rt_acc_l %>%
    tidyr::pivot_longer(., cols = c(RT, ACC), 
                        names_to = 'DVs', 
                        values_to = "value") %>% # to longer format
-   dplyr::mutate(DVs = factor(DVs, levels = c('RT', 'ACC')),
+   dplyr::mutate(Identity = factor(Identity, levels = c('Self','Other')),
+                 DVs = factor(DVs, levels = c('RT', 'ACC')),
                  # create an extra column for ploting the individual data cross different conditions.
                  Conds = mosaic::derivedFactor("0.88" = (Identity == "Self" & Morality == 'Good'), 
                                                "1.12" = (Identity == "Other" & Morality == 'Good'), 
@@ -622,12 +599,8 @@ levels(df.C1_Id.plot$DVs ) <- c("RT"= expression("Reaction times (ms)"),
 levels(df.C1_Id.sum_p$DVs ) <- c("RT"= expression("Reaction times (ms)"),
                               "ACC"= expression("Accuracy"))
 
-
 p_df_C1_Id_sum <- df.C1_Id.plot%>%
    ggplot(., aes(x = Morality, y = value, fill = Identity)) +
-   #geom_point(aes(x = Morality, y = value, colour = Identity),   # plot individual points
-   #           position = pd1, 
-   #           size = 3, shape = 20, alpha = 0.4)+
    geom_point(aes(x = Conds, y = value, group = Subject),   # plot individual points
               colour = "#000000",
               size = 3, shape = 20, alpha = 0.1)+
@@ -654,7 +627,6 @@ p_df_C1_Id_sum <- df.C1_Id.plot%>%
    scale_colour_brewer(palette = "Dark2")+
    scale_fill_brewer(palette = "Dark2")+
    ggtitle("B. Identity-based categorization task") +
-   #theme_classic(base_size = 16) +
    theme_bw()+
    theme(panel.grid.major = element_blank(),
          panel.grid.minor = element_blank(),
@@ -663,14 +635,9 @@ p_df_C1_Id_sum <- df.C1_Id.plot%>%
          text=element_text(family='Times'),
          legend.title=element_blank(),
          legend.text = element_text(size =16),
-         #legend.position='top',
-         #plot.title = element_text(size = 18, margin=margin(0,0,30,0)),
          plot.title = element_text(lineheight=.8, face="bold", size = 18, margin=margin(0,0,20,0)),
          axis.text = element_text (size = 16, color = 'black'),
-         #              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
          axis.title = element_text (size = 16),
-         #axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
-         #axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
          axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          axis.line.x = element_line(color='black', size = 1),   # increase the size of font
@@ -686,7 +653,6 @@ p_df_C1_Id_sum
 dev.off()
 
 ### plot val-based data
-#CAplots(saveDir = traDir, curDir = curDir,expName = 'conf', task = 'val', df.C1.V.sum_rt_acc_l)
 df.C1_Val.plot <- df.C1.V.sum_rt_acc_l %>%
    dplyr::mutate(RT = RT*1000) %>%
    dplyr::filter(Task == 'Val') %>%  # select matching data for plotting only.
@@ -694,7 +660,8 @@ df.C1_Val.plot <- df.C1.V.sum_rt_acc_l %>%
    tidyr::pivot_longer(., cols = c(RT, ACC), 
                        names_to = 'DVs', 
                        values_to = "value") %>% # to longer format
-   dplyr::mutate(DVs = factor(DVs, levels = c('RT', 'ACC')),
+   dplyr::mutate(Identity = factor(Identity, levels = c('Self','Other')),
+                 DVs = factor(DVs, levels = c('RT', 'ACC')),
                  # create an extra column for ploting the individual data cross different conditions.
                  Conds = mosaic::derivedFactor("0.88" = (Identity == "Self" & Morality == 'Good'), 
                                                "1.12" = (Identity == "Other" & Morality == 'Good'), 
@@ -715,9 +682,6 @@ levels(df.C1_Val.sum_p$DVs ) <- c("RT"= expression("Reaction times (ms)"),
 
 p_df_C1_Val_sum <- df.C1_Val.plot%>%
    ggplot(., aes(x = Morality, y = value, fill = Identity)) +
-   #geom_point(aes(x = Morality, y = value, colour = Identity),   # plot individual points
-   #           position = pd1, 
-   #           size = 3, shape = 20, alpha = 0.4)+
    geom_point(aes(x = Conds, y = value, group = Subject),   # plot individual points
               colour = "#000000",
               size = 3, shape = 20, alpha = 0.1)+
@@ -744,7 +708,6 @@ p_df_C1_Val_sum <- df.C1_Val.plot%>%
    scale_colour_brewer(palette = "Dark2")+
    scale_fill_brewer(palette = "Dark2")+
    ggtitle("C. Valence-based categorization task") +
-   #theme_classic(base_size = 16) +
    theme_bw()+
    theme(panel.grid.major = element_blank(),
          panel.grid.minor = element_blank(),
@@ -753,14 +716,9 @@ p_df_C1_Val_sum <- df.C1_Val.plot%>%
          text=element_text(family='Times'),
          legend.title=element_blank(),
          legend.text = element_text(size =16),
-         #legend.position='top',
-         #plot.title = element_text(size = 18, margin=margin(0,0,30,0)),
          plot.title = element_text(lineheight=.8, face="bold", size = 18, margin=margin(0,0,20,0)),
          axis.text = element_text (size = 16, color = 'black'),
-         #              axis.text.x = element_text(angle = 45, vjust = 0.5),   # x-axis's label font
          axis.title = element_text (size = 16),
-         #axis.title.x = element_text(margin=margin(10,0,0,0)),  # increase the sapce betwen title and x axis
-         #axis.title.y = element_text(margin=margin(0,12,0,0)),  # increase the space between title and y axis
          axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          axis.line.x = element_line(color='black', size = 1),   # increase the size of font
@@ -773,123 +731,4 @@ p_df_C1_Val_sum <- df.C1_Val.plot%>%
 
 pdf('Fig3_C_R1.pdf',  height = 6, width = 9)
 p_df_C1_Val_sum
-dev.off()
-
-### plot the categorization task (collapsed different tasks)
-#CAplots(saveDir = traDir, curDir = curDir,expName = 'conf', task = 'categ', df.C1.V.sum_rt_acc_noTask_l)
-
-
-#### Exploration: plot the density of d prime and rt
-# Create a scatterplot with density margin plots 
-# Note, this part of the code is just for exploration, not presented in the manuscript
-
-## prepare the data
-df.M1.V.SDT_l$Cond <- paste(df.M1.V.SDT_l$Morality,df.M1.V.SDT_l$Identity,sep = '_')
-df.M1.V.RT_m <- df.M1.V.sum_rt_acc_l %>%
-   dplyr::filter(Match == 'match') %>%
-   dplyr::mutate(Cond = paste(Morality, Identity, sep = '_')) %>%
-   dplyr::mutate(RT = RT*1000)
-
-df.M1.V_dens_p <- merge(df.M1.V.SDT_l, df.M1.V.RT_m)
-
-# The plotHolder() function from C-3PR creates a blank plot template that will hold the figures
-plotHolder <- function(useArial = F,afmPATH="~/Dropbox"){
-   require(ggplot2)
-   ggplot() +
-      geom_blank(aes(1,1)) +
-      theme(line = element_blank(),
-            text  = element_blank(),
-            title = element_blank(),
-            plot.background = element_blank(),
-            #           panel.grid.major = element_blank(),
-            #           panel.grid.minor = element_blank(),
-            panel.border = element_blank(),
-            panel.background = element_blank()
-            #           axis.title.x = element_blank(),
-            #           axis.title.y = element_blank(),
-            #           axis.text.x = element_blank(),
-            #           axis.text.y = element_blank(),
-            #           axis.ticks = element_blank()
-      )
-}
-
-gg.theme <- function(type=c("clean","noax")[1],useArial = F, afmPATH="~/Dropbox"){
-   require(ggplot2)
-   if(useArial){
-      set.Arial(afmPATH)
-      bf_font="Arial"
-   } else {bf_font="Helvetica"}
-   
-   switch(type,
-          clean = theme_bw(base_size = 16, base_family=bf_font) +
-             theme(axis.text.x     = element_text(size = 14),
-                   axis.title.y    = element_text(vjust = +1.5),
-                   panel.grid.major  = element_blank(),
-                   panel.grid.minor  = element_blank(),
-                   legend.background = element_blank(),
-                   legend.key = element_blank(),
-                   panel.border = element_blank(),
-                   panel.background = element_blank(),
-                   axis.line  = element_line(colour = "black")),
-          
-          noax = theme(line = element_blank(),
-                       text  = element_blank(),
-                       title = element_blank(),
-                       plot.background = element_blank(),
-                       panel.border = element_blank(),
-                       panel.background = element_blank())
-   )
-}
-
-blankPlot <- plotHolder()
-
-# X margin density plot (note: gg.theme() from C-3PR can be used directly in a ggplot2() call)
-
-xDense <- ggplot(df.M1.V_dens_p, aes(x=dprime, fill=Cond)) + 
-   geom_density(aes(y= ..count..),trim=F,alpha=.5) + 
-   xlab("") + ylab("") + xlim(0,5) +
-   gg.theme("noax") + 
-   theme(legend.position = "none",plot.margin = unit(c(0,0,0,4), "lines"))
-
-## Uncomment to save subplot
-# ggsave("RPP_F3_xDense.png",plot=xDense)
-
-# Y margin density plot (note: gg.theme() from C-3PR can be used directly in a ggplot2() call)
-
-yDense <- ggplot(df.M1.V_dens_p, aes(x=RT, fill=Cond)) + 
-   geom_density(aes(y= ..count..),trim=F,alpha=.5) + 
-   xlab("") + ylab("") + xlim(400,900) + 
-   coord_flip() + 
-   gg.theme("noax") + 
-   theme(legend.position = "none", plot.margin = unit(c(0,0,3,0), "lines")) 
-
-## Uncomment to save subplot
-# ggsave("RPP_F3_yDense.png",plot=yDense)
-
-# The main scatterplot (note: gg.theme() from C-3PR can be used directly in a ggplot2() call)
-scatterP<-
-   ggplot(df.M1.V_dens_p,aes(x=dprime,y=RT)) +  
-   #geom_hline(aes(yintercept=0),linetype=2) +
-   #geom_abline(intercept=0,slope=1,color="Grey60")+
-   geom_point(aes(size= 0.8,fill=Cond),color="Grey30",shape=21,alpha=.8) + 
-   #geom_rug(aes(color=Cond),size=1,sides="b",alpha=.6) + 
-   #geom_rug(aes(color=Cond),,size=1,sides="l",alpha=.6) + 
-   scale_x_continuous(name="d prime",limits=c(0,5),breaks=c(0,1,2,3,4,5)) + 
-   scale_y_continuous(name="RT",limits=c(400,900),breaks=c(400,500,600,700,800,900)) + 
-   ggtitle("") + xlab("") + ylab("") + 
-   #scale_size_continuous(name="Replication Power",range=c(2,9)) + 
-   scale_color_discrete(name='Conditions') +
-   #scale_fill_discrete(name="p-value") +
-   gg.theme("clean") + 
-   theme(legend.position=c(.9,.6), plot.margin = unit(c(-2,-1.5,2,2), "lines")) 
-
-## Uncomment to save subplot
-# ggsave("RPP_F3_scatter.png",plot=scatterP)
-
-# Yet another way to organise plots: grid.arrange() from the gridExtra package.
-gridExtra::grid.arrange(xDense, blankPlot, scatterP, yDense, ncol=2, nrow=2, widths=c(4, 1.4), heights=c(1.4, 4))
-
-# SAVE combined plots as PDF
-pdf("Figure_RT_drpime_density_explore.pdf",pagecentre=T, width=15,height=12 ,paper = "special")
-gridExtra::grid.arrange(xDense, blankPlot, scatterP, yDense, ncol=2, nrow=2, widths=c(4, 1.4), heights=c(1.4, 4))
 dev.off()

@@ -1,13 +1,20 @@
-## This file is aimed at fitting the data collected by Moral_asso_behavioral_exp7 Using Ex-Gaussian Model
-#  Author     Date           History of change
-# ============================================
-#  Hcp     06/07/2016        Save rawData2 as the processed data
-#  hcp     06/07/2016        begin with saved csv data
-#  hcp     19/07/2016        only the code for final analysis
-#  hcp     20/02/2017        used for the final data
-#  hcp     08/04/2017        save to pdf
-#  hcp     15/07/2018        update to latest format and data
-#  hcp     Jan 09, 2019      delete extra comments and prepared to open
+### This script is used to preprocessing the data of the moral self experiment (DDM), experiment 1. 
+#
+### Hu, C-P., Lan, Y., Macrae, N., & Sui. J. (2019) 
+### Script author: Chuan-Peng Hu
+### Email = hcp4715@gmail.com       twitter= @hcp4715
+#
+### Input: 
+###      MS_categ_exG.csv -- raw data of matching task for ex-Gaussian analysis;
+#
+#
+### Output:
+###     exGaussian_params_sigma_noTask_w.csv 
+###     exGaussian_params_tau_w.csv
+###     exGaussian_params_mu_w.csv
+###     exGaussian_params_sigma_w.csv
+###     exGaussian_params_long.csv
+
 
 ########## preparation #################################################
 # define directories
@@ -26,7 +33,6 @@ nTask <- length(unique(df.exG$Task))      # number of tasks, save for later for 
 nID   <- length(unique(df.exG$Identity))  # number of identies, save for later for loop
 nVal  <- length(unique(df.exG$Morality))  # number of valence levels, save for later for loop
 nRow  <- nSub*nTask*nID*nVal              # predefine the number of rows for saving data
-
 
 RTsubId <- unique(df.exG$Subject)
 RTtask  <- unique(df.exG$Task) 
@@ -253,20 +259,14 @@ ggsave('Test_exGass_sigma1.pdf',p_sigma1, width=6, height=6,family = "Times")  #
 
 p_sigma_noTask <- ggplot(data = Psigma_anova_noTask.sum, aes(y=Psigma,x=Morality,group=Identity,shape = Identity,fill = Identity)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3) +         # Thinner lines
-        #geom_errorbar(aes(ymin = RT-ci,ymax=RT+ci),colour="black",width=.1,position = position_dodge()) +
-        #geom_line(position = pd) + geom_point(shape=21,fill="white",position = pd) +
-        #geom_point(position = pd) +
         geom_errorbar(aes(ymin = Psigma-se, ymax = Psigma + se),
                       size = 1.2,
                       width = .2,
                       position=position_dodge(.9)) +
         xlab("Moral Valence") +
         ylab(" Paramter sigma") + 
-        #ggtitle("sigma in each task (combined data from both tasks)") +
-        #scale_y_continuous("sigma",expand = c(0, 0)) +
-        coord_cartesian(ylim=c(0.04,0.09)) +
+       coord_cartesian(ylim=c(0.04,0.09)) +
         scale_y_continuous(breaks=seq(0.04,0.09,0.01),expand = c(0, 0)) +
-        #scale_fill_grey (start=0.2, end=0.8) +   # using grey scale, start from darker, end to lighter. 
         apatheme + 
         theme(axis.text = element_text (size = 20,color = "black")) + 
         theme(axis.title = element_text (size = 20)) + 
@@ -281,9 +281,6 @@ ggsave('Test_exGass_sigma_noTask.pdf',p_sigma_noTask, width=6, height=6,family =
 
 p_tau1 <- ggplot(data = Ptau.sum1, aes(y=Ptau,x=Morality,group=Task,shape = Task,fill = Task)) +
         geom_bar(position = position_dodge(),stat = "identity",colour = "black", size=.3) +         # Thinner lines
-        #geom_errorbar(aes(ymin = RT-ci,ymax=RT+ci),colour="black",width=.1,position = position_dodge()) +
-        #geom_line(position = pd) + geom_point(shape=21,fill="white",position = pd) +
-        #geom_point(position = pd) +
         geom_errorbar(aes(ymin = Ptau-se, ymax = Ptau + se),
                       size = 1.2,
                       width = .2,
