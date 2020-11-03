@@ -1,0 +1,31 @@
+{
+    "description": "<p>release after publishing the paper</p>", 
+    "license": "CC-BY-NC 4.0", 
+    "title": "Good me bad me: Prioritization of the good-self during perceptual decision-Making'", 
+    "version": "v1.1", 
+    "upload_type": "software", 
+    "publication_date": "2020-11-03", 
+    "creators": [
+        {
+            "affiliation": "Leibniz Institute for Resilience Research (LIR)", 
+            "name": "Hu Chuan-Peng"
+        }, 
+        {
+			"affiliation": "Tsinghua University",             
+			"name": "Lan Yuxuan"
+        }
+    ], 
+    "access_right": "open", 
+    "related_identifiers": [
+        {
+            "scheme": "url", 
+            "identifier": "https://github.com/hcp4715/moralSelf_ddm/tree/v1.1", 
+            "relation": "isSupplementTo"
+        }, 
+        {
+            "scheme": "doi", 
+            "identifier": "10.5281/zenodo.4222014", 
+            "relation": "isVersionOf"
+        }
+    ]
+}
