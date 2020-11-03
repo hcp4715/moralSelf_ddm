@@ -1,12 +1,12 @@
 # Good me Bad me
 
-================================================================================
+============================================================================
 
-This is the project files for Chuan-Peng Hu et al (2019):https://psyarxiv.com/9fczh/.
+This is the project files for Chuan-Peng Hu et al (2020):https://doi.org/10.1525/collabra.301.
 
-This open repo includ scripts for the procedure and analysis script and data for two experiments.
+This open repo include scripts for the procedure and analysis script and data for two experiments.
 
-================================================================================
+============================================================================
 
 ### structure of the current folder:
 
