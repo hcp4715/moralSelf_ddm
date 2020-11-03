@@ -1,8 +1,8 @@
 {
     "description": "<p>release after publishing the paper</p>", 
     "license": "cc-by-nc-4.0", 
-    "title": "Good me bad me: Prioritization of the good-self during perceptual decision-Making'", 
-    "version": "v1.3", 
+    "title": "Code and Data for 'Good me bad me: Prioritization of the good-self during perceptual decision-Making'", 
+    "version": "v1.4", 
     "upload_type": "software", 
     "publication_date": "2020-11-03", 
     "creators": [
@@ -19,7 +19,7 @@
     "related_identifiers": [
         {
             "scheme": "url", 
-            "identifier": "https://github.com/hcp4715/moralSelf_ddm/tree/v1.3", 
+            "identifier": "https://github.com/hcp4715/moralSelf_ddm/tree/v1.4", 
             "relation": "isSupplementTo"
         }, 
         {
